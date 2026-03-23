@@ -13,10 +13,24 @@ from .lexicon import KASMLexicon
 from .weaver import AlgorithmicWeaver
 from .router import KOSShell
 from .daemon import KOSDaemon
-from .drivers.text import TextDriver, KOSResolver
-from .drivers.math import MathDriver
-from .drivers.ast import ASTDriver
-from .drivers.vision import VisionDriver
+
+# Lazy driver imports — avoid hard crashes if optional deps are missing
+try:
+    from .drivers.text import TextDriver, KOSResolver
+except ImportError:
+    TextDriver = KOSResolver = None
+try:
+    from .drivers.math import MathDriver
+except ImportError:
+    MathDriver = None
+try:
+    from .drivers.ast import ASTDriver
+except ImportError:
+    ASTDriver = None
+try:
+    from .drivers.vision import VisionDriver
+except ImportError:
+    VisionDriver = None
 
 __version__ = "4.1.0"
 __all__ = [

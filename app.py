@@ -7,6 +7,14 @@ import os
 if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
     os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 
+# Auto-download NLTK data (required on Streamlit Cloud)
+import nltk
+for pkg in ['punkt_tab', 'averaged_perceptron_tagger_eng', 'wordnet']:
+    try:
+        nltk.data.find(f'tokenizers/{pkg}' if 'punkt' in pkg else f'taggers/{pkg}' if 'tagger' in pkg else f'corpora/{pkg}')
+    except LookupError:
+        nltk.download(pkg, quiet=True)
+
 from kos_core_v4 import (KOSKernel, KOSDaemonV4, ASTDriver, VisionDriver,
                           AutonomousForager, KASMCompiler)
 from kos.lexicon import KASMLexicon
