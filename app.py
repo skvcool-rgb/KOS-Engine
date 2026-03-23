@@ -1,38 +1,48 @@
 import streamlit as st
-import sys
 import os
 import traceback
 
 st.set_page_config(page_title="KOS V4.0", page_icon="brain",
                    layout="centered", initial_sidebar_state="expanded")
 
-# Load secrets for Streamlit Cloud deployment
+# Load secrets
 if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
     os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 
-# Show boot progress
-boot_status = st.empty()
-boot_status.info("Step 1/4: Downloading NLTK data...")
-
-try:
+# Cached boot — only runs once per session
+@st.cache_resource(show_spinner="Booting KOS Engine...")
+def boot_kos():
     import nltk
     nltk.download('punkt_tab', quiet=True)
     nltk.download('averaged_perceptron_tagger_eng', quiet=True)
     nltk.download('wordnet', quiet=True)
-    boot_status.info("Step 2/4: Importing KOS core...")
 
     from kos_core_v4 import (KOSKernel, KOSDaemonV4, ASTDriver, VisionDriver,
                               AutonomousForager, KASMCompiler)
-    boot_status.info("Step 3/4: Importing lexicon & router...")
-
     from kos.lexicon import KASMLexicon
     from kos.router import KOSShell
     from kos.drivers.text import TextDriver
-    boot_status.info("Step 4/4: Boot complete!")
-    boot_status.empty()
+    return {
+        'KOSKernel': KOSKernel, 'KOSDaemonV4': KOSDaemonV4,
+        'ASTDriver': ASTDriver, 'VisionDriver': VisionDriver,
+        'AutonomousForager': AutonomousForager, 'KASMCompiler': KASMCompiler,
+        'KASMLexicon': KASMLexicon, 'KOSShell': KOSShell, 'TextDriver': TextDriver,
+    }
+
+try:
+    mods = boot_kos()
+    KOSKernel = mods['KOSKernel']
+    KOSDaemonV4 = mods['KOSDaemonV4']
+    ASTDriver = mods['ASTDriver']
+    VisionDriver = mods['VisionDriver']
+    AutonomousForager = mods['AutonomousForager']
+    KASMCompiler = mods['KASMCompiler']
+    KASMLexicon = mods['KASMLexicon']
+    KOSShell = mods['KOSShell']
+    TextDriver = mods['TextDriver']
     BOOT_OK = True
 except Exception as e:
-    boot_status.error(f"Boot failed: {e}\n\n```\n{traceback.format_exc()}\n```")
+    st.error(f"Boot failed: {e}\n\n```\n{traceback.format_exc()}\n```")
     BOOT_OK = False
 
 import threading
