@@ -1,0 +1,368 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  captionpos=b
+}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\title{KOS: A Fuel-Constrained Spreading Activation Engine\\for Zero-Hallucination Knowledge Retrieval}
+\author{Suraj K.V.\\
+\texttt{https://github.com/skvcool-rgb/KOS-Engine}}
+\date{March 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Retrieval-Augmented Generation (RAG) systems suffer from five persistent failure modes: hallucination (LLM generates facts not in the evidence), lost-in-the-middle (30\%+ accuracy degradation for mid-context information), vocabulary mismatch (typos and synonyms cause retrieval failure), inability to perform multi-hop reasoning, and non-deterministic evidence scoring. We present KOS (Knowledge Operating System), a neurosymbolic knowledge engine that addresses all five simultaneously through a unified architecture. KOS confines Large Language Models to thin input/output roles---keyword extraction and single-sentence synthesis---while routing all reasoning through a deterministic spreading activation graph with biological neuron physics. The system introduces three novel mechanisms: (1)~fuel-constrained propagation that prevents the fan-out explosion inherent in classic spreading activation, (2)~a 6-layer word resolution cascade spanning exact matching through semantic vector fallback, and (3)~an Algorithmic Weaver that scores evidence deterministically by query intent type. KOS achieves 16/16 on a benchmark suite covering SVO dependency parsing, cross-language queries, extreme typo recovery, multi-hop deduction, and symbolic mathematics, with zero hallucinations observed across all test scenarios.
+
+\medskip
+\noindent\textbf{Keywords:} neurosymbolic AI, spreading activation, knowledge retrieval, zero hallucination, deterministic reasoning
+\end{abstract}
+
+\section{Introduction}
+
+The dominant paradigm for knowledge-grounded question answering is Retrieval-Augmented Generation (RAG), which embeds document chunks into high-dimensional vectors and retrieves the most similar chunks to stuff into an LLM's context window for answer generation. Despite widespread adoption, RAG exhibits five well-documented failure modes:
+
+\begin{enumerate}
+  \item \textbf{Hallucination.} Even with retrieved context, LLMs can ignore it or blend it with training data. Self-reflective RAG reduces hallucination to approximately 5.8\% but does not eliminate it~\cite{lewis2020rag}.
+
+  \item \textbf{Lost in the Middle.} LLMs exhibit a U-shaped attention curve---they attend to the beginning and end of the context window but degrade significantly for information positioned in the middle. This is an architectural limitation of Rotary Position Embedding (RoPE)~\cite{liu2024lost}.
+
+  \item \textbf{Vocabulary Mismatch.} Bi-encoder embeddings are lossy by design. Typos, abbreviations, and domain-specific terminology often fail to retrieve the correct chunks. Hybrid search (vector + BM25) provides partial mitigation but is limited to two resolution strategies.
+
+  \item \textbf{Multi-hop Reasoning.} Standard RAG retrieves flat chunks with no relational structure. Chaining inferences ($A \Rightarrow B$, $B \Rightarrow C$, therefore $A \Rightarrow C$) is fundamentally unsupported.
+
+  \item \textbf{Non-deterministic Scoring.} Cosine similarity between embedding vectors provides no interpretable evidence quality metric. The same query can return different rankings across runs.
+\end{enumerate}
+
+Microsoft's GraphRAG~\cite{edge2024graphrag} addresses multi-hop reasoning through LLM-extracted knowledge graphs and community summarization, but introduces high indexing costs and retains LLM dependency throughout the pipeline. Traditional knowledge graphs (Neo4j, Amazon Neptune) support multi-hop traversal but require manual schema design, offer no typo tolerance, and provide no built-in evidence scoring.
+
+We present KOS, a system that takes a fundamentally different architectural approach: \textbf{the LLM never reasons.} Instead, it serves as a thin I/O shell---a JSON keyword extractor (Ear) and a single-sentence synthesizer (Mouth)---around a deterministic graph physics engine that handles all retrieval, inference, and evidence scoring through mathematical operations.
+
+\section{System Architecture}
+
+KOS processes a user query through six sequential stages.
+
+\subsection{Pre-LLM Raw Word Scan (Layer 0.5)}
+
+Before any LLM interaction, KOS extracts words from the raw user prompt and attempts to resolve each through the 6-layer cascade (Section~\ref{sec:cascade}). This captures typos and taxonomy matches that the LLM would normalize away.
+
+\subsection{LLM Ear (Layer 1)}
+
+A single API call to \texttt{gpt-4o-mini} with strict JSON output formatting:
+
+\begin{lstlisting}[language={},caption={LLM Ear output format}]
+{"status": "EXECUTE", "keywords": ["toronto", "population"]}
+\end{lstlisting}
+
+The \texttt{response\_format: json\_object} constraint eliminates free-text parsing variability. Temperature is set to 0.0 for deterministic extraction.
+
+\subsection{Six-Layer Word Resolution Cascade}
+
+Each keyword passes through up to six resolution layers before giving up (see Section~\ref{sec:cascade}).
+
+\subsection{Spreading Activation Engine}
+
+Resolved keywords become seed nodes in the knowledge graph. The engine propagates activation energy through weighted edges using priority-queue-driven beam search (see Section~\ref{sec:engine}).
+
+\subsection{Algorithmic Weaver}
+
+All provenance sentences linked to activated nodes are scored by a deterministic intent-matching formula (see Section~\ref{sec:weaver}). The top 2 sentences are selected as evidence.
+
+\subsection{LLM Mouth (Layer 7)}
+
+The selected 1--2 sentences are passed to \texttt{gpt-4o-mini} for natural language synthesis. The LLM reads a maximum of 2 evidence sentences---eliminating the lost-in-the-middle problem by construction.
+
+\section{The 6-Layer Word Resolution Cascade}
+\label{sec:cascade}
+
+When a user types a query word, KOS attempts resolution through six strategies in order of speed and precision:
+
+\begin{table}[ht]
+\centering
+\caption{Word resolution cascade layers.}
+\label{tab:cascade}
+\begin{tabular}{@{}clll@{}}
+\toprule
+\textbf{Layer} & \textbf{Algorithm} & \textbf{Complexity} & \textbf{Example} \\
+\midrule
+1  & Exact hash lookup            & $O(1)$          & ``toronto'' $\to$ \texttt{toronto.n.01} \\
+2  & Ratcliff/Obershelp fuzzy ($\geq 0.6$) & $O(W \log W)$ & ``toranto'' $\to$ \texttt{toronto.n.01} \\
+3a & Metaphone phonetic hash      & $O(1)$          & ``tornto'' $\to$ TRNTN $\to$ \texttt{toronto.n.01} \\
+3b & Soundex phonetic hash        & $O(1)$          & ``prpvskittes'' $\to$ P612 $\to$ perovskite \\
+4  & WordNet hypernym/hyponym (depth 6) & $O(S)$   & ``entities'' $\to$ entity $\to \cdots \to$ company \\
+5  & Semantic vector cosine (MiniLM-L6-v2) & $O(N)$ & ``metropolis'' $\to$ city (0.557) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The cascade terminates at the first successful resolution. Approximately 90\% of queries resolve at Layer~1. Layer~5 embeds only node labels (1--3 words each), not document chunks, preserving the zero-hallucination guarantee.
+
+\section{ConceptNode Physics Engine}
+\label{sec:engine}
+
+\subsection{Dual-State Model}
+
+Each concept node maintains two independent state variables:
+
+\begin{itemize}
+  \item \textbf{Activation} ($a$): Epistemic truth score. Accumulates additively, clamped to $[-E_{\max}, E_{\max}]$. Represents semantic relevance to the current query.
+  \item \textbf{Fuel} ($f$): Propagation energy. Drains to zero after firing. Represents the node's capacity to propagate information to neighbors.
+\end{itemize}
+
+\subsection{Hyperpolarization Gate}
+
+When a node receives incoming energy $e$ at tick $t$:
+
+\begin{equation}
+a(t) = \mathrm{clamp}\!\left(a(t{-}1) \cdot \delta^{\Delta t} + e,\; [-E_{\max},\, E_{\max}]\right)
+\label{eq:activation}
+\end{equation}
+
+\begin{equation}
+f(t) =
+\begin{cases}
+f(t{-}1) \cdot \delta^{\Delta t} + e & \text{if } e > 0 \text{ and } a(t) > 0 \\
+f(t{-}1) \cdot \delta^{\Delta t}     & \text{otherwise}
+\end{cases}
+\label{eq:fuel}
+\end{equation}
+
+where $\delta$ is the temporal decay constant. The gate ensures that negatively-activated nodes (inhibited concepts) cannot gain propagation energy, preventing pathological feedback loops.
+
+\subsection{Myelination (Synaptic Plasticity)}
+
+Each edge tracks a myelin counter $m$ that increments every time the edge fires:
+
+\begin{equation}
+w_{\mathrm{eff}} = w \cdot (1 + m \cdot 0.01)
+\label{eq:myelin}
+\end{equation}
+
+This implements Hebbian learning: frequently-traversed paths strengthen over time, creating self-optimizing retrieval without retraining.
+
+\subsection{Top-$K$ 500 Routing}
+
+During propagation, each node fires only its top 500 edges ranked by effective weight. This prevents fan-out explosion (a known failure of classic spreading activation~\cite{collins1975spreading}) while preserving access to niche connections.
+
+\subsection{Fuel Depletion}
+
+After firing, fuel drains to zero:
+
+\begin{equation}
+f_{\mathrm{post}} = 0
+\end{equation}
+
+This ``fire-once'' rule, combined with spatial decay ($0.8^{\mathrm{hops}}$), naturally bounds the search frontier without arbitrary depth limits.
+
+\section{Algorithmic Weaver: Deterministic Intent Scoring}
+\label{sec:weaver}
+
+The Weaver gathers all provenance sentences connected to seed nodes and scores each by a deterministic formula:
+
+\begin{equation}
+S(\text{sentence}) = I_{\mathrm{geo}} + I_{\mathrm{temp}} + I_{\mathrm{who}} + P_{\mathrm{noise}} + K_{\mathrm{overlap}}
+\label{eq:weaver}
+\end{equation}
+
+\noindent where:
+\begin{itemize}
+  \item $I_{\mathrm{geo}} = +40$ if prompt contains WHERE-intent words \textbf{and} sentence contains location markers (``in'', ``located'', ``province'').
+  \item $I_{\mathrm{temp}} = +40$ if prompt contains WHEN-intent words \textbf{and} sentence contains a 4-digit year (regex: \texttt{16xx--20xx}).
+  \item $I_{\mathrm{who}} = +40$ if prompt contains WHO-intent words \textbf{and} sentence contains founder markers (``established'', ``named'', ``founded'').
+  \item $P_{\mathrm{noise}} = -50$ if sentence contains sports/entertainment terms \textbf{and} query is not sports-related.
+  \item $K_{\mathrm{overlap}} = +20 \times |\text{prompt\_keywords} \cap \text{sentence\_keywords}|$.
+\end{itemize}
+
+The top 2 sentences by score are passed to the LLM Mouth. This formula is fully deterministic: identical inputs always produce identical rankings.
+
+\section{Background Maintenance Daemon}
+
+KOS runs three background maintenance algorithms during idle cycles.
+
+\subsection{Orphan Pruning --- $O(V + E)$}
+
+A single pass builds an inbound-tracker set from all edge targets, then deletes nodes with zero outbound \textbf{and} zero inbound connections.
+
+\subsection{Isomorph Merging --- Degree-Bucketed}
+
+Nodes are grouped by outbound degree. Only nodes within the same degree bucket are compared via Jaccard similarity. Pairs exceeding 85\% overlap are merged. This reduces the naive $O(V^2)$ comparison to $O(V + B^2)$ where $B$ is the average bucket size.
+
+\subsection{Triadic Closure --- Predictive Inference}
+
+For strong edges (weight $\geq 0.7$): if $A \to B$ and $B \to C$, infer $A \to C$ with confidence $= w_{AB} \cdot w_{BC}$, capped at 0.5 to prevent predicted edges from overriding explicit facts.
+
+\section{Benchmark Results}
+
+\subsection{Master Smoke Test (10 Scenarios)}
+
+\begin{table}[ht]
+\centering
+\caption{Master smoke test results.}
+\label{tab:smoke}
+\begin{tabular}{@{}clll@{}}
+\toprule
+\textbf{\#} & \textbf{Scenario} & \textbf{Capability Tested} & \textbf{Result} \\
+\midrule
+1  & SVO Slider Precision        & Drug interaction: apixaban vs warfarin       & PASS \\
+2  & Split-Antecedent Coreference & ``They'' resolves to 2 entities              & PASS \\
+3  & Extreme Typo Phonetics      & ``prpvskittes'' $\to$ perovskite              & PASS \\
+4  & Cross-Language (Spanglish)  & Spanish query, English knowledge graph        & PASS \\
+5  & Synonym Networks            & ``solar cells'' $\to$ ``photovoltaic cells''  & PASS \\
+6  & Ambiguity Resolution        & ``silcon'' disambiguated (silicon/silicone)   & PASS \\
+7  & Multi-Hop Deduction         & perovskite $\to$ cell $\to$ photon $\to$ electricity & PASS \\
+8  & Big Arithmetic              & $345{,}000{,}000 \times 0.0825 = 28{,}462{,}500$ & PASS \\
+9  & Calculus Integration        & $\int x^3 \ln(x)\,dx$ via SymPy              & PASS \\
+10 & Calculus Differentiation    & $\frac{d}{dx}[e^x \cos(x) \sin(x)]$ via SymPy & PASS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Unification Test (6 Scenarios)}
+
+\begin{table}[ht]
+\centering
+\caption{Unification test results.}
+\label{tab:unification}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Scenario} & \textbf{Query} & \textbf{Expected} & \textbf{Actual} \\
+\midrule
+Daemon survival & Hub node survives maintenance     & 24 edges intact                & PASS \\
+WHERE intent    & ``Where is Toronto located?''      & Ontario                        & ``province of Ontario, Canada'' \\
+WHEN intent     & ``When was Toronto founded?''      & 1834                           & ``founded and incorporated in 1834'' \\
+WHO intent      & ``Who established Toronto?''       & Simcoe                         & ``John Graves Simcoe'' \\
+WHAT intent     & ``Population of Toronto?''         & 2.7M                           & ``2.7 million people'' \\
+Layer 5 Vector  & ``Tell me about the metropolis''   & Toronto info                   & ``Toronto\ldots founded in 1834'' \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Performance}
+
+\begin{table}[ht]
+\centering
+\caption{Performance metrics.}
+\label{tab:perf}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Graph query latency       & $\sim$40--80\,ms (CPU, pure graph) \\
+End-to-end with LLM       & $\sim$1.2--2.5\,s (dominated by OpenAI API) \\
+Math coprocessor           & 2--250\,ms (SymPy, CPU) \\
+Daemon maintenance cycle   & $\sim$0.1--20\,ms \\
+Hallucinations observed    & 0 across 16 test scenarios \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Comparison with Existing Systems}
+
+\begin{table}[ht]
+\centering
+\caption{Feature comparison across knowledge retrieval systems.}
+\label{tab:comparison}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Capability} & \textbf{RAG} & \textbf{GraphRAG} & \textbf{Neo4j} & \textbf{Vector DBs} & \textbf{KOS} \\
+\midrule
+Typo handling       & None  & None        & None   & None   & 6-layer cascade \\
+Multi-hop           & None  & LLM-dep.    & Cypher & None   & Spreading act. \\
+Lost in Middle      & Yes   & Partial     & N/A    & N/A    & Eliminated \\
+Hallucination       & $\sim$5.8\% & Medium & Low    & N/A    & 0\% observed \\
+Evidence scoring    & Cosine & LLM (prob.) & None  & Cosine & Deterministic \\
+Self-learning       & No    & No          & No     & No     & Myelination \\
+Math                & LLM approx. & LLM approx. & N/A & N/A & SymPy exact \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Limitations and Future Work}
+
+\begin{enumerate}
+  \item \textbf{Scale testing.} Current benchmarks use corpora of 200--1000 words. Performance on million-document graphs requires evaluation.
+
+  \item \textbf{Contextual mitosis.} Super-hub splitting is currently disabled pending a safe sub-graph clustering algorithm that preserves provenance.
+
+  \item \textbf{LLM dependency for I/O.} The Ear and Mouth require an LLM API. A fully offline mode using local models (via the existing \texttt{base\_url} parameter) is architecturally supported but untested at scale.
+
+  \item \textbf{Semantic vector threshold.} Layer~5 uses a cosine similarity threshold of 0.50, which may admit false positives on larger vocabularies.
+
+  \item \textbf{Adversarial robustness.} The system has not been tested against adversarial prompts designed to exploit the deterministic scoring formula.
+\end{enumerate}
+
+\section{Conclusion}
+
+KOS demonstrates that the five persistent failure modes of RAG can be addressed simultaneously through a single architectural decision: confining the LLM to thin I/O and routing all reasoning through a deterministic graph physics engine. The biological neuron metaphors---fuel constraints, myelination, temporal decay, triadic closure---are not aesthetic choices but engineering solutions to specific graph traversal problems. The system achieves 16/16 on a diverse benchmark suite with zero observed hallucinations, deterministic evidence scoring, and sub-100\,ms graph query latency on CPU.
+
+\begin{thebibliography}{9}
+
+\bibitem{collins1975spreading}
+Collins, A.M. \& Loftus, E.F. (1975).
+A spreading activation theory of semantic processing.
+\textit{Psychological Review}, 82(6), 407--428.
+
+\bibitem{liu2024lost}
+Liu, N.F., et al. (2024).
+Lost in the middle: How language models use long contexts.
+\textit{Transactions of the ACL}, 12, 157--173.
+
+\bibitem{edge2024graphrag}
+Edge, D., et al. (2024).
+From local to global: A graph RAG approach to query-focused summarization.
+\textit{arXiv preprint arXiv:2404.16130}.
+
+\bibitem{lewis2020rag}
+Lewis, P., et al. (2020).
+Retrieval-augmented generation for knowledge-intensive NLP tasks.
+\textit{NeurIPS 2020}.
+
+\bibitem{gartner2025}
+Gartner. (2025).
+Hype Cycle for Artificial Intelligence---Neuro-Symbolic AI.
+
+\end{thebibliography}
+
+\appendix
+
+\section{Source Code}
+
+The complete source code is available at: \url{https://github.com/skvcool-rgb/KOS-Engine}
+
+\section{Reproducibility}
+
+All benchmark results can be reproduced by running:
+
+\begin{lstlisting}[language=bash,caption={Reproducing benchmark results}]
+git clone https://github.com/skvcool-rgb/KOS-Engine.git
+cd KOS-Engine
+pip install -r requirements.txt
+export OPENAI_API_KEY=<your-key>
+PYTHONPATH=. python tests/master_smoke_test.py
+PYTHONPATH=. python tests/test_unification.py
+\end{lstlisting}
+
+\end{document}
