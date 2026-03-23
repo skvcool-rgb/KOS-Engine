@@ -11,6 +11,12 @@ Pass 1: Extraction & Math Sequence Mapping — builds an ordered
 """
 import re
 import nltk
+# Ensure NLTK data is available (required on Streamlit Cloud)
+for _pkg in ['punkt_tab', 'averaged_perceptron_tagger_eng', 'wordnet']:
+    try:
+        nltk.data.find(f'tokenizers/{_pkg}' if 'punkt' in _pkg else f'taggers/{_pkg}' if 'tagger' in _pkg else f'corpora/{_pkg}')
+    except LookupError:
+        nltk.download(_pkg, quiet=True)
 from nltk.stem import WordNetLemmatizer
 
 

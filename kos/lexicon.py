@@ -7,7 +7,12 @@ Synonym net maps all lemma names to the same canonical UUID.
 """
 import hashlib
 import jellyfish
-from nltk.corpus import wordnet as wn
+import nltk
+try:
+    from nltk.corpus import wordnet as wn
+except LookupError:
+    nltk.download('wordnet', quiet=True)
+    from nltk.corpus import wordnet as wn
 
 
 class KASMLexicon:
