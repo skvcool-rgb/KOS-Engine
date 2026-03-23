@@ -1,7 +1,7 @@
 import streamlit as st
-import threading
-import time
+import sys
 import os
+import traceback
 
 st.set_page_config(page_title="KOS V4.0", page_icon="brain",
                    layout="centered", initial_sidebar_state="expanded")
@@ -10,27 +10,35 @@ st.set_page_config(page_title="KOS V4.0", page_icon="brain",
 if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
     os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 
-# Show loading message while imports happen
-loading = st.empty()
-loading.info("Booting KOS Engine... downloading language models...")
-
-# Auto-download NLTK data (required on Streamlit Cloud)
-import nltk
-for pkg in ['punkt_tab', 'averaged_perceptron_tagger_eng', 'wordnet']:
-    try:
-        nltk.data.find(f'tokenizers/{pkg}' if 'punkt' in pkg else f'taggers/{pkg}' if 'tagger' in pkg else f'corpora/{pkg}')
-    except LookupError:
-        nltk.download(pkg, quiet=True)
+# Show boot progress
+boot_status = st.empty()
+boot_status.info("Step 1/4: Downloading NLTK data...")
 
 try:
+    import nltk
+    nltk.download('punkt_tab', quiet=True)
+    nltk.download('averaged_perceptron_tagger_eng', quiet=True)
+    nltk.download('wordnet', quiet=True)
+    boot_status.info("Step 2/4: Importing KOS core...")
+
     from kos_core_v4 import (KOSKernel, KOSDaemonV4, ASTDriver, VisionDriver,
                               AutonomousForager, KASMCompiler)
+    boot_status.info("Step 3/4: Importing lexicon & router...")
+
     from kos.lexicon import KASMLexicon
     from kos.router import KOSShell
     from kos.drivers.text import TextDriver
-    loading.empty()
+    boot_status.info("Step 4/4: Boot complete!")
+    boot_status.empty()
+    BOOT_OK = True
 except Exception as e:
-    loading.error(f"Import error: {e}")
+    boot_status.error(f"Boot failed: {e}\n\n```\n{traceback.format_exc()}\n```")
+    BOOT_OK = False
+
+import threading
+import time
+
+if not BOOT_OK:
     st.stop()
 
 st.markdown("""
