@@ -1,10 +1,16 @@
-# KOS Engine -- Outreach Posts
+# KOS Engine -- Ready-to-Post Outreach
+
+Live Demo: https://web-production-bfba9.up.railway.app
+GitHub: https://github.com/skvcool-rgb/KOS-Engine
 
 ---
 
 ## 1. r/MachineLearning Post
 
-**Title:** KOS Engine: Reviving Spreading Activation as a Deterministic Alternative to RAG -- Zero Hallucination by Confining LLMs to Thin I/O
+**Submit at:** https://www.reddit.com/r/MachineLearning/submit
+**Flair:** [Project]
+
+**Title:** [P] KOS Engine: Reviving Spreading Activation as a Deterministic Alternative to RAG -- Zero Hallucination by Confining LLMs to Thin I/O
 
 **Body:**
 
@@ -21,6 +27,7 @@ Key technical contributions:
 
 The system passes 16/16 benchmark tests spanning factual recall, multi-hop reasoning, mathematical queries, and adversarial typo inputs. Because the LLM receives only the final pre-scored context window, hallucination is structurally impossible rather than statistically suppressed.
 
+Live Demo: https://web-production-bfba9.up.railway.app
 Repo: https://github.com/skvcool-rgb/KOS-Engine
 
 We welcome feedback on the activation dynamics and the fuel decay model in particular.
@@ -29,17 +36,25 @@ We welcome feedback on the activation dynamics and the fuel decay model in parti
 
 ## 2. Hacker News Post
 
+**Submit at:** https://news.ycombinator.com/submit
+
 **Title:** KOS Engine: A Neurosymbolic Knowledge Engine That Replaces RAG with Fuel-Constrained Spreading Activation
 
-**First comment:**
+**URL:** https://github.com/skvcool-rgb/KOS-Engine
+
+**First comment (post immediately after submitting):**
 
 Author here. KOS Engine takes a different approach to grounding LLMs: instead of retrieval-augmented generation, all reasoning happens in a deterministic spreading activation graph inspired by Collins & Loftus (1975). The LLM is reduced to a thin I/O layer that reads one or two pre-scored sentences -- it never reasons, so it cannot hallucinate.
 
 The graph uses a fuel-budget model borrowed from biological neuron dynamics: each activation pulse decays as it traverses weighted edges, naturally bounding the search without arbitrary top-k limits. A 6-layer typo recovery cascade handles noisy input, and a SymPy coprocessor handles math symbolically. 16/16 benchmark tests passing. Open source, runs on CPU.
 
+Live demo: https://web-production-bfba9.up.railway.app
+
 ---
 
 ## 3. r/LocalLLaMA Post
+
+**Submit at:** https://www.reddit.com/r/LocalLLaMA/submit
 
 **Title:** KOS Engine -- open-source neurosymbolic engine where the LLM is just a thin I/O shell (swap in any local model, runs on CPU)
 
@@ -53,10 +68,11 @@ What you get:
 
 - Runs entirely on CPU (no GPU needed for the reasoning layer)
 - 6-layer typo recovery so user input can be messy
-- SymPy math coprocessor for exact arithmetic
+- SymPy math coprocessor for exact arithmetic and calculus
 - Deterministic and fully traceable -- every answer has an auditable activation path
 - 16/16 benchmarks passing
 
 The LLM integration is a single swappable module. If your local model can handle a system prompt and a couple of sentences of context, it works.
 
+Live Demo: https://web-production-bfba9.up.railway.app
 Repo: https://github.com/skvcool-rgb/KOS-Engine
