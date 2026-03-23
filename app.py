@@ -5,9 +5,12 @@ import traceback
 st.set_page_config(page_title="KOS V4.0", page_icon="brain",
                    layout="centered", initial_sidebar_state="expanded")
 
-# Load secrets
-if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
-    os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+# Load secrets (Railway uses env vars, Streamlit Cloud uses st.secrets)
+try:
+    if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
+        os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+except Exception:
+    pass  # Railway already has OPENAI_API_KEY as env var
 
 # Cached boot — only runs once per session
 @st.cache_resource(show_spinner="Booting KOS Engine...")
