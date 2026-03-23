@@ -21,21 +21,28 @@ class KOSShell:
         from .drivers.math import MathDriver
         self.math = MathDriver()
 
-        # Layer 5: Semantic Vector Fallback (node labels only, NOT documents)
-        from sentence_transformers import SentenceTransformer, util
-        self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        # Layer 5: Semantic Vector Fallback (lazy-loaded to save memory)
+        self.embedder = None
         self.node_embeddings = None
         self.embedded_uuids = []
-        self._st_util = util
+        self._st_util = None
 
     def _ensure_embeddings(self):
         """Lazily build/rebuild cached embeddings for all graph node labels."""
+        if self.embedder is None:
+            try:
+                from sentence_transformers import SentenceTransformer, util
+                self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
+                self._st_util = util
+            except ImportError:
+                return False
         current_uuids = list(self.kernel.nodes.keys())
         if self.node_embeddings is None or len(current_uuids) != len(self.embedded_uuids):
             self.embedded_uuids = current_uuids
             plain_words = [self.lexicon.get_word(uid) for uid in current_uuids]
             self.node_embeddings = self.embedder.encode(
                 plain_words, convert_to_tensor=True)
+        return True
 
     def _resolve_word(self, w, known_words):
         """6-layer word→UUID resolution cascade."""
@@ -71,8 +78,7 @@ class KOSShell:
 
         # Layer 5: Semantic vector fallback (all-MiniLM-L6-v2)
         # Embeds node LABELS only (not documents) — zero hallucination risk
-        if self.kernel.nodes:
-            self._ensure_embeddings()
+        if self.kernel.nodes and self._ensure_embeddings():
             w_emb = self.embedder.encode(w, convert_to_tensor=True)
             hits = self._st_util.cos_sim(w_emb, self.node_embeddings)[0]
             best_score = hits.max().item()
