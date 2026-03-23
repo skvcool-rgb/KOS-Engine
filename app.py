@@ -3,9 +3,16 @@ import threading
 import time
 import os
 
+st.set_page_config(page_title="KOS V4.0", page_icon="brain",
+                   layout="centered", initial_sidebar_state="expanded")
+
 # Load secrets for Streamlit Cloud deployment
 if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
     os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+
+# Show loading message while imports happen
+loading = st.empty()
+loading.info("Booting KOS Engine... downloading language models...")
 
 # Auto-download NLTK data (required on Streamlit Cloud)
 import nltk
@@ -15,14 +22,16 @@ for pkg in ['punkt_tab', 'averaged_perceptron_tagger_eng', 'wordnet']:
     except LookupError:
         nltk.download(pkg, quiet=True)
 
-from kos_core_v4 import (KOSKernel, KOSDaemonV4, ASTDriver, VisionDriver,
-                          AutonomousForager, KASMCompiler)
-from kos.lexicon import KASMLexicon
-from kos.router import KOSShell
-from kos.drivers.text import TextDriver
-
-st.set_page_config(page_title="KOS V4.0", page_icon="\U0001f9e0",
-                   layout="centered", initial_sidebar_state="expanded")
+try:
+    from kos_core_v4 import (KOSKernel, KOSDaemonV4, ASTDriver, VisionDriver,
+                              AutonomousForager, KASMCompiler)
+    from kos.lexicon import KASMLexicon
+    from kos.router import KOSShell
+    from kos.drivers.text import TextDriver
+    loading.empty()
+except Exception as e:
+    loading.error(f"Import error: {e}")
+    st.stop()
 
 st.markdown("""
 <style>
