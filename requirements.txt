@@ -1,0 +1,11 @@
+openai>=1.0.0
+streamlit>=1.30.0
+nltk>=3.8.0
+jellyfish>=1.0.0
+sympy>=1.12
+sentence-transformers>=2.2.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+networkx>=3.0
+pyvis>=0.3.0
+z3-solver>=4.12.0

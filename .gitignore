@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.kos
+*.npy
+*.pkl
+.env
+.env.local
+*.log
+.streamlit/secrets.toml
+node_modules/
+.cache/
+*.docx
