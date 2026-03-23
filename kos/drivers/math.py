@@ -1,5 +1,5 @@
 """
-KOS V2.0 — Math Coprocessor (Symbolic CAS Driver).
+KOS V2.1 — Math Coprocessor (Symbolic CAS Driver).
 
 Translates text strings into strict Abstract Syntax Trees (ASTs)
 for mathematical evaluation via SymPy. Zero hallucination —
@@ -14,30 +14,63 @@ import sympy as sp
 class MathDriver:
     def __init__(self):
         self.math_keywords = {
-            "integrate", "derive", "derivative",
-            "solve", "calculate", "limit",
+            "integrate", "integral", "derive", "derivative", "differentiate",
+            "solve", "calculate", "compute", "evaluate", "limit",
         }
+        # Regex: matches expressions like "345000000 * 0.0825" or "2+3*4"
+        self._bare_math_re = re.compile(
+            r'^\s*[\d\.\(\)]+\s*[\+\-\*/\*\*\^%]+\s*[\d\.\(\)]+')
+        # Regex: matches "what is <math>" or "how much is <math>"
+        self._question_math_re = re.compile(
+            r'(?:what\s+is|how\s+much\s+is|compute|evaluate|calculate)\s+'
+            r'([\d\.\s\+\-\*/\^\(\)]+[\d\.\)])\s*\??',
+            re.IGNORECASE)
 
     def is_math_query(self, prompt: str) -> bool:
-        """Detects if the user is asking a calculus/algebra question."""
-        lower_prompt = prompt.lower()
-        # Trigger if it contains math keywords and math symbols
-        if any(kw in lower_prompt for kw in self.math_keywords):
+        """Detects if the user is asking a calculus/algebra/arithmetic question."""
+        lower = prompt.lower()
+        # 1. Explicit math keywords
+        if any(kw in lower for kw in self.math_keywords):
             return True
-        if re.search(r'[\+\-\*/\^=]', prompt):
+        # 2. Bare arithmetic expression (e.g. "345000000 * 0.0825")
+        if self._bare_math_re.search(prompt):
+            return True
+        # 3. "What is 2+2?" style questions with numbers and operators
+        if self._question_math_re.search(prompt):
+            return True
+        # 4. Contains math operators between numbers
+        if re.search(r'\d+\s*[\+\-\*/\^]\s*\d+', prompt):
             return True
         return False
 
+    def _clean_expr(self, text: str) -> str:
+        """Strip natural language wrappers and normalize math syntax."""
+        s = text.strip()
+        # Strip question marks
+        s = s.rstrip('?')
+        # Strip common question prefixes
+        s = re.sub(r'^(?:what\s+is|how\s+much\s+is|compute|evaluate|calculate|solve)\s+',
+                   '', s, flags=re.IGNORECASE).strip()
+        # Convert ^ to ** for Python/SymPy
+        s = s.replace('^', '**')
+        # Convert ln() to log() for SymPy (SymPy log = natural log)
+        s = re.sub(r'\bln\b', 'log', s)
+        return s
+
     def solve(self, prompt: str) -> dict:
         """Executes symbolic mathematics with 0% hallucination."""
-        # Clean the prompt (convert ^ to ** for Python syntax)
-        clean_prompt = prompt.lower().replace("^", "**")
+        lower = prompt.lower()
 
         try:
-            # Basic NLP Triage for Calculus
-            if "integrate" in clean_prompt:
-                # E.g., "integrate x**2 * cos(x)"
-                expr_str = clean_prompt.split("integrate")[1].strip()
+            # --- INTEGRATION ---
+            if 'integrat' in lower or 'integral' in lower:
+                # Extract expression after integration keyword
+                expr_str = re.split(
+                    r'integrate|integral\s+of|integral', lower, maxsplit=1)[-1].strip()
+                expr_str = self._clean_expr(expr_str)
+                # Remove trailing ", x" or "dx" variable spec
+                expr_str = re.sub(r',\s*[a-z]\s*$', '', expr_str)
+                expr_str = re.sub(r'\s+d[a-z]\s*$', '', expr_str)
                 expr = sp.sympify(expr_str)
                 var = (list(expr.free_symbols)[0]
                        if expr.free_symbols else sp.Symbol('x'))
@@ -49,10 +82,11 @@ class MathDriver:
                     "equation": str(expr),
                 }
 
-            elif "derive" in clean_prompt or "derivative" in clean_prompt:
-                # E.g., "derivative of sin(x)*exp(x)"
+            # --- DIFFERENTIATION ---
+            elif 'deriv' in lower or 'differentiat' in lower:
                 expr_str = re.split(
-                    r'derive|derivative of', clean_prompt)[-1].strip()
+                    r'derivative\s+of|derive|differentiate', lower, maxsplit=1)[-1].strip()
+                expr_str = self._clean_expr(expr_str)
                 expr = sp.sympify(expr_str)
                 var = (list(expr.free_symbols)[0]
                        if expr.free_symbols else sp.Symbol('x'))
@@ -64,11 +98,13 @@ class MathDriver:
                     "equation": str(expr),
                 }
 
+            # --- ARITHMETIC / ALGEBRA ---
             else:
-                # Standard Algebra / Arithmetic
-                # E.g., "calculate 24591 * 13492"
-                expr_str = clean_prompt.replace(
-                    "calculate", "").replace("solve", "").strip()
+                expr_str = self._clean_expr(lower)
+                # Remove any remaining words (just keep math tokens)
+                expr_str = re.sub(r'[a-df-hj-mo-qs-wyz]+', '', expr_str).strip()
+                if not expr_str:
+                    return {"status": "error", "message": "No expression found"}
                 result = sp.sympify(expr_str).evalf()
                 return {
                     "status": "success",
