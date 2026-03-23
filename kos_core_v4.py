@@ -19,7 +19,11 @@ import difflib
 import networkx as nx
 from bs4 import BeautifulSoup
 import requests
-from z3 import *  # Microsoft Theorem Prover
+try:
+    from z3 import *  # Microsoft Theorem Prover
+    Z3_AVAILABLE = True
+except ImportError:
+    Z3_AVAILABLE = False
 
 
 # ==========================================
