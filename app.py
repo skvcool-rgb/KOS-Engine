@@ -2,6 +2,11 @@ import streamlit as st
 import threading
 import time
 import os
+
+# Load secrets for Streamlit Cloud deployment
+if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
+    os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+
 from kos_core_v4 import (KOSKernel, KOSDaemonV4, ASTDriver, VisionDriver,
                           AutonomousForager, KASMCompiler)
 from kos.lexicon import KASMLexicon
