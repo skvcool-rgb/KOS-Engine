@@ -82,7 +82,7 @@ sentence_score =
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/kos-engine.git
+git clone https://github.com/skvcool-rgb/KOS-Engine.git
 cd kos-engine
 
 # Install
@@ -189,6 +189,6 @@ If you use KOS in research, please cite:
   title={KOS: A Fuel-Constrained Spreading Activation Engine for Zero-Hallucination Knowledge Retrieval},
   author={Suraj},
   year={2026},
-  url={https://github.com/YOUR_USERNAME/kos-engine}
+  url={https://github.com/skvcool-rgb/kos-engine}
 }
 ```
