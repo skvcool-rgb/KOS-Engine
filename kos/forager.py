@@ -402,6 +402,81 @@ class WebForager:
                 print(f"[FORAGER-PUBMED] Error: {e}")
             return 0
 
+    # ── Google Search Backend ─────────────────────────────────
+
+    def forage_google(self, query: str, max_results: int = 3,
+                       verbose: bool = True) -> int:
+        """
+        Search Google and ingest top results.
+
+        Uses Google's public search to find relevant pages,
+        then fetches and ingests each one.
+
+        No API key needed — uses the public search URL.
+        Respects rate limits (1 search per call).
+        """
+        if verbose:
+            print(f"[FORAGER-GOOGLE] Searching: '{query}'")
+
+        try:
+            # Use Google search via requests
+            search_url = "https://www.google.com/search"
+            params = {"q": query, "num": max_results}
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36"
+            }
+
+            resp = requests.get(search_url, params=params,
+                                headers=headers, timeout=15)
+            resp.raise_for_status()
+
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            # Extract URLs from search results
+            urls = []
+            for a in soup.find_all('a', href=True):
+                href = a['href']
+                # Google wraps URLs in /url?q=...
+                if '/url?q=' in href:
+                    real_url = href.split('/url?q=')[1].split('&')[0]
+                    if real_url.startswith('http') and 'google.com' not in real_url:
+                        urls.append(real_url)
+                elif href.startswith('http') and 'google.com' not in href:
+                    urls.append(href)
+
+            urls = list(dict.fromkeys(urls))[:max_results]  # Dedupe, limit
+
+            if not urls:
+                if verbose:
+                    print("[FORAGER-GOOGLE] No URLs found in search results.")
+                return 0
+
+            if verbose:
+                print(f"[FORAGER-GOOGLE] Found {len(urls)} URLs. Ingesting...")
+
+            total_new = 0
+            for url in urls:
+                try:
+                    new = self.forage(url, verbose=verbose)
+                    total_new += new
+                    if total_new > 200:  # Cap per search
+                        break
+                except Exception as e:
+                    if verbose:
+                        print(f"[FORAGER-GOOGLE] Failed on {url[:50]}: {e}")
+
+            if verbose:
+                print(f"[FORAGER-GOOGLE] Total: +{total_new} concepts from {len(urls)} pages")
+
+            return total_new
+
+        except Exception as e:
+            if verbose:
+                print(f"[FORAGER-GOOGLE] Search failed: {e}")
+            return 0
+
     # ── Smart Foraging with Domain Routing ─────────────────────
 
     def forage_smart(self, query: str, domain: str = None,
@@ -430,11 +505,13 @@ class WebForager:
             chain = [
                 ("PubMed", lambda: self.forage_pubmed(query, verbose=verbose)),
                 ("Wikipedia", lambda: self.forage_query(query, verbose=verbose)),
+                ("Google", lambda: self.forage_google(query, verbose=verbose)),
             ]
         elif domain == "science":
             chain = [
                 ("arXiv", lambda: self.forage_arxiv(query, verbose=verbose)),
                 ("Wikipedia", lambda: self.forage_query(query, verbose=verbose)),
+                ("Google", lambda: self.forage_google(query, verbose=verbose)),
             ]
         else:
             # Default: Wikipedia first, then try specialised sources
@@ -463,6 +540,10 @@ class WebForager:
             elif query_words & science_words:
                 chain.append(
                     ("arXiv", lambda: self.forage_arxiv(query, verbose=verbose)))
+
+            # Google is ALWAYS the last resort for any topic
+            chain.append(
+                ("Google", lambda: self.forage_google(query, verbose=verbose)))
 
         total = 0
         for source_name, fetcher in chain:
