@@ -566,9 +566,11 @@ def agent_start():
         return {"error": "Agent init failed"}
     if agent._running:
         return {"status": "already_running", **agent.get_status()}
-    agent.max_cycles = 20
-    agent.cycle_interval_sec = 10
-    agent.run_background(max_cycles=20, cycle_interval=10, verbose=True)
+    agent.max_cycles = 1000
+    agent.cycle_interval_sec = 15
+    agent._running = False  # Reset if previously stopped
+    agent._cycle = 0
+    agent.run_background(max_cycles=1000, cycle_interval=15, verbose=True)
     return {"status": "started", **agent.get_status()}
 
 @app.post("/api/agent/stop")

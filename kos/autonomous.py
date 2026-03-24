@@ -98,7 +98,13 @@ class AutonomousAgent:
                 break
 
             self._cycle += 1
-            result = self._run_one_cycle(verbose)
+            try:
+                result = self._run_one_cycle(verbose)
+            except Exception as e:
+                self._errors.append("Cycle %d crash: %s" % (self._cycle, str(e)[:60]))
+                self._log("ERROR in cycle %d: %s" % (self._cycle, str(e)[:60]))
+                if verbose:
+                    print("[AGENT] Cycle %d error: %s (continuing)" % (self._cycle, str(e)[:60]))
 
             if verbose and self._cycle % 5 == 0:
                 self._print_status()
@@ -114,9 +120,16 @@ class AutonomousAgent:
         return self.get_status()
 
     def run_background(self, **kwargs):
-        """Run in a daemon thread."""
-        self._thread = threading.Thread(
-            target=self.run, kwargs=kwargs, daemon=True)
+        """Run in a daemon thread with crash recovery."""
+        def _safe_run():
+            try:
+                self.run(**kwargs)
+            except Exception as e:
+                self._errors.append("Thread crash: %s" % str(e)[:60])
+                self._log("THREAD CRASH: %s" % str(e)[:60])
+                self._running = False
+
+        self._thread = threading.Thread(target=_safe_run, daemon=True)
         self._thread.start()
         return "Agent started in background"
 
