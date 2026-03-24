@@ -516,6 +516,27 @@ class TextDriver:
                     "negated": is_negated,
                 })
 
+                # ── VERB NODE CREATION ──────────────────────────
+                # Create a node for meaningful verbs so queries like
+                # "What produces ATP?" can resolve "produces" as a seed.
+                # Skip trivial verbs (is, are, was, has, have, do, etc.)
+                _TRIVIAL_VERBS = {
+                    "be", "is", "are", "was", "were", "am", "been",
+                    "have", "has", "had", "do", "does", "did",
+                    "can", "could", "will", "would", "shall", "should",
+                    "may", "might", "must", "get", "got", "let",
+                    "make", "made", "use", "used",
+                }
+                if lem not in _TRIVIAL_VERBS and len(lem) > 2:
+                    verb_uid = self.lexicon.get_or_create_id(lem)
+                    self.kernel.add_node(verb_uid)
+                    # Wire verb to all nouns in this clause (weak edges)
+                    for noun_uid in uids_only:
+                        self.kernel.add_connection(
+                            verb_uid, noun_uid, 0.5, original_sentence)
+                        self.kernel.add_connection(
+                            noun_uid, verb_uid, 0.3, original_sentence)
+
         # Wire Ambient Noise (Hebbian)
         for n1 in uids_only:
             self.kernel.add_node(n1)
