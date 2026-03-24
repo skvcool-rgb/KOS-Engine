@@ -76,7 +76,8 @@ class KOSResolver:
         self.recent_proper = []
         self.sentence_topics = []
         self._current_sentence_nouns = []
-        self._sentence_subject = None  # First noun in current sentence
+        self._sentence_subject = None     # First noun in CURRENT sentence/clause
+        self._last_sentence_subject = None # First noun from PREVIOUS sentence (persists!)
         self.PB = {
             "they", "them", "their", "theirs", "these",
             "he", "him", "his", "she", "her", "hers", "who",
@@ -90,6 +91,7 @@ class KOSResolver:
         self.sentence_topics.clear()
         self._current_sentence_nouns.clear()
         self._sentence_subject = None
+        self._last_sentence_subject = None
 
     def mark_topic(self, w):
         if w not in self._current_sentence_nouns:
@@ -102,6 +104,12 @@ class KOSResolver:
         for noun in self._current_sentence_nouns:
             self.sentence_topics.append(noun)
         self._current_sentence_nouns.clear()
+        # Carry subject forward: if this sentence had a subject,
+        # save it as the "last sentence subject" for the next sentence.
+        # This is what makes "Toronto is a city. It has..." work —
+        # "It" in the next sentence resolves to Toronto.
+        if self._sentence_subject:
+            self._last_sentence_subject = self._sentence_subject
         self._sentence_subject = None
 
     def update_memory(self, w, pos):
@@ -132,12 +140,20 @@ class KOSResolver:
             if self.recent_singular:
                 return [self.recent_singular[-1]]
             return [w]
-        # Fix #7: prefer sentence subject for "it" resolution
+        # Fix #7: 4-level cascade for "it" resolution
+        # 1. Current sentence subject (within same sentence/clause)
+        # 2. Last sentence subject (carried forward across sentences)
+        # 3. Most recent singular noun (NN tag)
+        # 4. Most recent proper noun (NNP tag — catches "Toronto")
         if w in {"it", "its", "itself", "this", "that", "which"}:
             if self._sentence_subject:
                 return [self._sentence_subject]
+            if self._last_sentence_subject:
+                return [self._last_sentence_subject]
             if self.recent_singular:
                 return [self.recent_singular[-1]]
+            if self.recent_proper:
+                return [self.recent_proper[-1]]
             return [w]
         return [w]
 
