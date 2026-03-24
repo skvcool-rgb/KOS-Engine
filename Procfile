@@ -1,1 +1,1 @@
-web: streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+web: python -c "import nltk; nltk.download('punkt_tab', quiet=True); nltk.download('averaged_perceptron_tagger_eng', quiet=True); nltk.download('wordnet', quiet=True)" && uvicorn api:app --host 0.0.0.0 --port $PORT
