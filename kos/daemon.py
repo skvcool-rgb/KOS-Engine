@@ -11,8 +11,19 @@ from collections import defaultdict
 
 
 class KOSDaemon:
-    def __init__(self, kernel):
+    def __init__(self, kernel, lexicon=None):
         self.kernel = kernel
+        self.lexicon = lexicon
+        self._layer3 = None
+
+    def _ensure_layer3(self):
+        """Lazy-init Layer 3 abstraction engine."""
+        if self._layer3 is None and hasattr(self.kernel, 'vsa') and self.kernel.vsa is not None:
+            try:
+                from kasm.abstraction import Layer3Daemon
+                self._layer3 = Layer3Daemon(self.kernel, self.lexicon)
+            except ImportError:
+                pass
 
     def run_maintenance_cycle(self) -> dict:
         """Executes the full suite of background autonomic repairs."""
@@ -20,10 +31,19 @@ class KOSDaemon:
 
         start_time = time.perf_counter()
 
-        # Run the 3 core autonomic protocols
+        # Run the 4 core autonomic protocols
         orphans_removed = self._prune_orphans()
         nodes_merged = self._merge_isomorphs()
         predictions_made = self._dream_triadic_closure()
+
+        # Layer 3: Analogical Abstraction
+        self._ensure_layer3()
+        analogies_found = 0
+        top_analogies = []
+        if self._layer3:
+            l3_report = self._layer3.run()
+            analogies_found = l3_report["analogies_found"]
+            top_analogies = l3_report.get("top", [])
 
         elapsed = (time.perf_counter() - start_time) * 1000
 
@@ -31,13 +51,24 @@ class KOSDaemon:
             "time_ms": elapsed,
             "orphans_pruned": orphans_removed,
             "isomorphs_merged": nodes_merged,
-            "predicted_edges": predictions_made
+            "predicted_edges": predictions_made,
+            "analogies_discovered": analogies_found,
+            "top_analogies": top_analogies,
         }
 
         print(f"[DAEMON] Cycle complete in {elapsed:.2f}ms.")
         print(f"   [-] Pruned {orphans_removed} memory leaks (Orphans)")
         print(f"   [v] Fused {nodes_merged} duplicate concepts (Graph Isomorphism)")
         print(f"   [+] Dreamt {predictions_made} new logical connections (Triadic Closure)")
+        print(f"   [~] Discovered {analogies_found} structural analogies (Layer 3)")
+
+        if top_analogies:
+            lex = self.lexicon
+            print(f"   [~] Top analogies:")
+            for a, b, score in top_analogies[:5]:
+                name_a = lex.get_word(a) if lex else a
+                name_b = lex.get_word(b) if lex else b
+                print(f"       {name_a} <=> {name_b}  (similarity: {score:+.4f})")
 
         return report
 

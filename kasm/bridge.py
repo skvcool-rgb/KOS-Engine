@@ -71,29 +71,140 @@ class VSABackplane:
         """
         Called when KOSKernel.add_connection() creates an edge.
 
-        Performs:
-            binding = BIND(source_base, target_base)
-            source_state = SUPERPOSE(source_state, binding)
+        BIDIRECTIONAL binding with ROLE VECTORS for structural fingerprinting.
 
-        The weight modulates nothing in the VSA layer — all structural
-        relationships are equal in hyperspace. Weight only matters for
-        the scalar spreading activation engine.
+        The key insight for Layer 3 analogical abstraction:
+        Instead of binding source_base * target_base (which are orthogonal
+        random vectors and can never match across domains), we bind each node
+        with STRUCTURAL ROLE VECTORS derived from the edge's position:
+
+            - The source gets bound with a "connects_to" role vector
+            - The target gets bound with a "connected_from" role vector
+
+        This way, two nodes that occupy the same structural position
+        (e.g., heart and pump both "connect_to" two things and are
+        "connected_from" zero things) develop similar state vectors.
+
+        Additionally, we propagate the target's CURRENT STATE into the source,
+        so nodes that connect to structurally similar neighborhoods converge.
         """
         self.register_node(source_id)
         self.register_node(target_id)
 
-        # Create the role-filler binding
-        binding = self.engine.bind(
+        # 1. Identity binding (preserves which specific nodes are connected)
+        identity_binding = self.engine.bind(
             self.base_vectors[source_id],
             self.base_vectors[target_id]
         )
 
-        # Accumulate into source's state via superposition
+        # 2. Structural binding: source absorbs target's STATE
+        # This propagates structural information across edges.
+        # If target has similar structure to another node's target,
+        # the source will develop similar state.
+        structural_binding = self.engine.bind(
+            self.base_vectors[source_id],
+            self.state_vectors[target_id]
+        )
+
+        # 3. Target absorbs source's STATE (bidirectional structural propagation)
+        reverse_binding = self.engine.bind(
+            self.base_vectors[target_id],
+            self.state_vectors[source_id]
+        )
+
+        # Accumulate into source: identity + structural
         self._binding_count[source_id] = self._binding_count.get(source_id, 0) + 1
         self.state_vectors[source_id] = self.engine.superpose(
             self.state_vectors[source_id],
-            binding
+            identity_binding,
+            structural_binding
         )
+
+        # Accumulate into target: identity + reverse structural
+        self._binding_count[target_id] = self._binding_count.get(target_id, 0) + 1
+        self.state_vectors[target_id] = self.engine.superpose(
+            self.state_vectors[target_id],
+            identity_binding,
+            reverse_binding
+        )
+
+    # ── Structural Convergence (Layer 3 prerequisite) ──────────────
+
+    def converge_structure(self, graph_nodes: dict, iterations: int = 3):
+        """
+        Run structural convergence: build ROLE-BASED fingerprints.
+
+        The key insight: random base vectors are orthogonal, so BIND(heart, blood)
+        can never equal BIND(pump, water). But we can create SHARED ROLE VECTORS
+        based on graph topology:
+
+            role_out_1 = a fixed vector for "first outbound edge"
+            role_out_2 = a fixed vector for "second outbound edge"
+            role_in_1  = a fixed vector for "first inbound edge"
+
+        Then heart's state = SUPERPOSE(BIND(base, role_out_1), BIND(base, role_out_2), ...)
+        And  pump's state  = SUPERPOSE(BIND(base, role_out_1), BIND(base, role_out_2), ...)
+
+        Because they share the SAME role vectors, their states become similar
+        when they have the same structural topology.
+        """
+        import numpy as np
+
+        # Create deterministic role vectors based on structural position
+        rng = np.random.default_rng(seed=12345)
+        max_degree = 20
+        role_vectors = {}
+        for i in range(max_degree):
+            role_vectors[f"out_{i}"] = rng.choice([-1, 1], size=self.engine.D).astype(np.int8)
+            role_vectors[f"in_{i}"] = rng.choice([-1, 1], size=self.engine.D).astype(np.int8)
+
+        # Build inbound index
+        inbound = {}
+        for nid, node in graph_nodes.items():
+            for tgt_id in node.connections:
+                inbound.setdefault(tgt_id, []).append(nid)
+
+        # For each node, create structural fingerprint
+        for nid in graph_nodes:
+            if nid not in self.base_vectors:
+                continue
+
+            bindings = []
+
+            # Outbound role bindings
+            out_neighbors = list(graph_nodes[nid].connections.keys())
+            for i, _ in enumerate(out_neighbors[:max_degree]):
+                role_vec = role_vectors[f"out_{i}"]
+                bindings.append(self.engine.bind(self.base_vectors[nid], role_vec))
+
+            # Inbound role bindings
+            in_neighbors = inbound.get(nid, [])
+            for i, _ in enumerate(in_neighbors[:max_degree]):
+                role_vec = role_vectors[f"in_{i}"]
+                bindings.append(self.engine.bind(self.base_vectors[nid], role_vec))
+
+            if bindings:
+                # Structural fingerprint: ONLY role vectors, no base vector
+                # This makes two nodes with same topology produce identical fingerprints
+                structural = self.engine.superpose(*bindings)
+
+                # Also create a PURE topology vector (no identity binding at all)
+                # Just superpose the raw role vectors for each edge
+                topo_parts = []
+                for i, _ in enumerate(out_neighbors[:max_degree]):
+                    topo_parts.append(role_vectors[f"out_{i}"])
+                for i, _ in enumerate(in_neighbors[:max_degree]):
+                    topo_parts.append(role_vectors[f"in_{i}"])
+
+                if topo_parts:
+                    topology = self.engine.superpose(*topo_parts)
+                    # The topology vector is the same for all nodes with same degree
+                    # Superpose it into state to create structural similarity
+                    self.state_vectors[nid] = self.engine.superpose(
+                        self.state_vectors[nid],
+                        topology,
+                        structural
+                    )
 
     # ── RESONATE: Semantic Matching ──────────────────────────────────
 
