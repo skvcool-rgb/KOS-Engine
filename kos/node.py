@@ -12,7 +12,8 @@ Top-K Synaptic Routing: only fires down the top 15 strongest pathways.
 
 class ConceptNode:
     __slots__ = ['id', 'activation', 'fuel', 'connections',
-                 'temporal_decay', 'max_energy', 'last_tick']
+                 'temporal_decay', 'max_energy', 'last_tick',
+                 'properties']
 
     def __init__(self, concept_id: str,
                  temporal_decay: float = 0.7,
@@ -24,6 +25,10 @@ class ConceptNode:
         self.fuel = 0.0
         self.last_tick = 0
         self.connections = {}
+        # FIX #8: Typed properties for quantitative comparison
+        # Format: {'population': 2700000, '_unit_population': 'people',
+        #          'year_founded': 1834}
+        self.properties = {}
 
     def _apply_lazy_decay(self, current_tick: int):
         if current_tick > self.last_tick:

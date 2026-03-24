@@ -318,6 +318,77 @@ class TextDriver:
 
         return adjective_count
 
+    # ── FIX #8: Numeric Property Extraction ────────────────
+
+    # Patterns: "2.7 million", "1834", "$50 billion", "30%", "9 °C"
+    _NUM_PATTERNS = [
+        # "2.7 million people" → value=2700000
+        (re.compile(r'(\d+[\.,]?\d*)\s*(million|billion|trillion|thousand)',
+                     re.IGNORECASE),
+         lambda m: float(m.group(1).replace(',', '')) *
+         {'million': 1e6, 'billion': 1e9, 'trillion': 1e12,
+          'thousand': 1e3}[m.group(2).lower()]),
+
+        # "1834" (standalone year)
+        (re.compile(r'\b(1[5-9]\d{2}|20[0-2]\d)\b'),
+         lambda m: int(m.group(1))),
+
+        # "30%" or "30 percent"
+        (re.compile(r'(\d+[\.,]?\d*)\s*(%|percent)', re.IGNORECASE),
+         lambda m: float(m.group(1).replace(',', ''))),
+
+        # "$50" or "50 dollars"
+        (re.compile(r'\$\s*(\d+[\.,]?\d*)', re.IGNORECASE),
+         lambda m: float(m.group(1).replace(',', ''))),
+
+        # "9 °C" or "48 °F"
+        (re.compile(r'(\d+[\.,]?\d*)\s*°\s*([CF])', re.IGNORECASE),
+         lambda m: float(m.group(1).replace(',', ''))),
+
+        # Generic large numbers: "2,700,000"
+        (re.compile(r'\b(\d{1,3}(?:,\d{3})+)\b'),
+         lambda m: float(m.group(1).replace(',', ''))),
+    ]
+
+    def _extract_numeric_properties(self, clause: str, uids: list):
+        """
+        Extract numeric values from text and attach as typed properties
+        to the nearest noun node.
+
+        "Toronto has a population of 2.7 million" →
+            nodes['toronto'].properties['population'] = 2700000
+        """
+        if not uids:
+            return
+
+        for pattern, extractor in self._NUM_PATTERNS:
+            for match in pattern.finditer(clause):
+                try:
+                    value = extractor(match)
+                except (ValueError, KeyError):
+                    continue
+
+                # Find context word near the number (±5 words)
+                start = max(0, match.start() - 50)
+                end = min(len(clause), match.end() + 50)
+                context = clause[start:end].lower()
+
+                # Determine property name from context
+                prop_name = "value"
+                for keyword in ["population", "year", "temperature",
+                                 "cost", "price", "area", "height",
+                                 "distance", "speed", "weight",
+                                 "percentage", "rate", "age",
+                                 "founded", "incorporated", "established"]:
+                    if keyword in context:
+                        prop_name = keyword
+                        break
+
+                # Attach to first uid (primary subject)
+                node_id = uids[0]
+                if node_id in self.kernel.nodes:
+                    self.kernel.nodes[node_id].properties[prop_name] = value
+
     # ── MAIN INGEST ──────────────────────────────────────────
 
     def ingest(self, text: str) -> dict:
@@ -439,6 +510,9 @@ class TextDriver:
 
         # ── FIX #1: Extract adjectives as property nodes ─────
         self._extract_adjectives(r_tagged, uids_only, original_sentence)
+
+        # ── FIX #8: Extract numeric properties ──────────────
+        self._extract_numeric_properties(clause, uids_only)
 
         # Native Dependency Parsing: Sequential Triplet Slider
         for i, token in enumerate(sequence):

@@ -204,6 +204,70 @@ class KOSKernel:
         return [(n, e) for n, e in results.items()
                 if n not in concept_ids][:top_k]
 
+    # ── FIX #8: Quantitative Comparison ─────────────────────
+
+    def compare(self, node_a_id: str, node_b_id: str,
+                property_name: str = None) -> dict:
+        """
+        Compare two nodes quantitatively.
+
+        If property_name is given, compares that specific property.
+        Otherwise, compares all shared properties.
+
+        Returns: {property: {a_value, b_value, comparison, ratio}}
+        """
+        node_a = self.nodes.get(node_a_id)
+        node_b = self.nodes.get(node_b_id)
+
+        if not node_a or not node_b:
+            return {"error": "One or both nodes not found"}
+
+        props_a = node_a.properties
+        props_b = node_b.properties
+
+        if property_name:
+            # Compare specific property
+            if property_name in props_a and property_name in props_b:
+                va, vb = props_a[property_name], props_b[property_name]
+                return {property_name: self._compare_values(va, vb)}
+            return {"error": f"Property '{property_name}' not found on both nodes"}
+
+        # Compare all shared properties
+        shared = set(props_a.keys()) & set(props_b.keys())
+        # Exclude internal metadata keys
+        shared = {k for k in shared if not k.startswith('_')}
+
+        if not shared:
+            return {"error": "No shared properties to compare"}
+
+        results = {}
+        for prop in shared:
+            results[prop] = self._compare_values(
+                props_a[prop], props_b[prop])
+        return results
+
+    @staticmethod
+    def _compare_values(va, vb) -> dict:
+        """Compare two numeric values."""
+        try:
+            va_f, vb_f = float(va), float(vb)
+            if va_f > vb_f:
+                comparison = "greater"
+            elif va_f < vb_f:
+                comparison = "less"
+            else:
+                comparison = "equal"
+            ratio = va_f / vb_f if vb_f != 0 else float('inf')
+            diff = va_f - vb_f
+            return {
+                "a": va_f, "b": vb_f,
+                "comparison": comparison,
+                "difference": diff,
+                "ratio": round(ratio, 4),
+            }
+        except (ValueError, TypeError):
+            return {"a": va, "b": vb, "comparison": "incomparable"}
+
     # ── VSA Operations (Fused KASM) ────────────────────────────
 
     def resonate_match(self, query_id: str,

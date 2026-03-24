@@ -1,22 +1,23 @@
 """
-KOS V5.0 — Autonomous Web Forager.
+KOS V5.1 — Autonomous Web Forager (Multi-Backend).
 
-Layer 5 Action System: When System Entropy is too high (the OS
-doesn't know enough to answer safely), the Forager autonomously
-reaches out to the internet, acquires structured knowledge, and
-wires it into the graph.
+Layer 5 Action System with pluggable search backends:
+    - Wikipedia (default, always available)
+    - arXiv (scientific papers)
+    - Local PDF/text files
+    - Any URL (direct fetch)
 
-The Forager does NOT use an LLM to summarize pages. It uses the
-existing TextDriver SVO extraction pipeline to convert raw text
-into graph edges with provenance. This preserves the zero-hallucination
-guarantee — every fact in the graph traces back to a source sentence.
+Fix #11: Multiple search backends with priority routing.
 
 Usage:
     forager = WebForager(kernel, lexicon)
-    facts_added = forager.forage("https://en.wikipedia.org/wiki/Toronto")
-    facts_added = forager.forage_query("Toronto climate temperature")
+    forager.forage("https://en.wikipedia.org/wiki/Toronto")
+    forager.forage_query("Toronto climate temperature")
+    forager.forage_arxiv("perovskite solar cell efficiency")
+    forager.forage_file("/path/to/document.txt")
 """
 
+import os
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -185,3 +186,122 @@ class WebForager:
         for q in queries:
             total += self.forage_query(q, verbose=verbose)
         return total
+
+    # ── FIX #11: Multi-Backend Search ────────────────────────
+
+    def forage_arxiv(self, query: str, max_results: int = 3,
+                     verbose: bool = True) -> int:
+        """
+        Search arXiv for scientific papers and ingest abstracts.
+
+        Uses the arXiv API (no authentication required).
+        Ingests paper titles + abstracts (not full text).
+        """
+        if verbose:
+            print(f"[FORAGER-ARXIV] Searching: '{query}'")
+
+        search_url = "http://export.arxiv.org/api/query"
+        params = {
+            "search_query": f"all:{query}",
+            "start": 0,
+            "max_results": max_results,
+            "sortBy": "relevance",
+        }
+
+        try:
+            resp = requests.get(search_url, params=params,
+                                headers=self.headers, timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            entries = soup.find_all('entry')
+            if not entries:
+                if verbose:
+                    print("[FORAGER-ARXIV] No results found.")
+                return 0
+
+            total_new = 0
+            before = len(self.kernel.nodes)
+
+            for entry in entries:
+                title = entry.find('title')
+                summary = entry.find('summary')
+                if title and summary:
+                    text = f"{title.get_text(strip=True)}. {summary.get_text(strip=True)}"
+                    text = re.sub(r'\s+', ' ', text).strip()
+                    if verbose:
+                        print(f"  Paper: {title.get_text(strip=True)[:80]}...")
+                    self.driver.ingest(text)
+
+            total_new = len(self.kernel.nodes) - before
+            if verbose:
+                print(f"[FORAGER-ARXIV] +{total_new} concepts from "
+                      f"{len(entries)} papers")
+            return total_new
+
+        except Exception as e:
+            if verbose:
+                print(f"[FORAGER-ARXIV] Error: {e}")
+            return 0
+
+    def forage_file(self, filepath: str, verbose: bool = True) -> int:
+        """
+        Ingest a local text file into the knowledge graph.
+
+        Supports .txt and .md files. For PDFs, pre-convert to text.
+        """
+        if not os.path.exists(filepath):
+            if verbose:
+                print(f"[FORAGER-FILE] Not found: {filepath}")
+            return 0
+
+        if verbose:
+            print(f"[FORAGER-FILE] Reading: {filepath}")
+
+        try:
+            with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+                text = f.read()
+        except Exception as e:
+            if verbose:
+                print(f"[FORAGER-FILE] Read error: {e}")
+            return 0
+
+        if len(text) > self.max_chars:
+            text = text[:self.max_chars]
+            last_period = text.rfind('.')
+            if last_period > self.max_chars * 0.8:
+                text = text[:last_period + 1]
+
+        before = len(self.kernel.nodes)
+        self.driver.ingest(text)
+        new_nodes = len(self.kernel.nodes) - before
+
+        if verbose:
+            print(f"[FORAGER-FILE] +{new_nodes} concepts from {filepath}")
+
+        return new_nodes
+
+    def forage_smart(self, query: str, verbose: bool = True) -> int:
+        """
+        Smart foraging: tries Wikipedia first, then arXiv if
+        the query looks scientific.
+
+        Heuristic: if query contains scientific terms, try arXiv.
+        """
+        # Try Wikipedia first
+        result = self.forage_query(query, verbose=verbose)
+        if result > 50:  # Got substantial content
+            return result
+
+        # If Wikipedia was thin, try arXiv for scientific queries
+        science_words = {"cell", "solar", "quantum", "neural", "protein",
+                         "molecule", "genome", "algorithm", "theorem",
+                         "perovskite", "photovoltaic", "semiconductor",
+                         "enzyme", "catalyst", "polymer", "nanoscale"}
+        query_words = set(query.lower().split())
+        if query_words & science_words:
+            if verbose:
+                print("[FORAGER] Wikipedia thin. Trying arXiv...")
+            arxiv_result = self.forage_arxiv(query, verbose=verbose)
+            return result + arxiv_result
+
+        return result
