@@ -35,6 +35,10 @@ class KOSShell:
         from .metacognition import ShadowKernel
         self.shadow = ShadowKernel(kernel)
 
+        # Phase 2: Proactive Attention Controller
+        from .attention import AttentionController
+        self.attention = AttentionController(kernel, lexicon)
+
         # Layer 5: Active Inference — Autonomous Web Forager
         self.forager = None
         if enable_forager:
@@ -345,6 +349,10 @@ class KOSShell:
                         if new_results:
                             evidence_text = self._weave_evidence(
                                 seeds, new_results, user_prompt)
+
+            # Record query for Attention Controller (anticipation)
+            self.attention.record_query(
+                best_seeds, self.kernel.current_tick)
 
             # Annotate with confidence metadata
             if self.shadow.SYSTEM_ENTROPY > 10.0:

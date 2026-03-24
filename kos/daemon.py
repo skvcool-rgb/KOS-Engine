@@ -1,19 +1,24 @@
 """
-KOS V2.0 — Autonomic Daemon (Background Brain Maintenance).
+KOS V5.0 — Autonomic Daemon (Background Brain Maintenance).
 
-Three autonomic systems that run during idle cycles:
-1. Garbage Collection: Prunes orphan nodes with zero connections (memory leaks).
+Five autonomic systems that run during idle cycles:
+1. Garbage Collection: Prunes orphan nodes with zero connections.
 2. Structural Deduplication: Merges isomorphic nodes via Jaccard similarity.
 3. Predictive Reasoning: Triadic Closure — if A->B and B->C, infer A->C.
+4. Analogical Abstraction: Layer 3 VSA metaphor detection (if enabled).
+5. Proactive Attention: Self-generated curiosity, anticipation, staleness goals.
 """
 import time
 from collections import defaultdict
 
 
 class KOSDaemon:
-    def __init__(self, kernel, lexicon=None):
+    def __init__(self, kernel, lexicon=None, forager=None,
+                 attention_controller=None):
         self.kernel = kernel
         self.lexicon = lexicon
+        self.forager = forager
+        self.attention = attention_controller
         self._layer3 = None
 
     def _ensure_layer3(self):
@@ -25,13 +30,14 @@ class KOSDaemon:
             except ImportError:
                 pass
 
-    def run_maintenance_cycle(self) -> dict:
-        """Executes the full suite of background autonomic repairs."""
+    def run_maintenance_cycle(self, enable_attention: bool = True,
+                               max_forage_actions: int = 2) -> dict:
+        """Executes the full suite of background autonomic processes."""
         print("\n[DAEMON] Waking up. Initiating deep-brain structural scan...")
 
         start_time = time.perf_counter()
 
-        # Run the 4 core autonomic protocols
+        # Run the core autonomic protocols
         orphans_removed = self._prune_orphans()
         nodes_merged = self._merge_isomorphs()
         predictions_made = self._dream_triadic_closure()
@@ -45,6 +51,12 @@ class KOSDaemon:
             analogies_found = l3_report["analogies_found"]
             top_analogies = l3_report.get("top", [])
 
+        # Phase 2: Proactive Attention Controller
+        attention_report = None
+        if enable_attention and self.attention and self.forager:
+            attention_report = self.attention.act_on_goals(
+                self.forager, max_actions=max_forage_actions)
+
         elapsed = (time.perf_counter() - start_time) * 1000
 
         report = {
@@ -54,13 +66,19 @@ class KOSDaemon:
             "predicted_edges": predictions_made,
             "analogies_discovered": analogies_found,
             "top_analogies": top_analogies,
+            "attention": attention_report,
         }
 
-        print(f"[DAEMON] Cycle complete in {elapsed:.2f}ms.")
+        print(f"\n[DAEMON] Cycle complete in {elapsed:.2f}ms.")
         print(f"   [-] Pruned {orphans_removed} memory leaks (Orphans)")
         print(f"   [v] Fused {nodes_merged} duplicate concepts (Graph Isomorphism)")
         print(f"   [+] Dreamt {predictions_made} new logical connections (Triadic Closure)")
         print(f"   [~] Discovered {analogies_found} structural analogies (Layer 3)")
+
+        if attention_report:
+            print(f"   [*] Attention: {attention_report['goals_generated']} goals, "
+                  f"{attention_report['actions_taken']} actions, "
+                  f"+{attention_report['concepts_acquired']} concepts")
 
         if top_analogies:
             lex = self.lexicon
@@ -76,11 +94,9 @@ class KOSDaemon:
         """O(V + E) Optimization: Scans edges once, avoiding O(N^2) loops."""
         inbound_tracker = set()
 
-        # 1. Single pass to log every node that is targeted by an edge
         for node in self.kernel.nodes.values():
             inbound_tracker.update(node.connections.keys())
 
-        # 2. Excision: If it points to nothing, and nothing points to it.
         prune_list = [nid for nid, node in self.kernel.nodes.items()
                       if not node.connections and nid not in inbound_tracker]
 
@@ -92,16 +108,14 @@ class KOSDaemon:
     def _merge_isomorphs(self, overlap_threshold: float = 0.85) -> int:
         """Degree-Bucketing Optimization: Kills the O(N^2) trap."""
 
-        # 1. Group nodes by exactly how many outbound connections they have
         degree_buckets = defaultdict(list)
         for nid, node in self.kernel.nodes.items():
-            if node.connections:  # Only group active nodes
+            if node.connections:
                 degree_buckets[len(node.connections)].append((nid, node))
 
         merge_commands = []
         merges_executed = 0
 
-        # 2. Only compare nodes inside the exact same degree bucket
         for bucket_size, group in degree_buckets.items():
             if len(group) < 2:
                 continue
@@ -120,7 +134,6 @@ class KOSDaemon:
                     if similarity >= overlap_threshold:
                         merge_commands.append((id_a, id_b))
 
-        # 3. Execute Merges
         for id_a, id_b in merge_commands:
             if id_a in self.kernel.nodes and id_b in self.kernel.nodes:
                 for target, data in self.kernel.nodes[id_b].connections.items():
@@ -138,7 +151,7 @@ class KOSDaemon:
 
     def _dream_triadic_closure(self) -> int:
         """
-        The Inference Engine: If A->B and B->C, the logic strongly suggests A->C.
+        The Inference Engine: If A->B and B->C, infer A->C.
         Wires a 'Predicted' edge while the system is idle.
         """
         new_edges = []
@@ -146,25 +159,19 @@ class KOSDaemon:
         for root_id, root_node in self.kernel.nodes.items():
             for hop1_id, weight1 in root_node.connections.items():
 
-                # Only trust strong, explicit excitatory edges for logic chains
                 if weight1 < 0.7 or hop1_id not in self.kernel.nodes:
                     continue
 
                 hop1_node = self.kernel.nodes[hop1_id]
                 for hop2_id, weight2 in hop1_node.connections.items():
 
-                    # If Hopper 1 points strongly to Hopper 2
                     if weight2 >= 0.7:
-                        # If Root doesn't already know about Hopper 2... predict it!
                         if hop2_id != root_id and hop2_id not in root_node.connections:
-                            # Synthesize the confidence (e.g., 0.9 * 0.9 = 0.81 probability)
                             predicted_confidence = weight1 * weight2
                             new_edges.append((root_id, hop2_id, predicted_confidence))
 
-        # Wire the dreams into reality
         count = 0
         for A, C, conf in new_edges:
-            # Wire a weak, predicted edge (we cap it at 0.5 so it doesn't override explicit facts)
             safe_conf = min(0.5, conf)
             self.kernel.add_connection(
                 A, C, safe_conf,
