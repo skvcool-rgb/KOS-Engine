@@ -530,12 +530,28 @@ class TextDriver:
                 if lem not in _TRIVIAL_VERBS and len(lem) > 2:
                     verb_uid = self.lexicon.get_or_create_id(lem)
                     self.kernel.add_node(verb_uid)
-                    # Wire verb to all nouns in this clause (weak edges)
+                    # Wire verb to all nouns in this clause
                     for noun_uid in uids_only:
                         self.kernel.add_connection(
                             verb_uid, noun_uid, 0.5, original_sentence)
                         self.kernel.add_connection(
                             noun_uid, verb_uid, 0.3, original_sentence)
+
+                    # ── CROSS-SENTENCE VERB BRIDGING ──────────────
+                    # If a verb like "learn" appears, connect it to
+                    # ALL existing nodes that share a semantic domain.
+                    # This creates bridges across sentences:
+                    # "Neural networks learn" + "Backpropagation adjusts weights"
+                    # → learn connects to backpropagation via shared "network" edges
+                    # We do this by finding all nodes that share connections
+                    # with any noun in this clause (2-hop bridge)
+                    for noun_uid in uids_only:
+                        if noun_uid in self.kernel.nodes:
+                            for neighbor_uid in list(self.kernel.nodes[noun_uid].connections.keys()):
+                                if neighbor_uid != verb_uid:
+                                    # Weak bridge edge: verb → 2-hop neighbor
+                                    self.kernel.add_connection(
+                                        verb_uid, neighbor_uid, 0.2, original_sentence)
 
         # Wire Ambient Noise (Hebbian)
         for n1 in uids_only:

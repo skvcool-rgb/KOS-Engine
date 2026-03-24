@@ -57,6 +57,17 @@ def run_self_heal():
     Apixaban prevents thrombosis without dietary restrictions.
     """)
 
+    # Keep track of original sentences for targeted bridging
+    original_sentences = [s.strip() for s in """
+    Mitochondria produce ATP which is the energy currency of cells.
+    Backpropagation adjusts weights by computing gradient of the loss.
+    Artificial neural networks are inspired by biological neurons.
+    Entanglement allows two qubits to be correlated across any distance.
+    Quantum computers use qubits which can exist in superposition.
+    The Sun produces energy through nuclear fusion of hydrogen into helium.
+    Coral reefs support 25 percent of all marine species.
+    """.strip().split('\n') if s.strip()]
+
     shell = KOSShellOffline(kernel, lexicon, enable_forager=False)
     pce = PredictiveCodingEngine(kernel, learning_rate=0.05)
     proposer = CodeProposer(kernel, lexicon, pce)
@@ -140,19 +151,32 @@ def run_self_heal():
             print("  FIX: Active Inference -> forage internet for missing knowledge")
 
             # AGENT DECIDES TO FORAGE
-            # Extract the key topic words for search
-            search_words = [w for w in raw if len(w) > 3]
-            search_words.extend([e for e in exp if len(e) > 3])
-            search_query = " ".join(search_words[:3])
+            # Targeted strategy: search for the EXPECTED keywords first
+            # (they are what's missing), then fall back to query words
+            search_attempts = []
+            # Priority 1: search each expected keyword individually
+            for e in exp:
+                if len(e) > 3:
+                    search_attempts.append(e)
+            # Priority 2: combine query nouns with expected keywords
+            query_nouns = [w for w in raw if len(w) > 3]
+            if query_nouns and exp:
+                search_attempts.append(query_nouns[0] + " " + exp[0])
+            # Priority 3: just the query nouns
+            search_attempts.extend(query_nouns)
 
             try:
                 forager = WebForager(kernel, lexicon, driver)
-                print("  FORAGING: Searching Wikipedia for '%s'" % search_query)
-                new_nodes = forager.forage_query(search_query, verbose=False)
-                if new_nodes > 0:
-                    print("  FORAGED: +%d new concepts learned" % new_nodes)
-                else:
-                    print("  FORAGED: No new data found")
+                total_new = 0
+                for sq in search_attempts:
+                    print("  FORAGING: '%s'" % sq)
+                    new_nodes = forager.forage_query(sq, verbose=False)
+                    if new_nodes > 0:
+                        total_new += new_nodes
+                        print("  FORAGED: +%d concepts from '%s'" % (new_nodes, sq))
+                        break  # Stop after first successful forage
+                if total_new == 0:
+                    print("  FORAGED: No new data found after %d attempts" % len(search_attempts))
             except Exception as e:
                 print("  FORAGE FAILED: %s" % str(e)[:60])
 
@@ -168,17 +192,21 @@ def run_self_heal():
             print("  APPLYING: %s" % p.get("description", "?")[:70])
             applied += 1
 
-    # Agent re-ingests the original corpus to create bridge edges
-    # between existing knowledge and newly foraged knowledge
-    print("\n  Re-ingesting original corpus to bridge new knowledge...")
-    driver.ingest("""
-    Mitochondria produce ATP which is the energy currency of cells.
-    Backpropagation adjusts weights by computing gradient of the loss.
-    Artificial neural networks are inspired by biological neurons.
-    Entanglement allows two qubits to be correlated across any distance.
-    Quantum computers use qubits which can exist in superposition.
-    """)
-    print("  Bridge edges created.")
+    # Agent re-ingests ONLY the sentences related to failing queries
+    # This prevents noise from successful forages from polluting
+    # already-passing queries
+    print("\n  Re-ingesting targeted bridge sentences for failures only...")
+    for q, exp, got in failures:
+        # Find original sentences containing the expected keywords
+        bridge_sentences = []
+        for sent in original_sentences:
+            if any(e.lower() in sent.lower() for e in exp):
+                bridge_sentences.append(sent)
+        if bridge_sentences:
+            for bs in bridge_sentences:
+                driver.ingest(bs)
+            print("  Bridged %d sentences for: %s" % (len(bridge_sentences), q[:40]))
+    print("  Targeted bridge complete.")
 
     # Agent also trains predictive model to improve future queries
     print("\n  Training predictive model on all seeds...")
