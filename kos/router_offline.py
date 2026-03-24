@@ -623,20 +623,21 @@ class KOSShellOffline:
             answer_words = set(re.findall(r'[a-z]+', answer_lower))
             relevance_overlap = query_content_words & answer_words
 
-            # Also check if any seed word appears in the answer
-            seed_words_in_answer = 0
-            for s in best_seeds:
-                sw = self.lexicon.get_word(s)
-                if sw and sw.lower() in answer_lower:
-                    seed_words_in_answer += 1
+            # Agent Fix 1: Check ORIGINAL query words in the answer,
+            # not resolved seed words. "tower" resolving to "water"
+            # should NOT count as relevance.
+            original_words_in_answer = 0
+            for w in raw_words:
+                if len(w) >= 4 and w in answer_lower:
+                    original_words_in_answer += 1
 
-            # Strict relevance: at least one 4+ letter query word
-            # must appear in the answer, OR a seed word must match
+            # Strict relevance: at least one 4+ letter ORIGINAL query
+            # word must appear in the answer
             strict_overlap = {w for w in query_content_words
                                if w in answer_lower and len(w) >= 4}
 
             is_relevant = (len(strict_overlap) > 0
-                           or seed_words_in_answer >= 2
+                           or original_words_in_answer >= 2
                            or "no relevant context" in answer_lower
                            or "don't have" in answer_lower)
 

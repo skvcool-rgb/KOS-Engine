@@ -16,10 +16,17 @@ class MathDriver:
         self.math_keywords = {
             "integrate", "integral", "derive", "derivative", "differentiate",
             "solve", "calculate", "compute", "evaluate", "limit",
+            # Agent Fix 2: add math function names
+            "sqrt", "log", "ln", "sin", "cos", "tan", "exp",
+            "abs", "factorial", "summation", "product",
         }
         # Regex: matches expressions like "345000000 * 0.0825" or "2+3*4"
         self._bare_math_re = re.compile(
             r'^\s*[\d\.\(\)]+\s*[\+\-\*/\*\*\^%]+\s*[\d\.\(\)]+')
+        # Agent Fix 2: matches function(number) patterns like sqrt(144), log(100)
+        self._func_math_re = re.compile(
+            r'^\s*(?:sqrt|log|ln|sin|cos|tan|exp|abs|factorial)\s*\(\s*[\d\.\s\+\-\*/\^]+\s*\)\s*\??$',
+            re.IGNORECASE)
         # Regex: matches "what is <math>" or "how much is <math>"
         self._question_math_re = re.compile(
             r'(?:what\s+is|how\s+much\s+is|compute|evaluate|calculate)\s+'
@@ -35,10 +42,13 @@ class MathDriver:
         # 2. Bare arithmetic expression (e.g. "345000000 * 0.0825")
         if self._bare_math_re.search(prompt):
             return True
-        # 3. "What is 2+2?" style questions with numbers and operators
+        # 3. Agent Fix 2: function(number) like sqrt(144), log(100)
+        if self._func_math_re.search(prompt):
+            return True
+        # 4. "What is 2+2?" style questions with numbers and operators
         if self._question_math_re.search(prompt):
             return True
-        # 4. Contains math operators between numbers
+        # 5. Contains math operators between numbers
         if re.search(r'\d+\s*[\+\-\*/\^]\s*\d+', prompt):
             return True
         return False
@@ -101,8 +111,30 @@ class MathDriver:
             # --- ARITHMETIC / ALGEBRA ---
             else:
                 expr_str = self._clean_expr(lower)
-                # Remove any remaining words (just keep math tokens)
-                expr_str = re.sub(r'[a-df-hj-mo-qs-wyz]+', '', expr_str).strip()
+                # Agent Fix 2: preserve math function names before stripping
+                # Replace function names with SymPy equivalents
+                _math_funcs = {
+                    'sqrt': 'sqrt', 'log': 'log', 'ln': 'log',
+                    'sin': 'sin', 'cos': 'cos', 'tan': 'tan',
+                    'exp': 'exp', 'abs': 'Abs', 'factorial': 'factorial',
+                }
+                for fname, sympy_name in _math_funcs.items():
+                    expr_str = re.sub(r'\b' + fname + r'\b', sympy_name, expr_str)
+                # Remove remaining non-math words (keep math tokens + function names)
+                # Only strip words that are NOT known math functions/variables
+                tokens = expr_str.split()
+                clean_tokens = []
+                for tok in tokens:
+                    # Keep if it contains digits, operators, parens, or is a math func
+                    if (re.search(r'[\d\+\-\*/\^\(\)\.]', tok) or
+                        tok in _math_funcs.values() or
+                        tok in {'x', 'y', 'z', 'e', 'pi', 'n', 'i'} or
+                        '(' in tok):
+                        clean_tokens.append(tok)
+                expr_str = ' '.join(clean_tokens).strip()
+                if not expr_str:
+                    expr_str = self._clean_expr(lower)
+                    expr_str = re.sub(r'[a-df-hj-mo-qs-wyz]+', '', expr_str).strip()
                 if not expr_str:
                     return {"status": "error", "message": "No expression found"}
                 result = sp.sympify(expr_str).evalf()
