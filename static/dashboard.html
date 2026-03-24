@@ -355,6 +355,18 @@
                 </div>
                 <div id="voiceResult"></div>
             </div>
+
+            <!-- Full Loop: Listen + Answer + Speak -->
+            <div class="card" style="margin-top: 16px;">
+                <h3>Full Loop: Listen → Think → Speak</h3>
+                <p style="color: var(--text2); font-size: 13px; margin-bottom: 12px;">
+                    Click the button, speak your question. KOS listens, transcribes, queries its brain, and speaks the answer back.
+                </p>
+                <button class="btn" style="background: var(--purple); font-size: 15px; padding: 14px 28px;" onclick="doFullLoop()" id="btnFullLoop">
+                    Listen → Think → Speak
+                </button>
+                <div id="fullLoopResult" style="margin-top: 12px;"></div>
+            </div>
         </div>
 
     </div>
@@ -703,6 +715,44 @@ async function doVoiceQuery() {
     }
     input.value = '';
     refreshOverview();
+}
+
+async function doFullLoop() {
+    const btn = document.getElementById('btnFullLoop');
+    const result = document.getElementById('fullLoopResult');
+    btn.disabled = true; btn.textContent = 'Listening (5 sec)... SPEAK NOW!';
+    result.innerHTML = '<p class="loading">Recording from microphone...</p>';
+
+    // Step 1: Listen
+    const listenResult = await api('sensors/listen', {method: 'POST'});
+    if (!listenResult || !listenResult.transcript || listenResult.transcript.startsWith('(')) {
+        result.innerHTML = '<p style="color:var(--warning)">No speech detected. Try again.</p>';
+        btn.disabled = false; btn.textContent = 'Listen → Think → Speak';
+        return;
+    }
+
+    const heard = listenResult.transcript;
+    result.innerHTML = '<p>Heard: <strong>"' + escHtml(heard) + '"</strong></p><p class="loading">Thinking + Speaking...</p>';
+    btn.textContent = 'Thinking...';
+
+    // Step 2: Query + Speak
+    const answerResult = await api('sensors/speak_answer', {
+        method: 'POST',
+        body: JSON.stringify({prompt: heard})
+    });
+
+    btn.disabled = false; btn.textContent = 'Listen → Think → Speak';
+
+    if (answerResult) {
+        result.innerHTML =
+            '<div class="result">' +
+            '<strong>You said:</strong> "' + escHtml(heard) + '"<br><br>' +
+            '<strong>KOS answered:</strong> ' + escHtml(answerResult.answer) +
+            '<div class="meta">' + answerResult.latency_ms + 'ms | Spoken: ' + answerResult.spoken + '</div>' +
+            '</div>';
+    }
+    refreshOverview();
+    refreshEmotion();
 }
 
 async function refreshEmotion() {

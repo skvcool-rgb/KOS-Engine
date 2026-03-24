@@ -509,9 +509,53 @@ def speak_answer(req: QueryRequest):
                    for d in _last_visual]
         answer = "I can see: " + ", ".join(objects) + "."
     elif any(w in q for w in audio_words) and _last_audio:
-        answer = "I heard: " + _last_audio
+        answer = "I heard you say: " + _last_audio
     else:
-        answer = shell.chat(req.prompt)
+        # Check if user wants to use voice input — listen first, then answer
+        voice_trigger = {"ask by voice", "voice input", "listen and answer",
+                         "use mic", "use microphone", "speak to me",
+                         "listen to me", "voice query"}
+        if any(t in q for t in voice_trigger):
+            # Record and transcribe
+            try:
+                import sounddevice as sd
+                import numpy as np
+                import wave
+                import tempfile
+
+                sample_rate = 16000
+                duration = 5
+                audio = sd.rec(int(duration * sample_rate),
+                               samplerate=sample_rate, channels=1, dtype='float32')
+                sd.wait()
+
+                wav_path = tempfile.mktemp(suffix=".wav")
+                with wave.open(wav_path, 'w') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(sample_rate)
+                    wf.writeframes((audio * 32767).astype(np.int16).tobytes())
+
+                import whisper
+                model = whisper.load_model("base")
+                result = model.transcribe(wav_path, fp16=False)
+                heard = result.get("text", "").strip()
+
+                try:
+                    os.remove(wav_path)
+                except:
+                    pass
+
+                if heard:
+                    _last_audio = heard
+                    answer = shell.chat(heard)
+                    answer = "You said: '" + heard + "'. " + answer
+                else:
+                    answer = "I listened but did not hear any speech. Please try again."
+            except Exception as e:
+                answer = "Microphone error: " + str(e)[:80]
+        else:
+            answer = shell.chat(req.prompt)
 
     latency = (time.perf_counter() - t0) * 1000
 
