@@ -207,6 +207,7 @@
         <div class="nav-item" onclick="showPage('graph')"><span class="icon">&#9670;</span> Graph</div>
         <div class="nav-item" onclick="showPage('tasks')"><span class="icon">&#9744;</span> Tasks</div>
         <div class="nav-item" onclick="showPage('history')"><span class="icon">&#8986;</span> History</div>
+        <div class="nav-item" onclick="showPage('senses')"><span class="icon">&#9673;</span> Senses</div>
     </div>
 
     <div class="main">
@@ -285,6 +286,75 @@
         <div id="page-history" class="page">
             <h2 style="margin-bottom: 16px">Query History</h2>
             <div id="historyLog"></div>
+        </div>
+
+        <!-- SENSES -->
+        <div id="page-senses" class="page">
+            <h2 style="margin-bottom: 16px">Senses</h2>
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="label">Emotion</div>
+                    <div class="value green" id="emotionState">...</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Cortisol</div>
+                    <div class="value orange" id="cortVal">-</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Dopamine</div>
+                    <div class="value purple" id="dopaVal">-</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Serotonin</div>
+                    <div class="value blue" id="seroVal">-</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+
+                <!-- EYES -->
+                <div class="card">
+                    <h3>Eyes (Webcam)</h3>
+                    <button class="btn blue" onclick="doSee()" id="btnSee">Take Photo</button>
+                    <div id="eyeResult" style="margin-top: 12px;">
+                        <p style="color: var(--text2); font-size: 13px;">Click to capture a frame and detect objects</p>
+                    </div>
+                    <img id="lastFrame" style="display:none; max-width:100%; border-radius:6px; margin-top:12px;" />
+                </div>
+
+                <!-- EARS -->
+                <div class="card">
+                    <h3>Ears (Microphone)</h3>
+                    <button class="btn blue" onclick="doListen()" id="btnListen">Listen (4 sec)</button>
+                    <div id="earResult" style="margin-top: 12px;">
+                        <p style="color: var(--text2); font-size: 13px;">Click to record 4 seconds from microphone</p>
+                    </div>
+                </div>
+
+                <!-- MOUTH -->
+                <div class="card">
+                    <h3>Mouth (Speaker)</h3>
+                    <div class="query-box" style="margin-bottom: 0;">
+                        <input type="text" id="speakInput" placeholder="Type text to speak..." onkeydown="if(event.key==='Enter')doSpeak()">
+                        <button class="btn" onclick="doSpeak()">Speak</button>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <button class="btn secondary" onclick="doSpeak('Hello. I am KOS, the Knowledge Operating System.')">Test Voice</button>
+                    </div>
+                    <div id="mouthResult" style="margin-top: 12px;"></div>
+                </div>
+            </div>
+
+            <!-- Voice Query: Ask + Speak -->
+            <div class="card" style="margin-top: 16px;">
+                <h3>Voice Query (Ask + Speak Answer)</h3>
+                <div class="query-box">
+                    <input type="text" id="voiceQueryInput" placeholder="Ask a question — KOS will answer AND speak it..." onkeydown="if(event.key==='Enter')doVoiceQuery()">
+                    <button class="btn" onclick="doVoiceQuery()">Ask + Speak</button>
+                </div>
+                <div id="voiceResult"></div>
+            </div>
         </div>
 
     </div>
@@ -528,6 +598,124 @@ async function loadHistory() {
 function escHtml(s) {
     if (!s) return '';
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════════════════
+// SENSES
+// ══════════════════════════════════════════════════════════
+
+async function doSee() {
+    const btn = document.getElementById('btnSee');
+    const result = document.getElementById('eyeResult');
+    const img = document.getElementById('lastFrame');
+    btn.disabled = true; btn.textContent = 'Capturing...';
+    result.innerHTML = '<p class="loading">Looking...</p>';
+
+    const d = await api('sensors/see', {method: 'POST'});
+    btn.disabled = false; btn.textContent = 'Take Photo';
+
+    if (!d || d.status === 'ERROR') {
+        result.innerHTML = '<p style="color:#ff4444">' + (d?.error || 'Error') + '</p>';
+        return;
+    }
+
+    let html = '<p style="color:var(--accent)">Resolution: ' + d.resolution + '</p>';
+    html += '<p><strong>Detected ' + d.detections.length + ' objects:</strong></p>';
+    d.detections.forEach(det => {
+        html += '<div style="padding:4px 0;font-size:13px;">' +
+            escHtml(det.label) + ' <span style="color:var(--accent)">' +
+            (det.confidence*100).toFixed(0) + '%</span></div>';
+    });
+    if (d.emotion_state) {
+        html += '<p style="margin-top:8px;color:var(--purple)">Emotion: ' + d.emotion_state + '</p>';
+    }
+    result.innerHTML = html;
+
+    img.src = d.frame_url + '?t=' + Date.now();
+    img.style.display = 'block';
+
+    refreshEmotion();
+}
+
+async function doListen() {
+    const btn = document.getElementById('btnListen');
+    const result = document.getElementById('earResult');
+    btn.disabled = true; btn.textContent = 'Listening...';
+    result.innerHTML = '<p class="loading">Recording 4 seconds... Speak now!</p>';
+
+    const d = await api('sensors/listen', {method: 'POST'});
+    btn.disabled = false; btn.textContent = 'Listen (4 sec)';
+
+    if (!d || d.status === 'ERROR') {
+        result.innerHTML = '<p style="color:#ff4444">' + (d?.error || 'Error') + '</p>';
+        return;
+    }
+
+    let html = '<p>Peak amplitude: ' + d.peak_amplitude + '</p>';
+    if (d.transcript) {
+        html += '<div class="result" style="margin-top:8px;">' +
+            '<strong>Heard:</strong> ' + escHtml(d.transcript) + '</div>';
+        if (d.ingested) {
+            html += '<p style="color:var(--accent);font-size:12px">Ingested into knowledge graph</p>';
+        }
+    } else {
+        html += '<p style="color:var(--text2)">No speech detected</p>';
+    }
+    result.innerHTML = html;
+    refreshOverview();
+}
+
+function doSpeak(preset) {
+    const text = preset || document.getElementById('speakInput').value.trim();
+    if (!text) return;
+    const result = document.getElementById('mouthResult');
+    result.innerHTML = '<p class="loading">Speaking...</p>';
+
+    api('sensors/speak', {
+        method: 'POST',
+        body: JSON.stringify({prompt: text})
+    }).then(d => {
+        if (d?.status === 'OK') {
+            result.innerHTML = '<p style="color:var(--accent)">Spoke: "' + escHtml(text.substring(0,80)) + '"</p>';
+        } else {
+            result.innerHTML = '<p style="color:#ff4444">' + (d?.error || 'Error') + '</p>';
+        }
+    });
+    if (!preset) document.getElementById('speakInput').value = '';
+}
+
+async function doVoiceQuery() {
+    const input = document.getElementById('voiceQueryInput');
+    const prompt = input.value.trim();
+    if (!prompt) return;
+    const result = document.getElementById('voiceResult');
+    result.innerHTML = '<p class="loading">Thinking + Speaking...</p>';
+
+    const d = await api('sensors/speak_answer', {
+        method: 'POST',
+        body: JSON.stringify({prompt})
+    });
+
+    if (d) {
+        result.innerHTML = '<div class="result"><strong>Q:</strong> ' + escHtml(prompt) +
+            '<br><br><strong>A:</strong> ' + escHtml(d.answer) +
+            '<div class="meta">' + d.latency_ms + 'ms | Spoken: ' + d.spoken + '</div></div>';
+    }
+    input.value = '';
+    refreshOverview();
+}
+
+async function refreshEmotion() {
+    const d = await api('sensors/emotion');
+    if (!d) return;
+    const el = document.getElementById('emotionState');
+    if (el) el.textContent = d.emotion;
+    const cort = document.getElementById('cortVal');
+    if (cort) cort.textContent = d.cortisol;
+    const dopa = document.getElementById('dopaVal');
+    if (dopa) dopa.textContent = d.dopamine;
+    const sero = document.getElementById('seroVal');
+    if (sero) sero.textContent = d.serotonin;
 }
 
 // Auto-refresh

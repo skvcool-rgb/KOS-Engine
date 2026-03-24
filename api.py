@@ -321,3 +321,182 @@ async def get_contradictions():
         {"node_a": str(a), "node_b": str(b), "details": str(d)}
         for (a, b), d in kernel.contradictions.items()
     ] if hasattr(kernel, 'contradictions') else []
+
+
+# ══════════════════════════════════════════════════════════
+# SENSOR ENDPOINTS
+# ══════════════════════════════════════════════════════════
+
+# Lazy sensor state
+_sensors = {"eyes": None, "ears": None, "mouth": None, "emotion": None}
+
+def _get_emotion():
+    if _sensors["emotion"] is None:
+        from kos.emotion import EmotionEngine
+        _sensors["emotion"] = EmotionEngine()
+    return _sensors["emotion"]
+
+@app.post("/api/sensors/speak")
+def sensor_speak(req: QueryRequest):
+    """Make KOS speak text through speakers."""
+    try:
+        import pyttsx3
+        engine = pyttsx3.init()
+        engine.setProperty('rate', 160)
+        engine.say(req.prompt)
+        engine.runAndWait()
+        return {"status": "OK", "text": req.prompt, "engine": "pyttsx3"}
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)[:100]}
+
+@app.post("/api/sensors/see")
+def sensor_see():
+    """Capture one frame from webcam and detect objects."""
+    try:
+        import cv2
+        from ultralytics import YOLO
+
+        cap = cv2.VideoCapture(0)
+        ret, frame = cap.read()
+        cap.release()
+
+        if not ret or frame is None:
+            return {"status": "ERROR", "error": "Cannot read webcam"}
+
+        h, w = frame.shape[:2]
+
+        # Save frame
+        frame_path = str(Path(__file__).parent / "static" / "last_frame.jpg")
+        cv2.imwrite(frame_path, frame)
+
+        # YOLO detection
+        model = YOLO("yolov8n.pt")
+        results = model(frame, verbose=False)
+        detections = []
+        for r in results:
+            for box in r.boxes:
+                label = model.names[int(box.cls[0])]
+                conf = float(box.conf[0])
+                detections.append({
+                    "label": label,
+                    "confidence": round(conf, 3),
+                })
+
+        # Trigger emotions from visual detections
+        from kos.senses.perception import EmotionGrounding
+        grounding = EmotionGrounding(_get_emotion())
+        fake_dets = [{"label": d["label"]} for d in detections]
+        triggers = grounding.process_visual(fake_dets)
+
+        # Ingest detected objects into graph
+        for d in detections:
+            uid = lexicon.get_or_create_id(d["label"])
+            kernel.add_node(uid)
+
+        return {
+            "status": "OK",
+            "resolution": "%dx%d" % (w, h),
+            "detections": detections,
+            "emotion_triggers": triggers,
+            "emotion_state": _get_emotion().current_emotion(),
+            "frame_url": "/static/last_frame.jpg",
+        }
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)[:100]}
+
+@app.post("/api/sensors/listen")
+def sensor_listen():
+    """Record from microphone and transcribe."""
+    try:
+        import sounddevice as sd
+        import numpy as np
+        import wave
+        import tempfile
+
+        duration = 4
+        sample_rate = 16000
+
+        audio = sd.rec(int(duration * sample_rate),
+                       samplerate=sample_rate, channels=1, dtype='float32')
+        sd.wait()
+
+        peak = float(np.max(np.abs(audio)))
+
+        # Save to temp wav
+        wav_path = tempfile.mktemp(suffix=".wav")
+        with wave.open(wav_path, 'w') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            wf.writeframes((audio * 32767).astype(np.int16).tobytes())
+
+        # Transcribe
+        text = ""
+        try:
+            import whisper
+            model = whisper.load_model("base")
+            result = model.transcribe(wav_path, fp16=False)
+            text = result.get("text", "").strip()
+        except Exception as we:
+            text = "(Whisper error: %s)" % str(we)[:60]
+
+        # Ingest transcript into graph if we got text
+        if text and len(text) > 3 and not text.startswith("("):
+            driver.ingest(text)
+
+        # Clean up
+        try:
+            os.remove(wav_path)
+        except:
+            pass
+
+        return {
+            "status": "OK",
+            "duration_sec": duration,
+            "peak_amplitude": round(peak, 4),
+            "transcript": text,
+            "ingested": bool(text and len(text) > 3),
+        }
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)[:100]}
+
+@app.get("/api/sensors/emotion")
+def sensor_emotion():
+    """Get current emotion state."""
+    em = _get_emotion()
+    state = em.state
+    return {
+        "emotion": em.current_emotion(),
+        "cortisol": round(state.cortisol, 1),
+        "adrenaline": round(state.adrenaline, 1),
+        "dopamine": round(state.dopamine, 1),
+        "serotonin": round(state.serotonin, 1),
+        "oxytocin": round(state.oxytocin, 1),
+        "gaba": round(state.gaba, 1),
+        "endorphin": round(state.endorphin, 1),
+    }
+
+@app.post("/api/sensors/speak_answer")
+def speak_answer(req: QueryRequest):
+    """Query KOS then speak the answer."""
+    t0 = time.perf_counter()
+    answer = shell.chat(req.prompt)
+    latency = (time.perf_counter() - t0) * 1000
+
+    # Speak it
+    try:
+        import pyttsx3
+        engine = pyttsx3.init()
+        engine.setProperty('rate', 160)
+        engine.say(answer.strip())
+        engine.runAndWait()
+        spoken = True
+    except:
+        spoken = False
+
+    return {
+        "prompt": req.prompt,
+        "answer": answer.strip(),
+        "latency_ms": round(latency, 1),
+        "spoken": spoken,
+    }
