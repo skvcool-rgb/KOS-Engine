@@ -1,6 +1,10 @@
 # KOS Engine V5.1 — Dependencies
 # Install: pip install -r requirements.txt
 
+# Use CPU-only PyTorch (saves ~2.5 GB by excluding CUDA libraries)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+
 # Core
 nltk>=3.8.0
 jellyfish>=1.0.0
