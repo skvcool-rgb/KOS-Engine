@@ -332,6 +332,26 @@ class KOSShellOffline:
 
     # ── THE MOUTH (Template-Based) ───────────────────────────────
 
+    def _try_science_fallback(self, query: str) -> str:
+        """
+        Try to answer from first principles using science drivers.
+        Called when the knowledge graph has no relevant data.
+
+        Checks chemistry, physics, biology in order.
+        Returns answer string or None if no driver can help.
+        """
+        for name, drv in [("physics", self._physics),
+                           ("chemistry", self._chemistry),
+                           ("biology", self._biology)]:
+            if drv:
+                try:
+                    result = drv.process(query)
+                    if result and result.strip() and len(result.strip()) > 10:
+                        return result
+                except Exception:
+                    pass
+        return None
+
     def _synthesize_answer(self, prompt: str, evidence: str) -> str:
         """
         Template-based answer synthesis. Replaces LLM Mouth entirely.
@@ -629,7 +649,40 @@ class KOSShellOffline:
                                 return self._synthesize_answer(
                                     user_prompt, evidence2)
 
-                # Emotion punish for failed answer
+                # ============================================
+                # SCIENCE FALLBACK: Try computing from first
+                # principles before saying "I don't know"
+                # ============================================
+                science_answer = self._try_science_fallback(user_prompt)
+                if science_answer:
+                    return science_answer
+
+                # Forage as last resort
+                if self.forager and not self._forager_attempted:
+                    self._forager_attempted = True
+                    search_query = " ".join(raw_words[:3])
+                    new_nodes = self.forager.forage_query(
+                        search_query, verbose=False)
+                    if new_nodes > 0:
+                        seeds3 = []
+                        known_words3 = list(self.lexicon.word_to_uuid.keys())
+                        for w in raw_words:
+                            uid = self._resolve_word(w, known_words3)
+                            if uid and uid not in seeds3:
+                                seeds3.append(uid)
+                        if seeds3:
+                            results3 = self.kernel.query(seeds3, top_k=10)
+                            if results3:
+                                evidence3 = weaver.weave(
+                                    self.kernel,
+                                    [self.lexicon.get_word(s) for s in seeds3],
+                                    results3, self.lexicon, seeds3,
+                                    user_prompt)
+                                foraged_answer = self._synthesize_answer(
+                                    user_prompt, evidence3)
+                                if "no relevant" not in foraged_answer.lower():
+                                    return foraged_answer
+
                 if self._emotion_bridge:
                     try:
                         self._emotion_bridge.punish("social_rejection", self.kernel)
@@ -637,7 +690,35 @@ class KOSShellOffline:
                         pass
                 return "I don't have data on this topic."
         else:
-            # Emotion punish for no results
+            # No graph results at all — try science fallback
+            science_answer = self._try_science_fallback(user_prompt)
+            if science_answer:
+                return science_answer
+
+            # Forage as absolute last resort
+            if self.forager and raw_words:
+                search_query = " ".join(raw_words[:3])
+                new_nodes = self.forager.forage_query(
+                    search_query, verbose=False)
+                if new_nodes > 0:
+                    seeds_final = []
+                    known_final = list(self.lexicon.word_to_uuid.keys())
+                    for w in raw_words:
+                        uid = self._resolve_word(w, known_final)
+                        if uid and uid not in seeds_final:
+                            seeds_final.append(uid)
+                    if seeds_final:
+                        results_final = self.kernel.query(seeds_final, top_k=10)
+                        if results_final:
+                            from .weaver import AlgorithmicWeaver
+                            weaver = AlgorithmicWeaver()
+                            ev = weaver.weave(
+                                self.kernel,
+                                [self.lexicon.get_word(s) for s in seeds_final],
+                                results_final, self.lexicon, seeds_final,
+                                user_prompt)
+                            return self._synthesize_answer(user_prompt, ev)
+
             if self._emotion_bridge:
                 try:
                     self._emotion_bridge.punish("social_rejection", self.kernel)
