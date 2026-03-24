@@ -1,0 +1,53 @@
+// ============================================================
+// KASM Example: Analogical Reasoning
+// Solar System <=> Atom — Structural Isomorphism Detection
+//
+// This script discovers that "nucleus is the sun of an atom"
+// through pure algebra. No training. No neural network.
+// ============================================================
+
+SEED 42
+DIM 10000
+
+// 1. Declare atomic concepts
+NODE sun, planet, gravity
+NODE nucleus, electron, electromagnetism
+
+// 2. Declare structural roles (domain-independent)
+NODE role_center, role_orbiter, role_force
+
+// 3. Bind concepts to roles
+BIND r_sun    = sun * role_center
+BIND r_planet = planet * role_orbiter
+BIND r_grav   = gravity * role_force
+
+BIND r_nuc  = nucleus * role_center
+BIND r_elec = electron * role_orbiter
+BIND r_em   = electromagnetism * role_force
+
+// 4. Superpose into composite manifolds
+SUPERPOSE solar_system = r_sun + r_planet + r_grav
+SUPERPOSE atom = r_nuc + r_elec + r_em
+
+// 5. Direct comparison (should be ~0: no shared nouns)
+PRINT "=== Raw Noun Comparison ==="
+RESONATE sun <=> nucleus
+
+// 6. The breakthrough: algebraic analogy mapping
+PRINT "=== Analogical Mapping: What is the Sun of an Atom? ==="
+BIND mapping = solar_system * atom
+UNBIND answer_sun = mapping * sun
+CLEANUP answer_sun
+
+PRINT "=== What is the Planet of an Atom? ==="
+UNBIND answer_planet = mapping * planet
+CLEANUP answer_planet
+
+PRINT "=== What is the Gravity of an Atom? ==="
+UNBIND answer_gravity = mapping * gravity
+CLEANUP answer_gravity
+
+// 7. Reverse: What is the Nucleus of a Solar System?
+PRINT "=== Reverse: What is the Nucleus of a Solar System? ==="
+UNBIND reverse = mapping * nucleus
+CLEANUP reverse

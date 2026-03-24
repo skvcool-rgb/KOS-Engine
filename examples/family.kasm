@@ -1,0 +1,46 @@
+// ============================================================
+// KASM Example: Family Tree Reasoning
+// Multi-hop relational queries via role-filler binding
+//
+// Can KASM answer "Who is Alice's grandfather?"
+// by composing father_of(father_of(Alice))?
+// ============================================================
+
+SEED 101
+DIM 10000
+
+// People
+NODE alice, bob, carol, george, martha
+
+// Relations
+NODE father_of, mother_of
+
+// Encode facts: George is father of Bob, Martha is mother of Bob
+BIND fact_george_father = george * father_of
+BIND fact_martha_mother = martha * mother_of
+SUPERPOSE bob_parents = fact_george_father + fact_martha_mother
+
+// Encode facts: Bob is father of Alice, Carol is mother of Alice
+BIND fact_bob_father = bob * father_of
+BIND fact_carol_mother = carol * mother_of
+SUPERPOSE alice_parents = fact_bob_father + fact_carol_mother
+
+// Query: Who is Alice's father?
+PRINT "=== Who is Alice's father? ==="
+UNBIND q1 = alice_parents * father_of
+CLEANUP q1
+
+// Query: Who is Alice's mother?
+PRINT "=== Who is Alice's mother? ==="
+UNBIND q2 = alice_parents * mother_of
+CLEANUP q2
+
+// Query: Who is Bob's father? (= Alice's paternal grandfather)
+PRINT "=== Who is Bob's father? (Alice's grandfather) ==="
+UNBIND q3 = bob_parents * father_of
+CLEANUP q3
+
+// Query: Who is Bob's mother?
+PRINT "=== Who is Bob's mother? ==="
+UNBIND q4 = bob_parents * mother_of
+CLEANUP q4

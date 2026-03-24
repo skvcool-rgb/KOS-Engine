@@ -1,4 +1,23 @@
-"""KASM — Knowledge Assembly: A DSL for Vector Symbolic Architectures."""
-from .vsa import KASMEngine
+"""
+KASM — Knowledge Assembly: A Domain-Specific Language for Vector Symbolic Architectures.
 
-__all__ = ["KASMEngine"]
+The SQL of Topological Algebra.
+
+Usage:
+    from kasm import KASMEngine, KASMInterpreter
+
+    # Direct API
+    engine = KASMEngine(dimensions=10000, seed=42)
+    a = engine.node("sun")
+    b = engine.node("center")
+    c = engine.bind(a, b)
+
+    # DSL Interpreter
+    interpreter = KASMInterpreter()
+    interpreter.run_file("example.kasm")
+"""
+
+from .vsa import KASMEngine
+from .interpreter import KASMInterpreter
+
+__all__ = ["KASMEngine", "KASMInterpreter"]

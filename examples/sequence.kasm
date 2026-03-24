@@ -1,0 +1,39 @@
+// ============================================================
+// KASM Example: Sequence Encoding
+// "Dog bites Man" != "Man bites Dog" via PERMUTE
+//
+// Without sequence encoding, these two sentences would be
+// identical (commutative superposition). PERMUTE breaks
+// commutativity by shifting vectors based on position.
+// ============================================================
+
+SEED 77
+DIM 10000
+
+NODE dog, bites, man
+
+// Encode "dog bites man" with positional permutation
+PERMUTE pos_dog_1 = dog >> 0
+PERMUTE pos_bite_1 = bites >> 1
+PERMUTE pos_man_1 = man >> 2
+SUPERPOSE sentence_1 = pos_dog_1 + pos_bite_1 + pos_man_1
+
+// Encode "man bites dog" with positional permutation
+PERMUTE pos_man_2 = man >> 0
+PERMUTE pos_bite_2 = bites >> 1
+PERMUTE pos_dog_2 = dog >> 2
+SUPERPOSE sentence_2 = pos_man_2 + pos_bite_2 + pos_dog_2
+
+// Compare: should be DIFFERENT despite same words
+PRINT "=== 'Dog bites Man' vs 'Man bites Dog' ==="
+RESONATE sentence_1 <=> sentence_2
+
+// Same sentence should match itself
+PRINT "=== 'Dog bites Man' vs 'Dog bites Man' ==="
+RESONATE sentence_1 <=> sentence_1
+
+// Raw word comparison (no sequence)
+PRINT "=== Without sequence encoding (just superpose) ==="
+SUPERPOSE bag_1 = dog + bites + man
+SUPERPOSE bag_2 = man + bites + dog
+RESONATE bag_1 <=> bag_2
