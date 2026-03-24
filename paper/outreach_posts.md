@@ -38,7 +38,7 @@ We welcome feedback on the activation dynamics and the fuel decay model in parti
 
 **Submit at:** https://news.ycombinator.com/submit
 
-**Title:** KOS Engine: A Neurosymbolic Knowledge Engine That Replaces RAG with Fuel-Constrained Spreading Activation
+**Title:** KOS: Zero-hallucination knowledge engine – LLM never reasons, graph does all the work
 
 **URL:** https://github.com/skvcool-rgb/KOS-Engine
 

@@ -222,14 +222,16 @@ class DomainProfiler:
     Example::
 
         profiler = DomainProfiler()
-        domain = profiler.detect_domain("What are the contraindications of aspirin?")
-        # 'medical'
-        profiler.apply_profile(weaver, domain)
-        # Weaver now boosts dosage/symptom/contraindication evidence
+        domain = profiler.apply_to_weaver(weaver, "What are the contraindications?")
+        # 'medical' — Weaver now boosts dosage/symptom/contraindication evidence
         answer = weaver.weave(...)
         profiler.restore_profile(weaver)
         # Weaver weights restored to defaults
     """
+
+    # Class-level references (also available as module-level constants)
+    DOMAIN_KEYWORDS = DOMAIN_KEYWORDS
+    DOMAIN_PROFILES = DOMAIN_PROFILES
 
     def __init__(self) -> None:
         """Initialise the profiler."""
