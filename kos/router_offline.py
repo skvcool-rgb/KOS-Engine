@@ -623,18 +623,25 @@ class KOSShellOffline:
             answer_words = set(re.findall(r'[a-z]+', answer_lower))
             relevance_overlap = query_content_words & answer_words
 
-            # Check BOTH original AND resolved words in the answer.
-            # Original catches real relevance.
-            # Resolved catches typo cases (torronto->toronto).
+            # Check original words AND high-confidence resolved words.
+            # Only count resolved words if the original was a CLOSE typo
+            # (difflib ratio > 0.7), not a distant fuzzy match.
+            import difflib
             original_words_in_answer = 0
             resolved_words_in_answer = 0
             for w in raw_words:
                 if len(w) >= 4 and w in answer_lower:
                     original_words_in_answer += 1
-            for s in best_seeds:
+            for i, s in enumerate(best_seeds):
                 sw = self.lexicon.get_word(s)
                 if sw and sw.lower() in answer_lower:
-                    resolved_words_in_answer += 1
+                    # Check: was this a close typo or a distant match?
+                    orig_word = raw_words[i] if i < len(raw_words) else ""
+                    if orig_word and sw:
+                        ratio = difflib.SequenceMatcher(
+                            None, orig_word.lower(), sw.lower()).ratio()
+                        if ratio >= 0.7:  # Close typo (torronto->toronto = 0.88)
+                            resolved_words_in_answer += 1
 
             # Strict relevance: at least one 5+ letter ORIGINAL query
             # word must appear in the answer, AND it must not be a
