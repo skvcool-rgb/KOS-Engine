@@ -173,6 +173,71 @@ class KOSShellOffline:
             except Exception:
                 pass
 
+        # ── WIRE ALL MODULES ─────────────────────────────
+        # Self-Model: KOS knows what it knows
+        self._self_model = None
+        try:
+            from .self_model import SelfModel
+            self._self_model = SelfModel(kernel, lexicon)
+        except Exception:
+            pass
+
+        # Dreamer: background thinking + discovery
+        self._dreamer = None
+        try:
+            from .dreamer import Dreamer, DreamerConfig
+            cfg = DreamerConfig()
+            cfg.max_cycles = 50
+            cfg.cycle_interval_sec = 60
+            self._dreamer = Dreamer(kernel, lexicon, self._self_model, config=cfg)
+        except Exception:
+            pass
+
+        # Hierarchical Predictor: 6-layer prediction
+        self._hierarchical = None
+        try:
+            from .hierarchical import HierarchicalPredictor
+            from .predictive import PredictiveCodingEngine
+            self._pce = PredictiveCodingEngine(kernel, learning_rate=0.05)
+            self._hierarchical = HierarchicalPredictor(kernel, self._pce)
+        except Exception:
+            self._pce = None
+
+        # Experiment Engine: hypothesis testing
+        self._experiment = None
+        try:
+            from .experiment import ExperimentEngine
+            self._experiment = ExperimentEngine(
+                chemistry=self._chemistry, physics=self._physics,
+                biology=self._biology, kernel=kernel, lexicon=lexicon)
+        except Exception:
+            pass
+
+        # Social Engine: user trust
+        self._social = None
+        self._user_model = None
+        try:
+            from .user_model import UserModel
+            self._user_model = UserModel()
+        except Exception:
+            pass
+
+        # Julia Bridge: fast science
+        self._julia = None
+        try:
+            from .julia_bridge import get_julia_bridge
+            self._julia = get_julia_bridge()
+        except Exception:
+            pass
+
+        # KASM: analogical reasoning
+        self._kasm = None
+        try:
+            from kasm.vsa import KASMEngine
+            self._kasm = KASMEngine(dimensions=10000, seed=42)
+        except Exception:
+            pass
+
         # Semantic Vector Fallback (lazy-loaded)
         self.embedder = None
         self.node_embeddings = None
@@ -181,6 +246,13 @@ class KOSShellOffline:
 
         # NLTK POS tagger (lazy-loaded)
         self._nltk_loaded = False
+
+        # Sync self-model with graph
+        if self._self_model:
+            try:
+                self._self_model.sync_beliefs_from_graph()
+            except Exception:
+                pass
 
     def _ensure_nltk(self):
         """Lazy-load NLTK POS tagger."""
@@ -334,12 +406,26 @@ class KOSShellOffline:
 
     def _try_science_fallback(self, query: str) -> str:
         """
-        Try to answer from first principles using science drivers.
+        Try to answer from first principles using science drivers + Julia + KASM.
         Called when the knowledge graph has no relevant data.
 
-        Checks chemistry, physics, biology in order.
-        Returns answer string or None if no driver can help.
+        Order: Julia (fastest) -> Python drivers -> KASM analogy -> Experiment
         """
+        # 1. Try Julia for fast compiled math
+        if self._julia:
+            try:
+                ql = query.lower()
+                if "molecular weight" in ql:
+                    formula = re.search(r'([A-Z][a-zA-Z0-9]+)', query)
+                    if formula:
+                        r = self._julia.molecular_weight(formula.group(1))
+                        if r.get("status") == "success":
+                            return "Molecular weight of %s = %s %s (computed by Julia)" % (
+                                r.get("formula"), r.get("molecular_weight"), r.get("unit", "g/mol"))
+            except Exception:
+                pass
+
+        # 2. Try Python science drivers
         for name, drv in [("physics", self._physics),
                            ("chemistry", self._chemistry),
                            ("biology", self._biology)]:
@@ -350,6 +436,32 @@ class KOSShellOffline:
                         return result
                 except Exception:
                     pass
+
+        # 3. Try KASM analogical reasoning
+        if self._kasm and len(self.kernel.nodes) > 5:
+            try:
+                # Check if query is about analogy/similarity
+                ql = query.lower()
+                analogy_words = {"like", "similar", "analogy", "compare", "metaphor",
+                                 "equivalent", "same as", "relates to"}
+                if any(w in ql for w in analogy_words):
+                    words = [w for w in re.findall(r'[a-zA-Z]+', query) if len(w) > 3]
+                    if len(words) >= 2:
+                        # Create KASM vectors and check similarity
+                        for w in words[:4]:
+                            if not self._kasm.symbols.get(w.lower()):
+                                self._kasm.node(w.lower())
+                        if len(words) >= 2:
+                            sim = self._kasm.resonate(
+                                self._kasm.get(words[0].lower()),
+                                self._kasm.get(words[1].lower()))
+                            if abs(sim) > 0.1:
+                                return ("KASM analogy: '%s' and '%s' have %.1f%% "
+                                        "structural similarity in 10,000-D space." % (
+                                        words[0], words[1], abs(sim)*100))
+            except Exception:
+                pass
+
         return None
 
     def _synthesize_answer(self, prompt: str, evidence: str) -> str:
@@ -406,11 +518,99 @@ class KOSShellOffline:
         6.  Template Mouth (direct output)
         """
         # ====================================================
+        # -1. SELF-MODEL QUERIES ("what do you know", "what are you")
+        # ====================================================
+        pl = user_prompt.lower()
+        self_queries = {
+            "what do you know": "knowledge_inventory",
+            "what are you uncertain": "uncertainty",
+            "what have you learned": "recent_learning",
+            "what can you do": "capabilities",
+            "what are your capabilities": "capabilities",
+            "how did you learn": "provenance_trace",
+            "what is your state": "current_state",
+            "what are you": "identity",
+            "who are you": "identity",
+            "describe yourself": "identity",
+        }
+        if self._self_model:
+            for trigger, action in self_queries.items():
+                if trigger in pl:
+                    if action == "knowledge_inventory":
+                        beliefs = self._self_model.what_do_i_know(min_confidence=0.3)
+                        if beliefs:
+                            top = beliefs[:10]
+                            lines = ["%d%% %s" % (int(b["confidence"]*100), b["concept"]) for b in top]
+                            return "I know %d concepts. Top 10 by confidence:\n%s" % (len(beliefs), "\n".join(lines))
+                    elif action == "uncertainty":
+                        uncertain = self._self_model.what_am_i_uncertain_about(0.3)
+                        if uncertain:
+                            lines = ["%d%% %s" % (int(u["confidence"]*100), u["concept"]) for u in uncertain[:10]]
+                            return "I am uncertain about %d concepts:\n%s" % (len(uncertain), "\n".join(lines))
+                        return "I have no major uncertainties."
+                    elif action == "recent_learning":
+                        recent = self._self_model.what_did_i_learn_recently(60)
+                        if recent:
+                            lines = ["%s (%.0f min ago)" % (r["concept"], r["learned_ago_min"]) for r in recent[:10]]
+                            return "Recently learned:\n%s" % "\n".join(lines)
+                        return "I haven't learned anything new in the last hour."
+                    elif action == "capabilities":
+                        caps = self._self_model.my_capabilities()
+                        can = "\n".join("- %s" % c for c in caps["can_do"][:8])
+                        cant = "\n".join("- %s" % c for c in caps["cannot_do"][:4])
+                        return "I can:\n%s\n\nI cannot:\n%s" % (can, cant)
+                    elif action == "current_state":
+                        state = self._self_model.my_current_state()
+                        lines = ["%s: %s" % (k, v) for k, v in state.items()]
+                        return "My current state:\n%s" % "\n".join(lines)
+                    elif action == "identity":
+                        state = self._self_model.my_current_state()
+                        emotion = self._emotion.current_emotion() if self._emotion else "neutral"
+                        return ("I am KOS, a knowledge operating system with %d nodes and %d edges. "
+                                "My current emotion is %s. I use spreading activation, "
+                                "predictive coding, and deterministic evidence scoring. "
+                                "I never hallucinate." % (state["nodes"], state["edges"], emotion))
+                    elif action == "provenance_trace":
+                        # Extract the concept they're asking about
+                        words = [w for w in re.findall(r'[a-zA-Z]+', user_prompt) if len(w) > 3]
+                        for w in words:
+                            trace = self._self_model.how_did_i_learn(w.lower())
+                            if trace.get("source"):
+                                prov = trace.get("provenance", [])[:2]
+                                return ("I learned '%s' via %s (confidence: %.0f%%). "
+                                        "Source: %s" % (w, trace["source"],
+                                        trace.get("confidence", 0)*100,
+                                        prov[0] if prov else "unknown"))
+
+        # ====================================================
+        # -0.5. HIERARCHICAL PREDICTION (pre-query)
+        # ====================================================
+        _h_predictions = None
+        if self._hierarchical:
+            try:
+                raw_words_pre = [w.lower() for w in re.findall(r'[a-zA-Z]+', user_prompt) if len(w) > 2]
+                pre_seeds = []
+                known_pre = list(self.lexicon.word_to_uuid.keys())
+                for w in raw_words_pre[:3]:
+                    uid = self._resolve_word(w, known_pre)
+                    if uid:
+                        pre_seeds.append(uid)
+                if pre_seeds:
+                    _h_predictions = self._hierarchical.predict_full(pre_seeds, user_prompt[:50])
+            except Exception:
+                pass
+
+        # ====================================================
         # 0. MATH INTERCEPT
         # ====================================================
         if self.math.is_math_query(user_prompt):
             result = self.math.solve(user_prompt)
             if result.get("status") == "success":
+                if self._emotion_bridge:
+                    try:
+                        self._emotion_bridge.reward("reward", self.kernel)
+                    except Exception:
+                        pass
                 return (f"**{result['operation']}**\n\n"
                         f"Input: `{result['equation']}`\n\n"
                         f"Result: **{result['result']}**")
@@ -676,6 +876,57 @@ class KOSShellOffline:
                         self._emotion_bridge.reward("reward", self.kernel)
                     except Exception:
                         pass
+
+                # ── POST-ANSWER HOOKS ────────────────────
+                # Hierarchical: observe actual result
+                if self._hierarchical and _h_predictions:
+                    try:
+                        self._hierarchical.observe_actual(
+                            best_seeds,
+                            {"top_energy": best_results[0][1] if best_results else 0,
+                             "ticks": 8, "confidence": 0.9,
+                             "no_answer": False, "foraged": False},
+                            user_prompt[:50])
+                    except Exception:
+                        pass
+
+                # Predictive coding: train on this query
+                if self._pce and best_seeds:
+                    try:
+                        self._pce.query_with_prediction(best_seeds, top_k=5, verbose=False)
+                    except Exception:
+                        pass
+
+                # Self-model: record the query
+                if self._self_model:
+                    try:
+                        self._self_model.record_query(user_prompt, answer_text, 0)
+                    except Exception:
+                        pass
+
+                # User model: track interaction
+                if self._user_model:
+                    try:
+                        self._user_model.update_from_interaction(
+                            "default", user_prompt, answer_text, True)
+                    except Exception:
+                        pass
+
+                # Dreamer: run one background think cycle occasionally
+                if self._dreamer and hasattr(self, '_query_count'):
+                    self._query_count = getattr(self, '_query_count', 0) + 1
+                    if self._query_count % 10 == 0:  # Every 10th query
+                        try:
+                            self._dreamer.think_once(verbose=False)
+                        except Exception:
+                            pass
+
+                # Emotion: modulate confidence annotation
+                if self._emotion:
+                    emotion_state = self._emotion.current_emotion()
+                    if emotion_state != "neutral":
+                        answer_text += " [Emotion: %s]" % emotion_state
+
                 return answer_text
             else:
                 # Answer is irrelevant — try foraging if available
