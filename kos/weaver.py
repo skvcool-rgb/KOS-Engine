@@ -35,6 +35,9 @@ class AlgorithmicWeaver:
                   "created", "inventor", "founder", "creator", "person"}
     HOW_PROMPT = {"how", "mechanism", "process", "method", "works",
                   "function", "operate", "procedure", "step"}
+    SOLVE_PROMPT = {"prevent", "fix", "solve", "repair", "stop",
+                    "avoid", "cure", "heal", "protect", "mitigate",
+                    "overcome", "address", "improve"}
 
     WHERE_EVIDENCE = {" in ", " at ", " located ", " province ",
                       " country ", " region ", " shore ", " near ",
@@ -120,6 +123,17 @@ class AlgorithmicWeaver:
             if has_how:
                 if any(w in sent_lower for w in self.HOW_EVIDENCE):
                     score += self.HOW_BOOST
+
+            # SOLVE intent: queries asking how to fix/prevent something
+            # should boost sentences about repair/prevention/solution
+            has_solve = bool(self.SOLVE_PROMPT & set(prompt_lower.split()))
+            if has_solve:
+                solve_evidence = {" repair ", " self-repair ", " prevent ",
+                                  " heal ", " regenerat", " fix ", " protect",
+                                  " enzyme ", " mechanism ", " solution ",
+                                  " cure ", " restore ", " recover "}
+                if any(w in sent_lower for w in solve_evidence):
+                    score += 45  # Strong boost for solution-oriented evidence
 
             # WHAT-ATTRIBUTE intent
             for attr in attribute_words:
