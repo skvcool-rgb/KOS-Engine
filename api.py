@@ -37,6 +37,19 @@ from kos.self_improve import SelfImprover
 from kos.feedback import WeaverFeedback, FormulaLearner, ContinuousTuner, AnalogyScanner
 from kos.predictive import PredictiveCodingEngine
 
+# Optional imports (may not be installed yet)
+try:
+    from kos.user_model import UserModel
+    user_model = UserModel()
+except Exception:
+    user_model = None
+
+try:
+    from kos.persistence import GraphPersistence
+    graph_persistence = GraphPersistence()
+except Exception:
+    graph_persistence = None
+
 # ══════════════════════════════════════════════════════════
 # BOOT THE KOS ENGINE
 # ══════════════════════════════════════════════════════════
@@ -72,6 +85,13 @@ Montreal was founded in the year 1642.
 Montreal has a population of 1.7 million.
 """
 driver.ingest(SEED_CORPUS)
+
+# Try to load saved graph (restores previous session state)
+if graph_persistence:
+    try:
+        graph_persistence.load(kernel, lexicon)
+    except Exception:
+        pass  # No saved graph yet, that's fine
 
 # State tracking
 query_log = []
@@ -185,6 +205,13 @@ def query(req: QueryRequest):
         if overlap >= 2 and len(curr) >= 2:
             feedback._reask_count += 1
 
+    # Update user model
+    if user_model:
+        try:
+            user_model.update_from_interaction("default", req.prompt, answer, True)
+        except Exception:
+            pass
+
     return entry
 
 
@@ -196,6 +223,13 @@ async def ingest(req: IngestRequest):
     driver.ingest(req.text)
     nodes_after = len(kernel.nodes)
     latency = (time.perf_counter() - t0) * 1000
+
+    # Auto-save graph after ingest
+    if graph_persistence:
+        try:
+            graph_persistence.save(kernel, lexicon)
+        except Exception:
+            pass
 
     return {
         "status": "OK",
@@ -320,6 +354,25 @@ async def get_queries():
     return query_log[-50:]  # Last 50 queries
 
 
+@app.get("/api/user/profile")
+async def get_user_profile():
+    """Get current user profile."""
+    if user_model:
+        try:
+            profile = user_model.get_profile("default")
+            return {
+                "user_id": profile.user_id,
+                "expertise": profile.expertise,
+                "detail_level": profile.detail_level,
+                "domains": list(profile.domains) if hasattr(profile, 'domains') else [],
+                "query_count": profile.query_count if hasattr(profile, 'query_count') else 0,
+                "satisfaction": profile.satisfaction if hasattr(profile, 'satisfaction') else 0,
+            }
+        except Exception as e:
+            return {"error": str(e)[:100]}
+    return {"error": "UserModel not available"}
+
+
 @app.get("/api/health/history")
 async def get_health_history():
     """Get health check history."""
@@ -339,6 +392,81 @@ async def get_contradictions():
         {"node_a": str(a), "node_b": str(b), "details": str(d)}
         for (a, b), d in kernel.contradictions.items()
     ] if hasattr(kernel, 'contradictions') else []
+
+
+# ══════════════════════════════════════════════════════════
+# PERSISTENCE ENDPOINTS
+# ══════════════════════════════════════════════════════════
+
+@app.get("/api/save")
+async def save_graph():
+    """Save the current graph to disk."""
+    if graph_persistence:
+        try:
+            graph_persistence.save(kernel, lexicon)
+            return {"status": "OK", "nodes": len(kernel.nodes)}
+        except Exception as e:
+            return {"status": "ERROR", "error": str(e)[:100]}
+    return {"status": "ERROR", "error": "GraphPersistence not available"}
+
+
+@app.get("/api/load")
+async def load_graph():
+    """Load graph from disk."""
+    if graph_persistence:
+        try:
+            graph_persistence.load(kernel, lexicon)
+            return {"status": "OK", "nodes": len(kernel.nodes)}
+        except Exception as e:
+            return {"status": "ERROR", "error": str(e)[:100]}
+    return {"status": "ERROR", "error": "GraphPersistence not available"}
+
+
+# ══════════════════════════════════════════════════════════
+# EXPERIMENT ENDPOINT
+# ══════════════════════════════════════════════════════════
+
+class ExperimentRequest(BaseModel):
+    statement: str
+    parameters: dict = {}
+
+@app.post("/api/experiment")
+async def run_experiment(req: ExperimentRequest):
+    """Run a hypothesis through the ExperimentEngine."""
+    try:
+        from kos.experiment import ExperimentEngine, Hypothesis
+    except ImportError:
+        return {"error": "ExperimentEngine not available"}
+
+    # Build science drivers
+    chem_driver = None
+    phys_driver = None
+    try:
+        from kos.drivers.chemistry import ChemistryDriver
+        chem_driver = ChemistryDriver()
+    except Exception:
+        pass
+    try:
+        from kos.drivers.physics import PhysicsDriver
+        phys_driver = PhysicsDriver()
+    except Exception:
+        pass
+
+    hypothesis = Hypothesis(statement=req.statement, parameters=req.parameters)
+    engine = ExperimentEngine(
+        chemistry=chem_driver, physics=phys_driver,
+        kernel=kernel, lexicon=lexicon
+    )
+    result = engine.run(hypothesis, max_iterations=10, verbose=False)
+
+    # Serialize result (ExperimentResult objects are not JSON-serializable)
+    serialized = {
+        "status": result.get("status", "UNKNOWN"),
+        "iterations": result.get("iterations", 0),
+        "confidence": result.get("confidence", 0),
+        "hypothesis": str(result.get("final_hypothesis", "")),
+    }
+    return serialized
 
 
 # ══════════════════════════════════════════════════════════
@@ -364,7 +492,14 @@ def sensor_speak(req: QueryRequest):
         try:
             import pyttsx3
             engine = pyttsx3.init()
-            engine.setProperty('rate', 160)
+            # Emotion-modulated speech rate
+            em_state = _get_emotion().current_emotion()
+            rate = 160  # default
+            if em_state == "fear": rate = 200
+            elif em_state == "calm": rate = 140
+            elif em_state == "joy": rate = 175
+            elif em_state == "depression": rate = 120
+            engine.setProperty('rate', rate)
             engine.say(text)
             engine.runAndWait()
         except:
@@ -409,6 +544,12 @@ def sensor_see():
         # Store detections for context queries
         global _last_visual
         _last_visual = detections
+
+        # Ingest YOLO detections as graph sentence
+        if detections:
+            objects = [d["label"] for d in detections]
+            sentence = "KOS currently sees " + ", ".join(objects) + " in the visual field."
+            driver.ingest(sentence)
 
         # Trigger emotions from visual detections
         from kos.senses.perception import EmotionGrounding
@@ -583,7 +724,14 @@ def speak_answer(req: QueryRequest):
         try:
             import pyttsx3
             engine = pyttsx3.init()
-            engine.setProperty('rate', 160)
+            # Emotion-modulated speech rate
+            em_state = _get_emotion().current_emotion()
+            rate = 160  # default
+            if em_state == "fear": rate = 200
+            elif em_state == "calm": rate = 140
+            elif em_state == "joy": rate = 175
+            elif em_state == "depression": rate = 120
+            engine.setProperty('rate', rate)
             engine.say(text)
             engine.runAndWait()
         except:
