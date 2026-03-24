@@ -68,6 +68,15 @@ class AlgorithmicWeaver:
                         " incorporated "]):
                     sent_score += 40
 
+            # WHAT-ATTRIBUTE intent: if prompt asks about a specific
+            # attribute (climate, population, economy), boost sentences
+            # that contain that exact attribute word
+            attribute_words = prompt_words - {w for w in prompt_words
+                                               if w in ignore or len(w) < 4}
+            for attr in attribute_words:
+                if attr in sent_lower:
+                    sent_score += 35  # Strong boost for exact attribute match
+
             # GLOBAL sports noise suppression — unless user explicitly
             # asks about sports, punish sports sentences in ALL queries
             is_sports_query = any(w in prompt_lower for w in
