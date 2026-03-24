@@ -22,6 +22,7 @@ from collections import defaultdict
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 
@@ -83,6 +84,23 @@ boot_time = time.time()
 # ══════════════════════════════════════════════════════════
 
 app = FastAPI(title="KOS Agent API", version="5.1.0")
+
+# ── API Key Authentication ────────────────────────────
+KOS_API_KEY = os.environ.get("KOS_API_KEY", None)
+
+if KOS_API_KEY:
+    class APIKeyMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            if request.url.path.startswith("/api/"):
+                key = request.headers.get("X-API-Key")
+                if key != KOS_API_KEY:
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Invalid or missing API key"},
+                    )
+            return await call_next(request)
+
+    app.add_middleware(APIKeyMiddleware)
 
 # Serve static files
 static_dir = Path(__file__).parent / "static"

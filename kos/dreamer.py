@@ -207,7 +207,8 @@ class Dreamer:
                         # (high energy but not a direct neighbor)
                         is_direct = target_uid in self.kernel.nodes.get(seed, type('', (), {'connections': {}})()).connections if seed in self.kernel.nodes else False
 
-                        if not is_direct and energy > 1.0:
+                        max_e = getattr(self.kernel, 'max_energy', 3.0)
+                        if not is_direct and energy > 1.0 and energy < max_e * 0.9:
                             discovery = {
                                 "seed": seed_word,
                                 "target": target_word,

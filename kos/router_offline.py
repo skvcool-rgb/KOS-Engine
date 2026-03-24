@@ -125,6 +125,37 @@ class KOSShellOffline:
         from .drivers.math import MathDriver
         self.math = MathDriver()
 
+        # Science Drivers (lazy-instantiated once)
+        self._chemistry = None
+        self._physics = None
+        self._biology = None
+        try:
+            from .drivers.chemistry import ChemistryDriver
+            self._chemistry = ChemistryDriver()
+        except Exception:
+            pass
+        try:
+            from .drivers.physics import PhysicsDriver
+            self._physics = PhysicsDriver()
+        except Exception:
+            pass
+        try:
+            from .drivers.biology import BiologyDriver
+            self._biology = BiologyDriver()
+        except Exception:
+            pass
+
+        # Emotion integration
+        self._emotion = None
+        self._emotion_bridge = None
+        try:
+            from .emotion import EmotionEngine
+            from .emotion_integration import EmotionDecisionBridge
+            self._emotion = EmotionEngine()
+            self._emotion_bridge = EmotionDecisionBridge(self._emotion)
+        except Exception:
+            pass
+
         # System 2
         from .metacognition import ShadowKernel
         self.shadow = ShadowKernel(kernel)
@@ -364,6 +395,49 @@ class KOSShellOffline:
                         f"Input: `{result['equation']}`\n\n"
                         f"Result: **{result['result']}**")
 
+        # ====================================================
+        # 0b. SCIENCE DRIVER INTERCEPTS
+        # ====================================================
+        prompt_lower = user_prompt.lower()
+
+        # Chemistry intercept
+        if self._chemistry:
+            chem_keywords = {"molecular weight", "bond", "ph", "element",
+                             "react", "compound"}
+            if any(kw in prompt_lower for kw in chem_keywords):
+                try:
+                    result = self._chemistry.process(user_prompt)
+                    if result and result.strip():
+                        return result
+                except Exception:
+                    pass
+
+        # Physics intercept
+        if self._physics:
+            phys_keywords = {"force", "velocity", "energy", "photon",
+                             "wavelength", "gravity", "circuit", "fall",
+                             "projectile"}
+            if any(kw in prompt_lower for kw in phys_keywords):
+                try:
+                    result = self._physics.process(user_prompt)
+                    if result and result.strip():
+                        return result
+                except Exception:
+                    pass
+
+        # Biology intercept
+        if self._biology:
+            bio_keywords = {"dna", "protein", "codon", "enzyme", "drug",
+                            "dosage", "half-life", "atp", "mutation",
+                            "population growth"}
+            if any(kw in prompt_lower for kw in bio_keywords):
+                try:
+                    result = self._biology.process(user_prompt)
+                    if result and result.strip():
+                        return result
+                except Exception:
+                    pass
+
         # Track forager usage for this query
         self._forager_attempted = False
 
@@ -449,6 +523,15 @@ class KOSShellOffline:
             # Record for attention controller
             self.attention.record_query(best_seeds, self.kernel.current_tick)
 
+            # Emotion modulation on confidence
+            if self._emotion_bridge and self._emotion:
+                try:
+                    modulated = self._emotion_bridge.modulate_confidence(
+                        base_confidence=0.8,
+                        emotion_state=self._emotion.state)
+                except Exception:
+                    pass
+
             # POST-HOC SEMANTIC GAP CHECK
             evidence_lower = evidence_text.lower()
             if "no relevant context" not in evidence_lower:
@@ -513,6 +596,12 @@ class KOSShellOffline:
                            or "don't have" in answer_lower)
 
             if is_relevant:
+                # Emotion reward for successful answer
+                if self._emotion_bridge:
+                    try:
+                        self._emotion_bridge.reward("reward", self.kernel)
+                    except Exception:
+                        pass
                 return answer_text
             else:
                 # Answer is irrelevant — try foraging if available
@@ -540,6 +629,18 @@ class KOSShellOffline:
                                 return self._synthesize_answer(
                                     user_prompt, evidence2)
 
+                # Emotion punish for failed answer
+                if self._emotion_bridge:
+                    try:
+                        self._emotion_bridge.punish("social_rejection", self.kernel)
+                    except Exception:
+                        pass
                 return "I don't have data on this topic."
         else:
+            # Emotion punish for no results
+            if self._emotion_bridge:
+                try:
+                    self._emotion_bridge.punish("social_rejection", self.kernel)
+                except Exception:
+                    pass
             return "I don't have data on this topic."

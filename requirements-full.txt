@@ -1,0 +1,12 @@
+# Core dependencies
+-r requirements-core.txt
+
+# Heavy / optional dependencies
+sentence-transformers
+faiss-cpu
+z3-solver
+ultralytics
+opencv-python
+openai-whisper
+sounddevice
+pyttsx3

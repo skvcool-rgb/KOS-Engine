@@ -227,15 +227,22 @@ class SelfModel:
         """
         Scan the kernel and register all known concepts as beliefs.
         Called after ingestion to keep self-model in sync.
+        Limits connections from kos_self to top 20 highest-confidence
+        beliefs to prevent super-hub distortion.
         """
+        candidates = []
         for uid in self.kernel.nodes:
             if uid != self.kos_uid and uid not in self._belief_log:
                 word = self.lexicon.get_word(uid) if hasattr(self.lexicon, 'get_word') else None
                 if word:
-                    # Confidence based on number of connections
                     connections = len(self.kernel.nodes[uid].connections)
                     confidence = min(1.0, connections * 0.1)
-                    self.register_belief(uid, confidence, "graph_sync")
+                    candidates.append((uid, confidence))
+
+        # Sort by confidence descending and limit to top 20
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        for uid, confidence in candidates[:20]:
+            self.register_belief(uid, confidence, "graph_sync")
 
     # ── Internal Logging ─────────────────────────────────
 

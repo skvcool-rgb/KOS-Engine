@@ -1,0 +1,12 @@
+nltk
+jellyfish
+sympy
+numpy
+beautifulsoup4
+requests
+networkx
+pyvis
+streamlit
+openai
+fastapi
+uvicorn

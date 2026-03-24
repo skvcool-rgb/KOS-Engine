@@ -241,7 +241,8 @@ class HierarchicalPredictor:
             len(self.kernel.nodes[s].connections)
             for s in seeds if s in self.kernel.nodes
         )
-        estimated_energy = min(3.0, total_connections * 0.2)
+        max_e = getattr(self.kernel, 'max_energy', 3.0)
+        estimated_energy = min(max_e, total_connections * 0.2)
         return {"predicted_nodes": total_connections, "top_energy": estimated_energy}
 
     # ── Top-Down Priors ──────────────────────────────────
