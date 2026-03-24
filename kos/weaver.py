@@ -104,10 +104,16 @@ class AlgorithmicWeaver:
             if any(m in sent_lower for m in self.METADATA_NOISE):
                 score += self.DAEMON_PENALTY
 
-            # WHERE intent
+            # WHERE intent — tiered scoring
             if has_where:
-                if any(w in sent_lower for w in self.WHERE_EVIDENCE):
-                    score += self.WHERE_BOOST
+                # Strong location words get full boost
+                strong_where = {" located ", " province ", " country ",
+                                " region ", " continent ", " situated "}
+                weak_where = {" in ", " at ", " near ", " shore "}
+                if any(w in sent_lower for w in strong_where):
+                    score += self.WHERE_BOOST + 15  # Strong location
+                elif any(w in sent_lower for w in weak_where):
+                    score += self.WHERE_BOOST  # Weak location
 
             # WHEN intent
             if has_when:
@@ -159,10 +165,21 @@ class AlgorithmicWeaver:
             if len(sent.strip()) < 30:
                 score += self.SHORT_SENTENCE_PENALTY
 
+            # DEFINITION boost: "X is a Y" sentences are canonical
+            # definitions — prefer them for "tell me about X" queries
+            is_tell_query = any(w in prompt_lower for w in
+                                 ['tell', 'about', 'what is', 'describe',
+                                  'explain', 'define'])
+            if is_tell_query:
+                if ' is a ' in sent_lower or ' is an ' in sent_lower:
+                    score += 20  # Prefer definitional sentences
+
             scored_sentences.append((score, sent))
 
-        # 3. Sort and return top 2
-        scored_sentences.sort(key=lambda x: x[0], reverse=True)
+        # 3. Sort by score, then by sentence length as tiebreaker
+        # (longer sentences contain more information)
+        scored_sentences.sort(
+            key=lambda x: (x[0], len(x[1])), reverse=True)
 
         top_evidence = [sent for score, sent in scored_sentences[:2]
                         if score >= 0]
