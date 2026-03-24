@@ -316,28 +316,175 @@ class WebForager:
 
         return new_nodes
 
-    def forage_smart(self, query: str, verbose: bool = True) -> int:
-        """
-        Smart foraging: tries Wikipedia first, then arXiv if
-        the query looks scientific.
+    # ── PubMed Search Backend ─────────────────────────────────
 
-        Heuristic: if query contains scientific terms, try arXiv.
+    def forage_pubmed(self, query: str, max_results: int = 3,
+                      verbose: bool = True) -> int:
         """
-        # Try Wikipedia first
-        result = self.forage_query(query, verbose=verbose)
-        if result > 50:  # Got substantial content
-            return result
+        Search PubMed for biomedical literature and ingest abstracts.
 
-        # If Wikipedia was thin, try arXiv for scientific queries
-        science_words = {"cell", "solar", "quantum", "neural", "protein",
-                         "molecule", "genome", "algorithm", "theorem",
-                         "perovskite", "photovoltaic", "semiconductor",
-                         "enzyme", "catalyst", "polymer", "nanoscale"}
-        query_words = set(query.lower().split())
-        if query_words & science_words:
+        Uses NCBI E-utilities API (no authentication required for
+        low-volume requests). Ingests paper titles + abstracts.
+
+        Args:
+            query: Search terms for PubMed.
+            max_results: Maximum number of papers to fetch (default 3).
+            verbose: Print progress messages.
+
+        Returns:
+            Number of new concepts added to the graph.
+        """
+        if verbose:
+            print(f"[FORAGER-PUBMED] Searching: '{query}'")
+
+        # Step 1: Search for PubMed IDs
+        search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+        search_params = {
+            "db": "pubmed",
+            "term": query,
+            "retmax": max_results,
+            "retmode": "json",
+        }
+
+        try:
+            resp = requests.get(search_url, params=search_params,
+                                headers=self.headers, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+
+            id_list = data.get("esearchresult", {}).get("idlist", [])
+            if not id_list:
+                if verbose:
+                    print("[FORAGER-PUBMED] No results found.")
+                return 0
+
             if verbose:
-                print("[FORAGER] Wikipedia thin. Trying arXiv...")
-            arxiv_result = self.forage_arxiv(query, verbose=verbose)
-            return result + arxiv_result
+                print(f"[FORAGER-PUBMED] Found {len(id_list)} papers. "
+                      "Fetching abstracts...")
 
-        return result
+            # Step 2: Fetch abstracts for all IDs
+            fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+            fetch_params = {
+                "db": "pubmed",
+                "id": ",".join(id_list),
+                "rettype": "abstract",
+                "retmode": "text",
+            }
+
+            fetch_resp = requests.get(fetch_url, params=fetch_params,
+                                      headers=self.headers, timeout=20)
+            fetch_resp.raise_for_status()
+            abstract_text = fetch_resp.text
+
+            if not abstract_text or len(abstract_text.strip()) < 50:
+                if verbose:
+                    print("[FORAGER-PUBMED] No usable abstracts retrieved.")
+                return 0
+
+            # Truncate to max chars
+            if len(abstract_text) > self.max_chars:
+                abstract_text = abstract_text[:self.max_chars]
+                last_period = abstract_text.rfind('.')
+                if last_period > self.max_chars * 0.8:
+                    abstract_text = abstract_text[:last_period + 1]
+
+            before = len(self.kernel.nodes)
+            self.driver.ingest(abstract_text)
+            total_new = len(self.kernel.nodes) - before
+
+            if verbose:
+                print(f"[FORAGER-PUBMED] +{total_new} concepts from "
+                      f"{len(id_list)} papers")
+            return total_new
+
+        except Exception as e:
+            if verbose:
+                print(f"[FORAGER-PUBMED] Error: {e}")
+            return 0
+
+    # ── Smart Foraging with Domain Routing ─────────────────────
+
+    def forage_smart(self, query: str, domain: str = None,
+                     verbose: bool = True) -> int:
+        """
+        Smart foraging with domain-aware source routing and fallback.
+
+        Routes queries to the most appropriate source based on domain:
+        - domain="medical" -> PubMed first, then Wikipedia
+        - domain="science" -> arXiv first, then Wikipedia
+        - domain=None      -> Wikipedia first (default)
+
+        If the primary source returns thin results (<50 concepts),
+        automatically tries the next source in the chain.
+
+        Args:
+            query: Search query string.
+            domain: Optional domain hint ("medical", "science", or None).
+            verbose: Print progress messages.
+
+        Returns:
+            Total number of new concepts added to the graph.
+        """
+        # Define source chains per domain
+        if domain == "medical":
+            chain = [
+                ("PubMed", lambda: self.forage_pubmed(query, verbose=verbose)),
+                ("Wikipedia", lambda: self.forage_query(query, verbose=verbose)),
+            ]
+        elif domain == "science":
+            chain = [
+                ("arXiv", lambda: self.forage_arxiv(query, verbose=verbose)),
+                ("Wikipedia", lambda: self.forage_query(query, verbose=verbose)),
+            ]
+        else:
+            # Default: Wikipedia first, then try specialised sources
+            chain = [
+                ("Wikipedia", lambda: self.forage_query(query, verbose=verbose)),
+            ]
+            # Auto-detect scientific queries for fallback
+            science_words = {
+                "cell", "solar", "quantum", "neural", "protein",
+                "molecule", "genome", "algorithm", "theorem",
+                "perovskite", "photovoltaic", "semiconductor",
+                "enzyme", "catalyst", "polymer", "nanoscale",
+                "hypothesis", "experiment", "equation", "reactor",
+            }
+            medical_words = {
+                "disease", "drug", "treatment", "symptom", "patient",
+                "clinical", "therapy", "diagnosis", "receptor",
+                "pharmaceutical", "dosage", "contraindication",
+                "pathology", "surgery", "infection", "antibody",
+                "vaccine", "prognosis", "syndrome", "tumor",
+            }
+            query_words = set(query.lower().split())
+            if query_words & medical_words:
+                chain.append(
+                    ("PubMed", lambda: self.forage_pubmed(query, verbose=verbose)))
+            elif query_words & science_words:
+                chain.append(
+                    ("arXiv", lambda: self.forage_arxiv(query, verbose=verbose)))
+
+        total = 0
+        for source_name, fetcher in chain:
+            if verbose:
+                print(f"[FORAGER-SMART] Trying {source_name}...")
+            try:
+                result = fetcher()
+                total += result
+                if result > 50:
+                    # Got substantial content — no need for fallback
+                    if verbose:
+                        print(f"[FORAGER-SMART] {source_name} returned "
+                              f"{result} concepts. Done.")
+                    return total
+                elif result > 0 and verbose:
+                    print(f"[FORAGER-SMART] {source_name} returned "
+                          f"{result} concepts (thin). Trying next source...")
+            except Exception as e:
+                if verbose:
+                    print(f"[FORAGER-SMART] {source_name} failed: {e}. "
+                          "Trying next source...")
+
+        if verbose:
+            print(f"[FORAGER-SMART] Total: {total} concepts from all sources.")
+        return total
