@@ -329,6 +329,8 @@ async def get_contradictions():
 
 # Lazy sensor state
 _sensors = {"eyes": None, "ears": None, "mouth": None, "emotion": None}
+_last_visual = []  # Store last YOLO detections
+_last_audio = ""   # Store last transcription
 
 def _get_emotion():
     if _sensors["emotion"] is None:
@@ -385,6 +387,10 @@ def sensor_see():
                     "label": label,
                     "confidence": round(conf, 3),
                 })
+
+        # Store detections for context queries
+        global _last_visual
+        _last_visual = detections
 
         # Trigger emotions from visual detections
         from kos.senses.perception import EmotionGrounding
@@ -444,6 +450,11 @@ def sensor_listen():
         except Exception as we:
             text = "(Whisper error: %s)" % str(we)[:60]
 
+        # Store for context queries
+        global _last_audio
+        if text and not text.startswith("("):
+            _last_audio = text
+
         # Ingest transcript into graph if we got text
         if text and len(text) > 3 and not text.startswith("("):
             driver.ingest(text)
@@ -484,7 +495,24 @@ def sensor_emotion():
 def speak_answer(req: QueryRequest):
     """Query KOS then speak the answer."""
     t0 = time.perf_counter()
-    answer = shell.chat(req.prompt)
+    q = req.prompt.lower()
+
+    # Intercept visual context queries
+    visual_words = {"see", "looking", "picture", "photo", "camera", "webcam",
+                    "visible", "detect", "detected", "objects", "view", "image",
+                    "show", "showing", "front", "watching"}
+    audio_words = {"hear", "heard", "said", "listen", "sound", "audio",
+                   "spoke", "speaking", "voice", "recording"}
+
+    if any(w in q for w in visual_words) and _last_visual:
+        objects = [d["label"] + " (" + str(round(d["confidence"]*100)) + "%)"
+                   for d in _last_visual]
+        answer = "I can see: " + ", ".join(objects) + "."
+    elif any(w in q for w in audio_words) and _last_audio:
+        answer = "I heard: " + _last_audio
+    else:
+        answer = shell.chat(req.prompt)
+
     latency = (time.perf_counter() - t0) * 1000
 
     # Speak it in background thread
