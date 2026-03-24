@@ -190,7 +190,11 @@ class AutonomousAgent:
                     if len(clean) < 3:
                         continue
 
-                    new_nodes = self.forager.forage_query(clean, verbose=False)
+                    # Let the forager decide the best source
+                    if hasattr(self.forager, 'forage_smart'):
+                        new_nodes = self.forager.forage_smart(clean, verbose=False)
+                    else:
+                        new_nodes = self.forager.forage_query(clean, verbose=False)
                     if new_nodes > 0:
                         result["foraged"] += new_nodes
                         self._foraged_topics.append({
