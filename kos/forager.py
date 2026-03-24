@@ -143,17 +143,8 @@ class WebForager:
 
         return new_nodes
 
-    def forage_query(self, query: str, verbose: bool = True) -> int:
-        """
-        Search Wikipedia for a topic and ingest the result.
-
-        This is the simplest possible search — hit Wikipedia's API
-        for the best matching article and ingest it. No LLM needed.
-        """
-        if verbose:
-            print(f"[FORAGER] Searching Wikipedia for: '{query}'")
-
-        # Use Wikipedia's opensearch API to find the best article
+    def _wikipedia_search(self, query: str, verbose: bool = False) -> str:
+        """Search Wikipedia opensearch API. Returns article URL or empty string."""
         search_url = "https://en.wikipedia.org/w/api.php"
         params = {
             "action": "opensearch",
@@ -161,24 +152,69 @@ class WebForager:
             "limit": 1,
             "format": "json",
         }
-
         try:
             resp = requests.get(search_url, params=params,
                                 headers=self.headers, timeout=10)
             data = resp.json()
             if len(data) >= 4 and data[3]:
-                article_url = data[3][0]
-                if verbose:
-                    print(f"[FORAGER] Found article: {article_url}")
-                return self.forage(article_url, verbose=verbose)
-            else:
-                if verbose:
-                    print("[FORAGER] No Wikipedia article found.")
-                return 0
-        except Exception as e:
+                return data[3][0]
+        except Exception:
+            pass
+        return ""
+
+    def forage_query(self, query: str, verbose: bool = True) -> int:
+        """
+        Search Wikipedia for a topic and ingest the result.
+
+        Uses progressive fallback:
+        1. Try full query ("tungsten boiling point properties")
+        2. Try first two words ("tungsten boiling")
+        3. Try first word only ("tungsten")
+        4. Try each word individually
+
+        This ensures maximum hit rate on Wikipedia's search.
+        """
+        if verbose:
+            print(f"[FORAGER] Searching Wikipedia for: '{query}'")
+
+        words = query.strip().split()
+
+        # Progressive search strategies
+        search_attempts = [
+            query,                                    # Full query
+            ' '.join(words[:2]) if len(words) > 2 else None,  # First 2 words
+            words[0] if len(words) > 1 else None,     # First word only
+        ]
+        # Add individual words as last resort (skip stopwords)
+        stopwords = {'what', 'is', 'the', 'of', 'how', 'does', 'do', 'are',
+                     'was', 'were', 'can', 'will', 'a', 'an', 'and', 'or',
+                     'in', 'on', 'at', 'to', 'for', 'with', 'about', 'tell',
+                     'me', 'point', 'properties'}
+        for w in words:
+            if w.lower() not in stopwords and len(w) > 3:
+                search_attempts.append(w)
+
+        # Remove None and duplicates while preserving order
+        seen = set()
+        clean_attempts = []
+        for s in search_attempts:
+            if s and s not in seen:
+                seen.add(s)
+                clean_attempts.append(s)
+
+        for attempt in clean_attempts:
             if verbose:
-                print(f"[FORAGER] Search failed: {e}")
-            return 0
+                print(f"[FORAGER] Trying: '{attempt}'")
+
+            url = self._wikipedia_search(attempt, verbose=verbose)
+            if url:
+                if verbose:
+                    print(f"[FORAGER] Found article: {url}")
+                return self.forage(url, verbose=verbose)
+
+        if verbose:
+            print(f"[FORAGER] No Wikipedia article found after {len(clean_attempts)} attempts.")
+        return 0
 
     def forage_multiple(self, queries: list, verbose: bool = True) -> int:
         """Forage multiple topics sequentially."""

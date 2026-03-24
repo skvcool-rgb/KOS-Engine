@@ -174,17 +174,23 @@ class AlgorithmicWeaver:
                 if ' is a ' in sent_lower or ' is an ' in sent_lower:
                     score += 20  # Prefer definitional sentences
 
-            scored_sentences.append((score, sent))
+            # Compute tiebreak score: unique keyword density
+            # (how many query words appear / total sentence words)
+            # Higher density = more relevant per word = better tiebreak
+            tiebreak = (len(overlap) / max(len(sent_words), 1)) * 100
 
-        # 3. Sort by score, then by sentence length as tiebreaker
-        # (longer sentences contain more information)
+            scored_sentences.append((score, tiebreak, sent))
+
+        # 3. Sort by score FIRST, then by keyword density as tiebreaker
+        # Density tiebreak ensures "Toronto is in Ontario" beats
+        # "Toronto hosts the annual film festival" when both score equal
         scored_sentences.sort(
-            key=lambda x: (x[0], len(x[1])), reverse=True)
+            key=lambda x: (x[0], x[1]), reverse=True)
 
-        top_evidence = [sent for score, sent in scored_sentences[:2]
+        top_evidence = [sent for score, tiebreak, sent in scored_sentences[:2]
                         if score >= 0]
 
         if not top_evidence and scored_sentences:
-            top_evidence = [scored_sentences[0][1]]
+            top_evidence = [scored_sentences[0][2]]
 
         return "\n".join(top_evidence)
