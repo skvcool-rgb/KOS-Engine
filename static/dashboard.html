@@ -208,6 +208,7 @@
         <div class="nav-item" onclick="showPage('tasks')"><span class="icon">&#9744;</span> Tasks</div>
         <div class="nav-item" onclick="showPage('history')"><span class="icon">&#8986;</span> History</div>
         <div class="nav-item" onclick="showPage('senses')"><span class="icon">&#9673;</span> Senses</div>
+        <div class="nav-item" onclick="showPage('agent')"><span class="icon">&#9889;</span> Agent</div>
     </div>
 
     <div class="main">
@@ -366,6 +367,37 @@
                     Listen → Think → Speak
                 </button>
                 <div id="fullLoopResult" style="margin-top: 12px;"></div>
+            </div>
+        </div>
+
+        <!-- ══ AGENT ═════════════════════════════ -->
+        <div id="page-agent" class="page">
+            <h2 style="margin-bottom: 16px">Autonomous Agent</h2>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button class="btn" style="background: var(--accent);" onclick="agentStart()">Start Agent</button>
+                <button class="btn secondary" onclick="agentPause()">Pause</button>
+                <button class="btn secondary" onclick="agentResume()">Resume</button>
+                <button class="btn danger" onclick="agentStop()">Stop</button>
+                <button class="btn secondary" onclick="agentRefresh()">Refresh</button>
+            </div>
+
+            <div class="metrics" id="agentMetrics"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="card">
+                    <h3>Foraged Topics</h3>
+                    <div id="foragedList" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                <div class="card">
+                    <h3>Proposals (Needs Approval)</h3>
+                    <div id="proposalList"></div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 16px;">
+                <h3>Agent Events (Live)</h3>
+                <div id="agentEvents" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
             </div>
         </div>
 
@@ -768,9 +800,94 @@ async function refreshEmotion() {
     if (sero) sero.textContent = d.serotonin;
 }
 
+// ══════════════════════════════════════════════════════════
+// AGENT
+// ══════════════════════════════════════════════════════════
+
+async function agentStart() {
+    const d = await api('agent/start', {method: 'POST'});
+    if (d) agentRefresh();
+}
+async function agentStop() {
+    await api('agent/stop', {method: 'POST'});
+    agentRefresh();
+}
+async function agentPause() {
+    await api('agent/pause', {method: 'POST'});
+    agentRefresh();
+}
+async function agentResume() {
+    await api('agent/resume', {method: 'POST'});
+    agentRefresh();
+}
+
+async function agentRefresh() {
+    const s = await api('agent/status');
+    if (!s) return;
+
+    document.getElementById('agentMetrics').innerHTML = `
+        <div class="metric"><div class="label">Status</div><div class="value ${s.running ? 'green' : 'orange'}">${s.running ? (s.paused ? 'PAUSED' : 'RUNNING') : 'STOPPED'}</div></div>
+        <div class="metric"><div class="label">Cycle</div><div class="value blue">${s.cycle || 0}/${s.max_cycles || 0}</div></div>
+        <div class="metric"><div class="label">Nodes Learned</div><div class="value green">${s.nodes_learned || 0}</div></div>
+        <div class="metric"><div class="label">Topics Foraged</div><div class="value purple">${s.topics_foraged || 0}</div></div>
+        <div class="metric"><div class="label">Improvements</div><div class="value blue">${s.improvements_applied || 0}</div></div>
+        <div class="metric"><div class="label">Errors</div><div class="value ${(s.errors||0) > 0 ? 'orange' : 'green'}">${s.errors || 0}</div></div>
+    `;
+
+    // Foraged topics
+    const foraged = await api('agent/foraged');
+    if (foraged && foraged.length > 0) {
+        document.getElementById('foragedList').innerHTML = foraged.reverse().map(f =>
+            `<div class="log-entry"><span class="time">${new Date(f.time*1000).toLocaleTimeString()}</span>
+            <strong>${escHtml(f.topic)}</strong> <span style="color:var(--accent)">+${f.nodes} nodes</span></div>`
+        ).join('');
+    } else {
+        document.getElementById('foragedList').innerHTML = '<p style="color:var(--text2)">No topics foraged yet</p>';
+    }
+
+    // Proposals
+    const proposals = await api('agent/proposals');
+    if (proposals && proposals.length > 0) {
+        document.getElementById('proposalList').innerHTML = proposals.map((p, i) =>
+            `<div style="padding:8px;border-bottom:1px solid var(--border);">
+            <strong>[${escHtml(p.type)}]</strong> ${escHtml(p.reason||'').substring(0,80)}
+            <div style="margin-top:4px;">
+                <button class="btn" style="padding:4px 12px;font-size:11px;" onclick="approveProposal(${i})">Approve</button>
+                <button class="btn danger" style="padding:4px 12px;font-size:11px;" onclick="rejectProposal(${i})">Reject</button>
+            </div></div>`
+        ).join('');
+    } else {
+        document.getElementById('proposalList').innerHTML = '<p style="color:var(--text2)">No proposals pending</p>';
+    }
+
+    // Events
+    const events = await api('agent/events');
+    if (events && events.length > 0) {
+        document.getElementById('agentEvents').innerHTML = events.reverse().map(e =>
+            `<div class="log-entry">${e.message ? escHtml(e.message) :
+            'Cycle ' + e.cycle + ': +' + (e.nodes_added||0) + ' nodes, ' +
+            (e.foraged||0) + ' foraged, ' + (e.improved||0) + ' improved'}</div>`
+        ).join('');
+    }
+}
+
+async function approveProposal(idx) {
+    await api('agent/approve/' + idx, {method: 'POST'});
+    agentRefresh();
+}
+async function rejectProposal(idx) {
+    await api('agent/reject/' + idx, {method: 'POST'});
+    agentRefresh();
+}
+
 // Auto-refresh
 refreshOverview();
 setInterval(refreshOverview, 5000);
+setInterval(() => {
+    if (document.getElementById('page-agent').classList.contains('active')) {
+        agentRefresh();
+    }
+}, 3000);
 </script>
 
 </body>

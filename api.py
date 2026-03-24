@@ -490,6 +490,155 @@ async def run_experiment(req: ExperimentRequest):
 
 
 # ══════════════════════════════════════════════════════════
+# AUTONOMOUS AGENT ENDPOINTS
+# ══════════════════════════════════════════════════════════
+
+_agent = None
+
+def _get_agent():
+    global _agent
+    if _agent is None:
+        try:
+            from kos.autonomous import AutonomousAgent
+            from kos.auto_improve import AutoImprover
+            from kos.dreamer import Dreamer, DreamerConfig
+            from kos.self_model import SelfModel
+            from kos.predictive import PredictiveCodingEngine
+
+            _pce = PredictiveCodingEngine(kernel, learning_rate=0.05)
+            _sm = SelfModel(kernel, lexicon, _pce)
+            _sm.sync_beliefs_from_graph()
+
+            _cfg = DreamerConfig()
+            _cfg.max_cycles = 200
+            _cfg.cycle_interval_sec = 0
+            _cfg.curiosity_probability = 0.8
+            _dreamer = Dreamer(kernel, lexicon, _sm, _pce, _cfg)
+
+            _ai = AutoImprover(kernel, lexicon, shell, _pce)
+
+            _forager = None
+            try:
+                from kos.forager import WebForager
+                _forager = WebForager(kernel, lexicon, driver)
+            except Exception:
+                pass
+
+            _agent = AutonomousAgent(
+                kernel, lexicon, shell, driver,
+                forager=_forager, auto_improver=_ai,
+                dreamer=_dreamer, self_model=_sm, pce=_pce)
+
+            # Directed learning curriculum
+            _agent.learning_curriculum = [
+                # Self-knowledge
+                "artificial intelligence self improvement",
+                "knowledge graph spreading activation",
+                "hyperdimensional computing vector symbolic architecture",
+                "predictive coding free energy principle",
+                "neuromorphic computing Intel Loihi",
+                # Human challenges
+                "global energy crisis renewable solutions",
+                "climate change carbon dioxide solutions",
+                "water scarcity desalination technology",
+                "air pollution health effects solutions",
+                "ocean plastic pollution cleanup technology",
+                "deforestation reforestation carbon capture",
+                "sustainable agriculture food security",
+                "nuclear fusion energy ITER tokamak",
+                "solar energy perovskite efficiency record",
+                "hydrogen fuel cell green hydrogen production",
+                "battery technology solid state lithium",
+                "resource depletion circular economy recycling",
+                "biodiversity loss species extinction conservation",
+                "microplastics health environmental impact",
+                "carbon capture direct air technology",
+            ]
+        except Exception as e:
+            print("[AGENT] Init error: %s" % e)
+    return _agent
+
+@app.post("/api/agent/start")
+def agent_start():
+    """Start the autonomous agent."""
+    agent = _get_agent()
+    if not agent:
+        return {"error": "Agent init failed"}
+    if agent._running:
+        return {"status": "already_running", **agent.get_status()}
+    agent.max_cycles = 20
+    agent.cycle_interval_sec = 10
+    agent.run_background(max_cycles=20, cycle_interval=10, verbose=True)
+    return {"status": "started", **agent.get_status()}
+
+@app.post("/api/agent/stop")
+def agent_stop():
+    agent = _get_agent()
+    if agent:
+        agent.stop()
+        return {"status": "stopped", **agent.get_status()}
+    return {"error": "No agent"}
+
+@app.post("/api/agent/pause")
+def agent_pause():
+    agent = _get_agent()
+    if agent:
+        agent.pause()
+        return {"status": "paused"}
+    return {"error": "No agent"}
+
+@app.post("/api/agent/resume")
+def agent_resume():
+    agent = _get_agent()
+    if agent:
+        agent.resume()
+        return {"status": "resumed"}
+    return {"error": "No agent"}
+
+@app.get("/api/agent/status")
+def agent_status():
+    agent = _get_agent()
+    if agent:
+        return agent.get_status()
+    return {"running": False, "error": "No agent"}
+
+@app.get("/api/agent/events")
+def agent_events():
+    agent = _get_agent()
+    if agent:
+        return agent.get_events(30)
+    return []
+
+@app.get("/api/agent/foraged")
+def agent_foraged():
+    agent = _get_agent()
+    if agent:
+        return agent.get_foraged(20)
+    return []
+
+@app.get("/api/agent/proposals")
+def agent_proposals():
+    agent = _get_agent()
+    if agent:
+        return agent.get_queued_proposals()
+    return []
+
+@app.post("/api/agent/approve/{index}")
+def agent_approve(index: int):
+    agent = _get_agent()
+    if agent:
+        return agent.approve_proposal(index)
+    return {"error": "No agent"}
+
+@app.post("/api/agent/reject/{index}")
+def agent_reject(index: int):
+    agent = _get_agent()
+    if agent:
+        return agent.reject_proposal(index)
+    return {"error": "No agent"}
+
+
+# ══════════════════════════════════════════════════════════
 # SENSOR ENDPOINTS
 # ══════════════════════════════════════════════════════════
 
