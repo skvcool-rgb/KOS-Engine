@@ -16,6 +16,8 @@ class KOSKernel:
     def __init__(self, enable_vsa: bool = True, vsa_dimensions: int = 10_000):
         self.nodes = {}
         self.provenance = defaultdict(set)
+        self.contradictions = []  # FIX #9: detected contradictions log
+        self._lexicon_ref = None  # Set via set_lexicon() for contradiction word lookup
         self.current_tick = 0
         self.max_ticks = 15
         self.tiebreaker = 0
@@ -28,6 +30,10 @@ class KOSKernel:
                 self.vsa = VSABackplane(dimensions=vsa_dimensions)
             except ImportError:
                 pass  # KASM not available, run in scalar-only mode
+
+    def set_lexicon(self, lexicon):
+        """Set lexicon reference for contradiction word lookup."""
+        self._lexicon_ref = lexicon
 
     def add_node(self, concept_id: str):
         if concept_id not in self.nodes:
@@ -45,9 +51,109 @@ class KOSKernel:
         if source_text:
             pair = tuple(sorted([source_id, target_id]))
             self.provenance[pair].add(source_text)
-        # Silent VSA binding — the node state vector absorbs this edge
+
+        # FIX #9: Contradiction detection at ingestion
+        # Check if the source already has a connection to an antonym of target
+        if weight > 0.5 and source_id in self.nodes:
+            contradiction = self._check_antonym_contradiction(
+                source_id, target_id, weight)
+            if contradiction:
+                self.contradictions.append(contradiction)
+
+        # Silent VSA binding
         if self.vsa is not None:
             self.vsa.on_edge_created(source_id, target_id, weight)
+
+    # ── FIX #9: Contradiction Detection ──────────────────────
+
+    def _check_antonym_contradiction(self, source_id: str,
+                                      target_id: str,
+                                      weight: float) -> dict:
+        """
+        Check if source already connects to an antonym of target.
+
+        Uses WordNet antonym lookup + domain antonym map.
+        Returns contradiction record or None.
+        """
+        try:
+            from nltk.corpus import wordnet as wn
+        except ImportError:
+            return None
+
+        # Get the plain word for the new target
+        # Use lexicon reverse lookup if available
+        target_word = target_id
+        if hasattr(self, '_lexicon_ref') and self._lexicon_ref:
+            target_word = self._lexicon_ref.get_word(target_id)
+        elif '.' in target_id:
+            target_word = target_id.split('.')[0]
+        # Strip KASM_ prefix if present
+        if target_word.startswith('KASM_'):
+            target_word = target_word  # Can't decode — skip
+
+        # Get WordNet antonyms for target word
+        target_antonyms = set()
+        for syn in wn.synsets(target_word):
+            for lemma in syn.lemmas():
+                for ant in lemma.antonyms():
+                    target_antonyms.add(ant.name().lower())
+
+        # Supplement with common domain antonym pairs
+        _DOMAIN_ANTONYMS = {
+            "cheap": {"expensive", "costly", "pricey"},
+            "expensive": {"cheap", "affordable", "inexpensive"},
+            "affordable": {"expensive", "costly"},
+            "fast": {"slow"},
+            "slow": {"fast", "quick", "rapid"},
+            "hot": {"cold", "cool"},
+            "cold": {"hot", "warm"},
+            "safe": {"dangerous", "unsafe", "hazardous"},
+            "dangerous": {"safe", "harmless"},
+            "efficient": {"inefficient", "wasteful"},
+            "inefficient": {"efficient"},
+            "large": {"small", "tiny"},
+            "small": {"large", "big", "massive"},
+            "strong": {"weak", "fragile"},
+            "weak": {"strong", "robust"},
+            "true": {"false"},
+            "false": {"true"},
+            "good": {"bad", "poor"},
+            "bad": {"good"},
+            "high": {"low"},
+            "low": {"high"},
+            "increase": {"decrease", "reduce"},
+            "decrease": {"increase"},
+        }
+        if target_word.lower() in _DOMAIN_ANTONYMS:
+            target_antonyms.update(_DOMAIN_ANTONYMS[target_word.lower()])
+
+        if not target_antonyms:
+            return None
+
+        # Check if source already connects to any antonym
+        node = self.nodes.get(source_id)
+        if not node:
+            return None
+
+        for existing_target in node.connections:
+            existing_word = existing_target
+            if hasattr(self, '_lexicon_ref') and self._lexicon_ref:
+                existing_word = self._lexicon_ref.get_word(existing_target)
+            elif '.' in existing_target:
+                existing_word = existing_target.split('.')[0]
+
+            if existing_word.lower() in target_antonyms:
+                return {
+                    'source': source_id,
+                    'existing_target': existing_target,
+                    'new_target': target_id,
+                    'existing_word': existing_word,
+                    'new_word': target_word,
+                    'type': 'antonym_contradiction',
+                    'tick': self.current_tick,
+                }
+
+        return None
 
     def propagate(self, seed_ids: list,
                   seed_energy: float = 3.0) -> dict:

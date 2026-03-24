@@ -138,6 +138,9 @@ class TextDriver:
         self.lexicon = lexicon
         self.resolver = KOSResolver()
         self.lemmatizer = _LEMMATIZER
+        # Set lexicon ref on kernel for contradiction word lookup
+        if hasattr(kernel, 'set_lexicon'):
+            kernel.set_lexicon(lexicon)
         self.JUNK = {
             "def", "import", "from", "return", "print", "len",
             "true", "false", "none", "thing", "way",
