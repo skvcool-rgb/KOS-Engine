@@ -417,43 +417,68 @@ class KOSShellOffline:
 
         # ====================================================
         # 0b. SCIENCE DRIVER INTERCEPTS
+        # Only fire when the query is EXPLICITLY about science.
+        # Require 2+ science keywords OR a multi-word science phrase.
+        # This prevents "to be a perfect being" → Beryllium.
         # ====================================================
         prompt_lower = user_prompt.lower()
+        prompt_words = set(re.findall(r'\b[a-z]+\b', prompt_lower))
 
-        # Chemistry intercept
+        # Chemistry intercept — require explicit chemistry context
         if self._chemistry:
-            chem_keywords = {"molecular weight", "bond", "ph", "element",
-                             "react", "compound"}
-            if any(kw in prompt_lower for kw in chem_keywords):
+            chem_phrases = {"molecular weight", "bond type", "chemical bond",
+                            "periodic table", "chemical reaction", "ph of",
+                            "acid base", "oxidation state"}
+            chem_words = {"molecule", "compound", "element", "valence",
+                          "electronegativity", "isotope", "molar",
+                          "stoichiometry", "reagent", "catalyst"}
+            phrase_match = any(p in prompt_lower for p in chem_phrases)
+            word_match = len(prompt_words & chem_words) >= 1
+            if phrase_match or word_match:
                 try:
                     result = self._chemistry.process(user_prompt)
-                    if result and result.strip():
+                    if result and result.strip() and len(result.strip()) > 20:
                         return result
                 except Exception:
                     pass
 
-        # Physics intercept
+        # Physics intercept — require explicit physics context
         if self._physics:
-            phys_keywords = {"force", "velocity", "energy", "photon",
-                             "wavelength", "gravity", "circuit", "fall",
-                             "projectile"}
-            if any(kw in prompt_lower for kw in phys_keywords):
+            phys_phrases = {"speed of light", "free fall", "kinetic energy",
+                            "gravitational force", "ohms law", "time dilation",
+                            "mass energy", "snell law", "photon energy",
+                            "de broglie", "carnot efficiency"}
+            phys_words = {"velocity", "acceleration", "momentum", "photon",
+                          "wavelength", "projectile", "thermodynamic",
+                          "electromagnetic", "refraction", "relativity",
+                          "entropy", "watt", "joule", "newton"}
+            phrase_match = any(p in prompt_lower for p in phys_phrases)
+            word_match = len(prompt_words & phys_words) >= 1
+            if phrase_match or word_match:
                 try:
                     result = self._physics.process(user_prompt)
-                    if result and result.strip():
+                    if result and result.strip() and len(result.strip()) > 20:
                         return result
                 except Exception:
                     pass
 
-        # Biology intercept
+        # Biology intercept — require explicit biology context
         if self._biology:
-            bio_keywords = {"dna", "protein", "codon", "enzyme", "drug",
-                            "dosage", "half-life", "atp", "mutation",
-                            "population growth"}
-            if any(kw in prompt_lower for kw in bio_keywords):
+            bio_phrases = {"dna sequence", "amino acid", "codon table",
+                           "enzyme kinetics", "drug interaction",
+                           "half life", "population growth",
+                           "hardy weinberg", "nernst potential",
+                           "michaelis menten", "atp yield"}
+            bio_words = {"protein", "codon", "genome", "ribosome",
+                         "mitochondria", "enzyme", "receptor",
+                         "dosage", "pharmacology", "allele",
+                         "mutation", "transcription", "metabolism"}
+            phrase_match = any(p in prompt_lower for p in bio_phrases)
+            word_match = len(prompt_words & bio_words) >= 1
+            if phrase_match or word_match:
                 try:
                     result = self._biology.process(user_prompt)
-                    if result and result.strip():
+                    if result and result.strip() and len(result.strip()) > 20:
                         return result
                 except Exception:
                     pass

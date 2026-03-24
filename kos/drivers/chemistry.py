@@ -344,14 +344,31 @@ class ChemistryDriver:
             result = self.calculate_ph(conc, typ)
             return f"pH of {conc}M {typ} = {result['pH']}"
 
-        # Element lookup
-        for sym, data in ELEMENTS.items():
-            if data["name"] in q or sym.lower() in q.split():
-                return (f"{data['name'].title()} ({sym}): "
-                        f"atomic number {data['number']}, "
-                        f"mass {data['mass']} g/mol, "
-                        f"electronegativity {data['electronegativity']}, "
-                        f"valence {data['valence']}, "
-                        f"category {data['category']}")
+        # Element lookup — only if query is explicitly about an element
+        # Require context words that indicate the user is asking about chemistry
+        element_context = {"element", "atom", "atomic", "metal", "chemical",
+                           "periodic", "properties of", "what is", "tell me about"}
+        has_context = any(ctx in q for ctx in element_context)
+
+        if has_context:
+            for sym, data in ELEMENTS.items():
+                # Match full element name (not partial)
+                # Or symbol as standalone word (not "be" inside "being")
+                name_match = (" " + data["name"] + " ") in (" " + q + " ")
+                # For symbols: require uppercase match in original query
+                # and the symbol must be a standalone word
+                sym_words = query.split()
+                sym_match = sym in sym_words and len(sym) >= 2
+                # Single-letter symbols (C, N, O, etc.) need extra context
+                if len(sym) == 1:
+                    sym_match = False  # Never match single-letter symbols from queries
+
+                if name_match or sym_match:
+                    return (f"{data['name'].title()} ({sym}): "
+                            f"atomic number {data['number']}, "
+                            f"mass {data['mass']} g/mol, "
+                            f"electronegativity {data['electronegativity']}, "
+                            f"valence {data['valence']}, "
+                            f"category {data['category']}")
 
         return ""
