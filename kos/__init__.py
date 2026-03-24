@@ -32,9 +32,33 @@ try:
 except ImportError:
     VisionDriver = None
 
-__version__ = "4.1.0"
+# V6.1 feature modules — lazy imports for optional dependencies
+try:
+    from .emotion_integration import EmotionDecisionBridge
+except ImportError:
+    EmotionDecisionBridge = None
+try:
+    from .compound_detector import CompoundDetector
+except ImportError:
+    CompoundDetector = None
+try:
+    from .sleep import SleepCycle
+except ImportError:
+    SleepCycle = None
+try:
+    from .user_model import UserModel
+except ImportError:
+    UserModel = None
+try:
+    from .domain_profiles import DomainProfiler
+except ImportError:
+    DomainProfiler = None
+
+__version__ = "6.1.0"
 __all__ = [
     "ConceptNode", "KOSKernel", "KASMLexicon", "AlgorithmicWeaver",
     "KOSShell", "KOSDaemon", "TextDriver", "KOSResolver",
     "MathDriver", "ASTDriver", "VisionDriver",
+    "EmotionDecisionBridge", "CompoundDetector", "SleepCycle",
+    "UserModel", "DomainProfiler",
 ]

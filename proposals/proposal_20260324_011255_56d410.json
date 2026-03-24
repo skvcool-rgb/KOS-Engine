@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_011255_56d410",
+  "type": "threshold_change",
+  "description": "Change activation_threshold: 0.1 -> 0.05",
+  "impact": "Lower activation threshold improves recall for deep multi-hop chains without significant precision loss. Empirically validated in Contagion Audit test.",
+  "code": "\n# AUTO-GENERATED THRESHOLD CHANGE\n# Parameter: activation_threshold\n# Old value: 0.1\n# New value: 0.05\n# Reason: Lower activation threshold improves recall for deep multi-hop chains without significant precision loss. Empirically validated in Contagion Audit test.\n\n# Apply in the relevant module:\n# activation_threshold = 0.05\n\n# To apply via config (preferred):\n# Edit .cache/self_tuned_config.json:\n#   \"activation_threshold\": {\"value\": 0.05}\n",
+  "timestamp": "2026-03-24T01:12:55.923794",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

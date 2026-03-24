@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_011255_b7b804",
+  "type": "synonym_addition",
+  "description": "Add 1 new synonym mappings discovered from graph structure overlap",
+  "impact": "Improves Layer 1b resolution for 1 words",
+  "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"photon\": \"electricity\",\n}\n",
+  "timestamp": "2026-03-24T01:12:55.921036",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

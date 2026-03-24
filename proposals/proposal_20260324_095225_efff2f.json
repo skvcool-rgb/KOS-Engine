@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_095225_efff2f",
+  "type": "synonym_addition",
+  "description": "Add 4 new synonym mappings discovered from graph structure overlap",
+  "impact": "Improves Layer 1b resolution for 4 words",
+  "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"city\": \"population\",\n    \"oxygen\": \"lung\",\n    \"hydrogen\": \"helium\",\n    \"into\": \"helium\",\n}\n",
+  "timestamp": "2026-03-24T09:52:25.078858",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

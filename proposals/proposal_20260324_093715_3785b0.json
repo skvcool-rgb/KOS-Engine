@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_093715_3785b0",
+  "type": "synonym_addition",
+  "description": "Add 17 new synonym mappings discovered from graph structure overlap",
+  "impact": "Improves Layer 1b resolution for 17 words",
+  "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"city\": \"population\",\n    \"oxygen\": \"lung\",\n    \"quantum_computer\": \"measurement\",\n    \"qubits\": \"measurement\",\n    \"hydrogen\": \"helium\",\n    \"quantum\": \"measurement\",\n    \"qubit\": \"measurement\",\n    \"ju\u02d0\": \"two-level\",\n    \"qudit\": \"device\",\n    \"device\": \"two-level\",\n    \"electron\": \"coherent\",\n    \"examples\": \"measurement\",\n    \"polarization\": \"horizontal\",\n    \"photon\": \"horizontal\",\n    \"1995\": \"during\",\n    \"conversation\": \"wootters\",\n    \"william\": \"wootters\",\n}\n",
+  "timestamp": "2026-03-24T09:37:15.653298",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

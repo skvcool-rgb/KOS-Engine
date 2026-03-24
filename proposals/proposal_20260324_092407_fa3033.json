@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_092407_fa3033",
+  "type": "synonym_addition",
+  "description": "Add 28 new synonym mappings discovered from graph structure overlap",
+  "impact": "Improves Layer 1b resolution for 28 words",
+  "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"oxygen\": \"lung\",\n    \"hydrogen\": \"helium\",\n    \"1963\": \"bava\",\n    \"mario\": \"bava\",\n    \"1972\": \"polanski\",\n    \"roman\": \"polanski\",\n    \"2019\": \"costello\",\n    \"barry\": \"costello\",\n    \"baseman\": \"costello\",\n    \"abbott\": \"costello\",\n    \"catchphrase\": \"austin\",\n    \"wrestler\": \"austin\",\n    \"steve\": \"austin\",\n    \"comedy/music\": \"2013\",\n    \"album\": \"2013\",\n    \"burnham\": \"2013\",\n    \"music\": \"facebook\",\n    \"low-end\": \"facebook\",\n    \"tracker\": \"facebook\",\n    \"bittorrent\": \"facebook\",\n}\n",
+  "timestamp": "2026-03-24T09:24:07.444867",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_092953_a9a306",
+  "type": "synonym_addition",
+  "description": "Add 7 new synonym mappings discovered from graph structure overlap",
+  "impact": "Improves Layer 1b resolution for 7 words",
+  "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"oxygen\": \"lung\",\n    \"hydrogen\": \"helium\",\n    \"update\": \"\\displaystyle\",\n    \"0.1,0.7,0.2\": \"0,1,0\",\n    \"one-hot\": \"0,1,0\",\n    \"-th\": \"softargmax\",\n    \"softmax\": \"softargmax\",\n}\n",
+  "timestamp": "2026-03-24T09:29:53.389162",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

@@ -66,8 +66,10 @@ class SleepCycle:
         self._protected_uids: Set[str] = protected_uids or set()
         self._scheduler_thread: Optional[threading.Thread] = None
         self._scheduler_stop = threading.Event()
+        self._lock = threading.Lock()
         self._cycle_count = 0
         self._last_stats: Dict[str, int] = {}
+        self._history: List[Dict] = []
 
     def set_protected_uids(self, uids: Set[str]) -> None:
         """Update the set of protected node UIDs.
@@ -98,28 +100,34 @@ class SleepCycle:
         Returns:
             Dict with counts: {strengthened, weakened, pruned, merged, inferred}
         """
+        start = time.perf_counter()
+
         stats = {
             'strengthened': 0,
             'weakened': 0,
             'pruned': 0,
             'merged': 0,
             'inferred': 0,
+            'time_ms': 0.0,
         }
 
-        # Phase 1 & 2: Strengthen / Weaken edges based on myelin
-        stats['strengthened'], stats['weakened'] = self._modulate_edges(kernel)
+        with self._lock:
+            # Phase 1 & 2: Strengthen / Weaken edges based on myelin
+            stats['strengthened'], stats['weakened'] = self._modulate_edges(kernel)
 
-        # Phase 3: Prune dead edges
-        stats['pruned'] = self._prune_edges(kernel)
+            # Phase 3: Prune dead edges
+            stats['pruned'] = self._prune_edges(kernel)
 
-        # Phase 4: Merge near-duplicate nodes
-        stats['merged'] = self._merge_duplicates(kernel, lexicon)
+            # Phase 4: Merge near-duplicate nodes
+            stats['merged'] = self._merge_duplicates(kernel, lexicon)
 
-        # Phase 5: Triadic closure for top-connected nodes
-        stats['inferred'] = self._triadic_closure(kernel)
+            # Phase 5: Triadic closure for top-connected nodes
+            stats['inferred'] = self._triadic_closure(kernel)
 
+        stats['time_ms'] = (time.perf_counter() - start) * 1000.0
         self._cycle_count += 1
         self._last_stats = stats
+        self._history.append(dict(stats))
 
         return stats
 
@@ -406,6 +414,18 @@ class SleepCycle:
             self._scheduler_thread = None
 
     # ----- Stats / Monitoring ---------------------------------------------
+
+    def get_history(self) -> List[Dict]:
+        """Return past consolidation results.
+
+        Each entry in the list corresponds to one consolidation cycle and
+        contains the keys: strengthened, weakened, pruned, merged,
+        inferred, and time_ms.
+
+        Returns:
+            List of dicts, one per completed cycle.
+        """
+        return list(self._history)
 
     def get_stats(self) -> Dict:
         """Return statistics from the last consolidation cycle.

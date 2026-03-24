@@ -362,6 +362,26 @@ class DomainProfiler:
 
         return True
 
+    def apply_to_weaver(self, weaver, query: str) -> str:
+        """Detect domain from query and temporarily adjust weaver boosts.
+
+        Convenience method that combines detect_domain and apply_profile
+        in a single call. Returns the detected domain name so callers
+        can log or display it.
+
+        Args:
+            weaver: AlgorithmicWeaver instance.
+            query: The raw query string.
+
+        Returns:
+            The detected domain name string, or 'general' if no
+            domain-specific profile was applied.
+        """
+        domain = self.detect_domain(query)
+        if domain and self.apply_profile(weaver, domain):
+            return domain
+        return "general"
+
     def restore_profile(self, weaver) -> None:
         """Restore Weaver weights to their pre-profile values.
 
