@@ -1,10 +1,31 @@
-openai>=1.0.0
-streamlit>=1.30.0
+# KOS Engine V5.1 — Dependencies
+# Install: pip install -r requirements.txt
+
+# Core
 nltk>=3.8.0
 jellyfish>=1.0.0
 sympy>=1.12
+numpy>=1.24.0
+
+# Web foraging
 beautifulsoup4>=4.12.0
 requests>=2.31.0
+
+# Graph visualization
 networkx>=3.0
 pyvis>=0.3.0
+
+# Semantic vector fallback (Layer 5)
+sentence-transformers>=2.2.0
+
+# Scaling (Month 2)
+faiss-cpu>=1.7.0
+
+# Optional: LLM mode (not required for offline)
+openai>=1.0.0
+
+# Optional: Web UI
+streamlit>=1.30.0
+
+# Optional: Formal verification
 z3-solver>=4.12.0
