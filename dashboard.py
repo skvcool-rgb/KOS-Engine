@@ -464,7 +464,7 @@ elif page == "🏥 Health Monitor":
     st.write(f"**Cached predictions:** {pce_stats['cached_predictions']}")
     st.write(f"**Total predictions made:** {pce_stats['total_predictions']}")
     st.write(f"**Overall accuracy:** {pce_stats['overall_accuracy']:.0%}")
-    st.write(f"**Weight adjustments:** {pce_stats['total_adjustments']}")
+    st.write(f"**Weight adjustments:** {pce_stats.get('total_weight_adjustments', 0)}")
 
     if st.button("🔄 Run Health Check Now"):
         st.session_state.agent_status = "BUSY"
