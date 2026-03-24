@@ -339,15 +339,19 @@ def _get_emotion():
 @app.post("/api/sensors/speak")
 def sensor_speak(req: QueryRequest):
     """Make KOS speak text through speakers."""
-    try:
-        import pyttsx3
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 160)
-        engine.say(req.prompt)
-        engine.runAndWait()
-        return {"status": "OK", "text": req.prompt, "engine": "pyttsx3"}
-    except Exception as e:
-        return {"status": "ERROR", "error": str(e)[:100]}
+    import threading
+    def _speak(text):
+        try:
+            import pyttsx3
+            engine = pyttsx3.init()
+            engine.setProperty('rate', 160)
+            engine.say(text)
+            engine.runAndWait()
+        except:
+            pass
+    t = threading.Thread(target=_speak, args=(req.prompt,), daemon=True)
+    t.start()
+    return {"status": "OK", "text": req.prompt, "engine": "pyttsx3"}
 
 @app.post("/api/sensors/see")
 def sensor_see():
@@ -483,16 +487,20 @@ def speak_answer(req: QueryRequest):
     answer = shell.chat(req.prompt)
     latency = (time.perf_counter() - t0) * 1000
 
-    # Speak it
-    try:
-        import pyttsx3
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 160)
-        engine.say(answer.strip())
-        engine.runAndWait()
-        spoken = True
-    except:
-        spoken = False
+    # Speak it in background thread
+    import threading
+    def _speak(text):
+        try:
+            import pyttsx3
+            engine = pyttsx3.init()
+            engine.setProperty('rate', 160)
+            engine.say(text)
+            engine.runAndWait()
+        except:
+            pass
+    t = threading.Thread(target=_speak, args=(answer.strip(),), daemon=True)
+    t.start()
+    spoken = True
 
     return {
         "prompt": req.prompt,
