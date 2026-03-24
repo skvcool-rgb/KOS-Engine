@@ -1,27 +1,50 @@
 """
-KOS V2.0 — Shell (LLM Ear + KOS Brain + LLM Mouth).
+KOS V5.0 — Shell (LLM Ear + System 2 Brain + Active Inference + LLM Mouth).
 
-The LLM acts as the Ear to catch conversation and extract intent,
-and the Mouth to speak naturally. Your KOS Kernel is the Brain.
+The full cognitive pipeline:
+    0.  Math Intercept (SymPy exact computation)
+    0.5 Pre-LLM Raw Word Scan (typo rescue before normalization)
+    1.  LLM Ear (JSON keyword extraction — deterministic)
+    2.  6-Layer Word Resolution Cascade
+    3.  System 2: ShadowKernel simulates multiple interpretations
+    4.  Active Inference: if entropy too high, Forager learns autonomously
+    5.  Algorithmic Weaver scores evidence deterministically
+    6.  LLM Mouth synthesizes 1-2 sentence answer
 """
 import os
+import re
+import json
+import itertools
 from openai import OpenAI
 
 
 class KOSShell:
-    def __init__(self, kernel, lexicon):
+    # Entropy threshold — above this, Active Inference triggers
+    ENTROPY_THRESHOLD = 15.0
+
+    def __init__(self, kernel, lexicon, enable_forager: bool = True):
         self.kernel = kernel
         self.lexicon = lexicon
-        # Initialize the LLM (Requires OPENAI_API_KEY as environment variable)
-        # OR point to a local model:
-        # client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
         self.client = OpenAI()
 
         # Math Coprocessor (0% hallucination — SymPy exact computation)
         from .drivers.math import MathDriver
         self.math = MathDriver()
 
-        # Layer 5: Semantic Vector Fallback (lazy-loaded to save memory)
+        # System 2: Metacognitive Shadow Simulation
+        from .metacognition import ShadowKernel
+        self.shadow = ShadowKernel(kernel)
+
+        # Layer 5: Active Inference — Autonomous Web Forager
+        self.forager = None
+        if enable_forager:
+            try:
+                from .forager import WebForager
+                self.forager = WebForager(kernel, lexicon)
+            except Exception:
+                pass  # Forager optional — runs without it
+
+        # Semantic Vector Fallback (lazy-loaded)
         self.embedder = None
         self.node_embeddings = None
         self.embedded_uuids = []
@@ -45,7 +68,7 @@ class KOSShell:
         return True
 
     def _resolve_word(self, w, known_words):
-        """6-layer word→UUID resolution cascade."""
+        """6-layer word->UUID resolution cascade."""
         import difflib
         import jellyfish
 
@@ -54,8 +77,7 @@ class KOSShell:
             return self.lexicon.word_to_uuid[w]
 
         # Layer 2: Difflib fuzzy match (character similarity >= 0.6)
-        matches = difflib.get_close_matches(
-            w, known_words, n=1, cutoff=0.6)
+        matches = difflib.get_close_matches(w, known_words, n=1, cutoff=0.6)
         if matches:
             return self.lexicon.word_to_uuid[matches[0]]
 
@@ -77,7 +99,6 @@ class KOSShell:
             return resolved
 
         # Layer 5: Semantic vector fallback (all-MiniLM-L6-v2)
-        # Embeds node LABELS only (not documents) — zero hallucination risk
         if self.kernel.nodes and self._ensure_embeddings():
             w_emb = self.embedder.encode(w, convert_to_tensor=True)
             hits = self._st_util.cos_sim(w_emb, self.node_embeddings)[0]
@@ -88,47 +109,8 @@ class KOSShell:
 
         return None
 
-    def chat(self, user_prompt: str) -> str:
-        # ====================================================
-        # 0. MATH INTERCEPT (fires before the LLM Ear)
-        # ====================================================
-        if self.math.is_math_query(user_prompt):
-            result = self.math.solve(user_prompt)
-            if result.get("status") == "success":
-                return (f"**{result['operation']}**\n\n"
-                        f"Input: `{result['equation']}`\n\n"
-                        f"Result: **{result['result']}**")
-            # If math parse failed, fall through to the graph
-
-        # ====================================================
-        # 0.5 PRE-LLM RAW WORD SCAN
-        # Catches typos and taxonomy matches BEFORE the LLM
-        # normalizes them away. Any seeds found here supplement
-        # the LLM-extracted seeds.
-        # ====================================================
-        import re
-        import itertools
-
-        stopwords = {"what", "where", "when", "who", "why", "how",
-                     "is", "the", "a", "an", "does", "it", "are", "do",
-                     "of", "in", "to", "for", "and", "or", "so", "about",
-                     "that", "this", "was", "be", "has", "had", "will",
-                     "can", "if", "my", "me", "i", "you", "we", "they",
-                     "not", "no", "with", "from", "by", "at", "on", "its",
-                     "wht", "gud", "que", "es", "mas", "el"}
-        raw_words = [w.lower() for w in re.findall(r'[a-zA-Z]+', user_prompt)
-                     if len(w) > 2 and w.lower() not in stopwords]
-
-        known_words = list(self.lexicon.word_to_uuid.keys())
-        pre_seeds = set()
-        for w in raw_words:
-            uid = self._resolve_word(w, known_words)
-            if uid:
-                pre_seeds.add(uid)
-
-        # ====================================================
-        # 1. THE EAR (Strict JSON extraction — deterministic)
-        # ====================================================
+    def _extract_keywords(self, user_prompt: str) -> dict:
+        """LLM Ear: strict JSON keyword extraction."""
         extraction_system = """
         You are a deterministic database router. Read the user's prompt.
         If it is casual conversation ('hello', 'how are you'), output: {"status": "CONVERSATION"}
@@ -136,8 +118,6 @@ class KOSShell:
         Output ONLY valid JSON in this exact format:
         {"status": "EXECUTE", "keywords": ["keyword1", "keyword2"]}
         """
-
-        import json
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -148,22 +128,36 @@ class KOSShell:
                 ],
                 temperature=0.0
             )
-            extracted = json.loads(response.choices[0].message.content.strip())
+            return json.loads(response.choices[0].message.content.strip())
         except Exception:
-            extracted = {"status": "EXECUTE", "keywords": []}
+            return {"status": "EXECUTE", "keywords": []}
 
-        # Intercept casual conversation — BUT only if pre-scan found nothing
-        if extracted.get("status") == "CONVERSATION" and not pre_seeds:
-            return self._talk_normally(
-                user_prompt,
-                "I am a factual knowledge system. I don't have access "
-                "to personal or conversational context."
-            )
+    def _resolve_seeds(self, user_prompt: str, extracted: dict) -> tuple:
+        """
+        Pre-LLM scan + LLM keyword resolution -> merged seed set.
+        Also returns the raw words for Active Inference fallback.
+        """
+        stopwords = {"what", "where", "when", "who", "why", "how",
+                     "is", "the", "a", "an", "does", "it", "are", "do",
+                     "of", "in", "to", "for", "and", "or", "so", "about",
+                     "that", "this", "was", "be", "has", "had", "will",
+                     "can", "if", "my", "me", "i", "you", "we", "they",
+                     "not", "no", "with", "from", "by", "at", "on", "its",
+                     "wht", "gud", "que", "es", "mas", "el"}
 
-        # ====================================================
-        # 2. THE BRAIN (Your KOS runs the exact math)
-        # ====================================================
-        # Resolve LLM-extracted keywords through the 6-layer cascade
+        raw_words = [w.lower() for w in re.findall(r'[a-zA-Z]+', user_prompt)
+                     if len(w) > 2 and w.lower() not in stopwords]
+
+        known_words = list(self.lexicon.word_to_uuid.keys())
+
+        # Pre-LLM scan
+        pre_seeds = set()
+        for w in raw_words:
+            uid = self._resolve_word(w, known_words)
+            if uid:
+                pre_seeds.add(uid)
+
+        # LLM-extracted keywords
         llm_seeds = set()
         if extracted.get("status") != "CONVERSATION":
             words = [w.strip().lower() for w in extracted.get("keywords", [])]
@@ -172,49 +166,205 @@ class KOSShell:
                 if uid:
                     llm_seeds.add(uid)
 
-        # Merge pre-LLM and LLM seeds (union — no duplicates)
-        seeds = list(pre_seeds | llm_seeds)
+        return list(pre_seeds | llm_seeds), raw_words
 
-        evidence_text = "No relevant context found in database."
+    def _weave_evidence(self, seeds: list, results: list,
+                        user_prompt: str) -> str:
+        """Run the Algorithmic Weaver on graph results."""
+        from .weaver import AlgorithmicWeaver
+        weaver = AlgorithmicWeaver()
+        return weaver.weave(
+            self.kernel,
+            [self.lexicon.get_word(s) for s in seeds],
+            results,
+            self.lexicon,
+            seeds,
+            user_prompt
+        )
 
-        if seeds:
-            results = self.kernel.query(seeds, top_k=10)
+    def chat(self, user_prompt: str) -> str:
+        """
+        The full cognitive pipeline.
 
-            # Collect ALL provenance evidence (inter-seed + traversal)
-            all_evidence = set()
+        System 1 (fast): Math intercept + direct graph query
+        System 2 (slow): Shadow simulation + contradiction detection
+        Active Inference: Autonomous foraging if entropy too high
+        """
+        # ====================================================
+        # 0. MATH INTERCEPT (fires before everything)
+        # ====================================================
+        if self.math.is_math_query(user_prompt):
+            result = self.math.solve(user_prompt)
+            if result.get("status") == "success":
+                return (f"**{result['operation']}**\n\n"
+                        f"Input: `{result['equation']}`\n\n"
+                        f"Result: **{result['result']}**")
 
-            # Inter-seed provenance (direct pairs)
-            for s1, s2 in itertools.combinations(seeds, 2):
-                pair = tuple(sorted([s1, s2]))
-                all_evidence.update(
-                    getattr(self.kernel, 'provenance', {}).get(
-                        pair, set()))
-
-            # Traversal provenance (seed→result pairs)
-            if results:
-                for ans_uuid, _ in results:
-                    for s_uuid in seeds:
-                        all_evidence.update(
-                            getattr(self.kernel, 'provenance', {}).get(
-                                tuple(sorted([s_uuid, ans_uuid])), set()))
-
-            if results:
-                # Weaver returns top-2 raw sentences scored by intent
-                from .weaver import AlgorithmicWeaver
-                weaver = AlgorithmicWeaver()
-                evidence_text = weaver.weave(
-                    self.kernel,
-                    [self.lexicon.get_word(s) for s in seeds],
-                    results,
-                    self.lexicon,
-                    seeds,
-                    user_prompt
-                )
+        # Track whether forager was already used this query (prevent loops)
+        self._forager_attempted = False
 
         # ====================================================
-        # 3. THE MOUTH (LLM formats the Weaver's scored evidence)
+        # 1. THE EAR (JSON keyword extraction)
         # ====================================================
-        return self._talk_normally(user_prompt, evidence_text)
+        extracted = self._extract_keywords(user_prompt)
+
+        if extracted.get("status") == "CONVERSATION":
+            # Quick pre-scan check before dismissing as conversation
+            stopwords = {"what", "where", "when", "who", "why", "how",
+                         "is", "the", "a", "an", "does", "it", "are", "do"}
+            raw = [w.lower() for w in re.findall(r'[a-zA-Z]+', user_prompt)
+                   if len(w) > 2 and w.lower() not in stopwords]
+            known = list(self.lexicon.word_to_uuid.keys())
+            has_seeds = any(self._resolve_word(w, known) for w in raw)
+            if not has_seeds:
+                return self._talk_normally(
+                    user_prompt,
+                    "I am a factual knowledge system. I don't have access "
+                    "to personal or conversational context.")
+
+        # ====================================================
+        # 2. SEED RESOLUTION (6-layer cascade)
+        # ====================================================
+        seeds, raw_words = self._resolve_seeds(user_prompt, extracted)
+
+        # ====================================================
+        # 3. SYSTEM 2: METACOGNITIVE SHADOW SIMULATION
+        # ====================================================
+        # Create multiple interpretation branches
+        # Branch 1: All resolved seeds (full query)
+        # Branch 2: First seed only (broad/fallback)
+        # Branch 3: LLM keywords only (if different from pre-scan)
+        branches = [seeds]
+        if len(seeds) > 1:
+            branches.append(seeds[:1])  # Broad fallback
+            branches.append(seeds[1:])  # Alternate focus
+
+        thought = self.shadow.think_before_speaking(branches)
+
+        # ====================================================
+        # 4. ACTIVE INFERENCE (Curiosity Trigger)
+        # ====================================================
+        if (thought is None or self.shadow.SYSTEM_ENTROPY > self.ENTROPY_THRESHOLD):
+            entropy = self.shadow.SYSTEM_ENTROPY
+
+            if self.forager and raw_words:
+                print(f"\n[ACTIVE INFERENCE] System Entropy = {entropy:.1f} "
+                      f"(threshold: {self.ENTROPY_THRESHOLD})")
+                print("[ACTIVE INFERENCE] Insufficient knowledge. "
+                      "Deploying autonomous forager...")
+
+                # Formulate a search query from the raw words
+                search_query = " ".join(raw_words[:4])
+                self._forager_attempted = True
+                new_nodes = self.forager.forage_query(search_query)
+
+                if new_nodes > 0:
+                    print(f"[ACTIVE INFERENCE] Acquired +{new_nodes} concepts. "
+                          f"Re-thinking...")
+
+                    # Re-resolve seeds after learning
+                    seeds, raw_words = self._resolve_seeds(
+                        user_prompt, extracted)
+                    branches = [seeds]
+                    if len(seeds) > 1:
+                        branches.append(seeds[:1])
+
+                    # Re-run System 2 with new knowledge
+                    thought = self.shadow.think_before_speaking(branches)
+
+                    if thought:
+                        print(f"[ACTIVE INFERENCE] Uncertainty resolved! "
+                              f"New entropy = {self.shadow.SYSTEM_ENTROPY:.1f}")
+                    else:
+                        print("[ACTIVE INFERENCE] Foraging did not resolve "
+                              "the uncertainty.")
+                else:
+                    print("[ACTIVE INFERENCE] Forager returned no new data.")
+            else:
+                if not self.forager:
+                    print(f"\n[ACTIVE INFERENCE] Entropy = {entropy:.1f} "
+                          f"but Forager is offline.")
+
+        # ====================================================
+        # 5. WEAVER + MOUTH (Evidence scoring + synthesis)
+        # ====================================================
+        if thought and thought["results"]:
+            best_seeds = thought["seeds"]
+            best_results = thought["results"]
+            evidence_text = self._weave_evidence(
+                best_seeds, best_results, user_prompt)
+
+            # POST-HOC ENTROPY CHECK: The graph activated, but does
+            # the Weaver's evidence actually match the query intent?
+            # Even if we have evidence, if the key query words are
+            # completely absent from it, there's a semantic gap.
+            evidence_lower = evidence_text.lower()
+            no_evidence = "no relevant context" in evidence_lower
+
+            # Semantic gap detection: check if ANY non-entity query
+            # words appear in the evidence. If none do, the evidence
+            # is about the right entity but wrong attribute.
+            if not no_evidence and raw_words:
+                # Get entity words (things that resolved to seeds)
+                entity_words = set()
+                known = list(self.lexicon.word_to_uuid.keys())
+                for w in raw_words:
+                    if self._resolve_word(w, known):
+                        entity_words.add(w)
+                # Attribute words = query words that aren't entities
+                attribute_words = [w for w in raw_words
+                                   if w not in entity_words and len(w) > 3]
+                if attribute_words:
+                    attr_in_evidence = sum(
+                        1 for w in attribute_words if w in evidence_lower)
+                    if attr_in_evidence == 0:
+                        # None of the attribute words appear in evidence
+                        # = semantic gap (knows entity, not the fact)
+                        no_evidence = True
+                        print(f"\n[SEMANTIC GAP] Query attributes "
+                              f"{attribute_words} not found in evidence.")
+
+            if no_evidence and self.forager and raw_words and not self._forager_attempted:
+                print(f"\n[POST-HOC INFERENCE] Graph activated but Weaver "
+                      f"found no matching evidence.")
+                print(f"[POST-HOC INFERENCE] Semantic gap detected. "
+                      f"Deploying Forager...")
+
+                search_query = " ".join(raw_words[:4])
+                new_nodes = self.forager.forage_query(search_query)
+
+                if new_nodes > 0:
+                    print(f"[POST-HOC INFERENCE] +{new_nodes} concepts acquired. "
+                          f"Re-weaving...")
+
+                    # Re-resolve and re-query with expanded knowledge
+                    seeds, raw_words = self._resolve_seeds(
+                        user_prompt, extracted)
+                    if seeds:
+                        new_results = self.kernel.query(seeds, top_k=10)
+                        if new_results:
+                            evidence_text = self._weave_evidence(
+                                seeds, new_results, user_prompt)
+
+            # Annotate with confidence metadata
+            if self.shadow.SYSTEM_ENTROPY > 10.0:
+                evidence_text += (
+                    f"\n[Note: System confidence is moderate. "
+                    f"Entropy={self.shadow.SYSTEM_ENTROPY:.1f}]")
+
+            return self._talk_normally(user_prompt, evidence_text)
+        else:
+            # Complete knowledge gap — even after foraging
+            if self.forager:
+                return self._talk_normally(
+                    user_prompt,
+                    "I attempted to resolve my uncertainty via autonomous "
+                    "foraging, but could not find logically consistent data "
+                    "for this query.")
+            else:
+                return self._talk_normally(
+                    user_prompt,
+                    "No relevant context found in database.")
 
     def _talk_normally(self, prompt, evidence):
         synthesis_system = f"""
@@ -226,6 +376,7 @@ class KOSShell:
         3. If the evidence contains the answer even indirectly, extract and state it clearly.
         4. ONLY say "I don't have the data" if the evidence literally says "No relevant context found".
         5. Keep answers concise — 1-2 sentences.
+        6. If a confidence note is present, you may mention uncertainty but still answer.
 
         DATABASE EVIDENCE:
         {evidence}
