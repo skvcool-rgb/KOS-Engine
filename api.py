@@ -83,6 +83,20 @@ Apixaban does not cause bleeding in patients.
 Unlike warfarin, apixaban is a modern anticoagulant.
 Montreal was founded in the year 1642.
 Montreal has a population of 1.7 million.
+Backpropagation adjusts weights by computing gradient of the loss.
+Artificial neural networks are inspired by biological neurons.
+Quantum computers use qubits which can exist in superposition.
+Entanglement allows two qubits to be correlated across any distance.
+The Sun produces energy through nuclear fusion of hydrogen into helium.
+Mitochondria produce ATP which is the energy currency of cells.
+Coral reefs support 25 percent of all marine species.
+The human heart pumps blood through arteries and veins.
+Water consists of two hydrogen atoms bonded to one oxygen atom.
+Electrolysis splits water into hydrogen and oxygen using electricity.
+DNA contains the genetic instructions for building proteins.
+Einstein special relativity states nothing travels faster than light.
+Forward time travel is proven real via time dilation at high speeds.
+Backward time travel has never been observed experimentally.
 """
 driver.ingest(SEED_CORPUS)
 
@@ -388,10 +402,16 @@ async def get_feedback_stats():
 @app.get("/api/contradictions")
 async def get_contradictions():
     """Get all detected contradictions."""
-    return [
-        {"node_a": str(a), "node_b": str(b), "details": str(d)}
-        for (a, b), d in kernel.contradictions.items()
-    ] if hasattr(kernel, 'contradictions') else []
+    try:
+        contras = getattr(kernel, 'contradictions', [])
+        if isinstance(contras, dict):
+            return [{"node_a": str(a), "node_b": str(b), "details": str(d)}
+                    for (a, b), d in contras.items()]
+        elif isinstance(contras, list):
+            return [{"details": str(c)} for c in contras]
+        return []
+    except Exception:
+        return []
 
 
 # ══════════════════════════════════════════════════════════

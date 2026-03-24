@@ -21,6 +21,9 @@ class GraphPersistence:
             "contradictions": kernel.contradictions,
             "word_to_uuid": lexicon.word_to_uuid,
             "uuid_to_word": lexicon.uuid_to_word,
+            # Fix: persist phonetic indexes for typo recovery
+            "sound_to_uuids": getattr(lexicon, 'sound_to_uuids', {}),
+            "soundex_to_uuids": getattr(lexicon, 'soundex_to_uuids', {}),
         }
 
         with open(filepath, "wb") as f:
@@ -42,6 +45,11 @@ class GraphPersistence:
         kernel.contradictions = data["contradictions"]
         lexicon.word_to_uuid = data["word_to_uuid"]
         lexicon.uuid_to_word = data["uuid_to_word"]
+        # Fix: restore phonetic indexes for typo recovery
+        if "sound_to_uuids" in data:
+            lexicon.sound_to_uuids = data["sound_to_uuids"]
+        if "soundex_to_uuids" in data:
+            lexicon.soundex_to_uuids = data["soundex_to_uuids"]
 
         node_count = len(kernel.nodes)
         edge_count = sum(len(n.connections) for n in kernel.nodes.values())
