@@ -60,6 +60,28 @@ def init_session():
         st.session_state.total_queries = 0
         st.session_state.total_correct = 0
 
+        # AUTO-SEED: Ingest benchmark corpus so health check works immediately
+        seed_corpus = """
+        Toronto is a major city in the Canadian province of Ontario.
+        Toronto was founded and incorporated in the year 1834.
+        The city of Toronto has a population of approximately 2.7 million people.
+        Toronto has a humid continental climate with warm summers and cold winters.
+        John Graves Simcoe originally established the settlement of Toronto.
+        The CN Tower is a famous landmark in downtown Toronto.
+        Toronto is the financial capital of Canada with many banks.
+        Perovskite is a highly efficient material for photovoltaic cells.
+        Photovoltaic cells capture photons to produce electricity.
+        Perovskite is remarkably cheap and affordable to produce.
+        Silicon is a traditional semiconductor for computing.
+        Apixaban prevents thrombosis without dietary restrictions.
+        Apixaban does not cause bleeding in patients.
+        Unlike warfarin, apixaban is a modern anticoagulant.
+        Montreal was founded in the year 1642.
+        Montreal has a population of 1.7 million.
+        """
+        driver.ingest(seed_corpus)
+        st.session_state.seed_loaded = True
+
 
 init_session()
 
