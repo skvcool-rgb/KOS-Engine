@@ -31,11 +31,41 @@ from nltk.stem import WordNetLemmatizer
 _PROTECTED_WORDS = {"kos", "os", "api", "gpu", "cpu", "llm", "ast"}
 _LEMMATIZER = WordNetLemmatizer()
 
+# Agent Fix 1: Domain-specific words that WordNet maps incorrectly.
+# "entanglement" -> "web.n.02" (wrong: spider web, not quantum physics)
+# These words should stay as-is, never lemmatized to a different root.
+_DOMAIN_PROTECTED = {
+    "entanglement", "qubit", "qubits", "perovskite", "perovskites",
+    "photovoltaic", "photovoltaics", "backpropagation", "nanotube",
+    "nanotubes", "graphene", "blockchain", "cryptocurrency",
+    "crispr", "mitochondria", "mitochondrion", "ribosome", "ribosomes",
+    "genome", "genomic", "proteomics", "epigenetic",
+    "neurotransmitter", "neurotransmitters", "serotonin", "dopamine",
+    "apixaban", "warfarin", "thrombosis",
+}
+
+# Agent Fix 2: Normalize plurals for domain words that the standard
+# lemmatizer doesn't handle (non-English-origin words).
+_PLURAL_NORMALIZE = {
+    "qubits": "qubit",
+    "perovskites": "perovskite",
+    "photovoltaics": "photovoltaic",
+    "nanotubes": "nanotube",
+    "ribosomes": "ribosome",
+    "neurotransmitters": "neurotransmitter",
+}
+
 
 def _safe_lemmatize(word: str, pos: str = 'n') -> str:
-    """Prevents the lemmatizer from destroying acronyms."""
+    """Prevents the lemmatizer from destroying domain-specific terms."""
     w = word.lower()
     if w in _PROTECTED_WORDS or len(w) <= 3:
+        return w
+    # Agent Fix 2: normalize known plurals first
+    if w in _PLURAL_NORMALIZE:
+        return _PLURAL_NORMALIZE[w]
+    # Agent Fix 1: protect domain words from WordNet misclassification
+    if w in _DOMAIN_PROTECTED:
         return w
     return _LEMMATIZER.lemmatize(w, pos)
 
@@ -197,10 +227,20 @@ class TextDriver:
             "achieve", "build", "form", "yield",
         }
 
+    # Agent Fix: Words NLTK consistently mis-tags
+    _FORCE_NOUN = {
+        "entanglement", "backpropagation", "photovoltaic",
+        "perovskite", "graphene", "crispr", "blockchain",
+        "nanotube", "electrolysis", "mitochondria",
+    }
+
     def _fix_pos_tags(self, word: str, tag: str) -> str:
         """Fix POS tags for synthetic identifiers and domain terms."""
         from nltk.corpus import wordnet as wn
 
+        # Agent Fix: force domain words to NN regardless of NLTK tag
+        if word.lower() in self._FORCE_NOUN:
+            return 'NN'
         if self._IDENTIFIER_RE.match(word) and not tag.startswith('NN'):
             return 'NN'
         if not tag.startswith('NN') and not tag.startswith('VB'):

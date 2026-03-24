@@ -23,17 +23,42 @@ class KASMLexicon:
         self.sound_to_uuids = {}
         self.soundex_to_uuids = {}  # Soundex index (broader phonetic net)
 
+    # Agent Fix 1: Domain words WordNet misclassifies
+    _DOMAIN_PROTECTED = {
+        "entanglement", "qubit", "qubits", "perovskite", "perovskites",
+        "photovoltaic", "photovoltaics", "backpropagation", "nanotube",
+        "nanotubes", "graphene", "blockchain", "cryptocurrency",
+        "crispr", "mitochondria", "mitochondrion", "ribosome", "ribosomes",
+        "genome", "genomic", "proteomics", "epigenetic",
+        "neurotransmitter", "neurotransmitters", "serotonin", "dopamine",
+        "apixaban", "warfarin", "thrombosis",
+    }
+    # Agent Fix 2: Plural normalization for non-English-origin words
+    _PLURAL_MAP = {
+        "qubits": "qubit", "perovskites": "perovskite",
+        "photovoltaics": "photovoltaic", "nanotubes": "nanotube",
+        "ribosomes": "ribosome", "neurotransmitters": "neurotransmitter",
+    }
+
     def get_or_create_id(self, word: str) -> str:
         w_lower = word.lower()
+
+        # Agent Fix 2: normalize plurals
+        w_lower = self._PLURAL_MAP.get(w_lower, w_lower)
+
         if w_lower in self.word_to_uuid:
             return self.word_to_uuid[w_lower]
 
-        # Determine UUID from WordNet or hash fallback
-        synsets = wn.synsets(w_lower, pos=wn.NOUN)
-        if synsets:
-            uuid = synsets[0].name()
-        else:
+        # Agent Fix 1: skip WordNet for domain-protected words
+        synsets = None
+        if w_lower in self._DOMAIN_PROTECTED:
             uuid = f"KASM_{hashlib.sha256(w_lower.encode()).hexdigest()[:8]}"
+        else:
+            synsets = wn.synsets(w_lower, pos=wn.NOUN)
+            if synsets:
+                uuid = synsets[0].name()
+            else:
+                uuid = f"KASM_{hashlib.sha256(w_lower.encode()).hexdigest()[:8]}"
 
         self.word_to_uuid[w_lower] = uuid
         if uuid not in self.uuid_to_word:

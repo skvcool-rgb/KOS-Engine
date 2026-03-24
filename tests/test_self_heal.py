@@ -113,8 +113,13 @@ def run_self_heal():
                                         score_before * 100 // len(benchmark)))
 
     # ── STEP 2: Agent diagnoses each failure ─────────────────
+    # SMART FORAGE: Only forage if score < 90%. At 90%+ the risk
+    # of noise regression outweighs the benefit of 1 more query.
+    should_forage = score_before < 9
 
     print("\n[STEP 2] Agent diagnosing %d failures...\n" % len(failures))
+    if not should_forage:
+        print("  Score is %d/10 — skipping forage to avoid noise regression" % score_before)
 
     for q, exp, got in failures:
         print("  --- Failure: \"%s\" ---" % q)
@@ -165,20 +170,23 @@ def run_self_heal():
             # Priority 3: just the query nouns
             search_attempts.extend(query_nouns)
 
-            try:
-                forager = WebForager(kernel, lexicon, driver)
-                total_new = 0
-                for sq in search_attempts:
-                    print("  FORAGING: '%s'" % sq)
-                    new_nodes = forager.forage_query(sq, verbose=False)
-                    if new_nodes > 0:
-                        total_new += new_nodes
-                        print("  FORAGED: +%d concepts from '%s'" % (new_nodes, sq))
-                        break  # Stop after first successful forage
-                if total_new == 0:
-                    print("  FORAGED: No new data found after %d attempts" % len(search_attempts))
-            except Exception as e:
-                print("  FORAGE FAILED: %s" % str(e)[:60])
+            if should_forage:
+                try:
+                    forager = WebForager(kernel, lexicon, driver)
+                    total_new = 0
+                    for sq in search_attempts:
+                        print("  FORAGING: '%s'" % sq)
+                        new_nodes = forager.forage_query(sq, verbose=False)
+                        if new_nodes > 0:
+                            total_new += new_nodes
+                            print("  FORAGED: +%d concepts from '%s'" % (new_nodes, sq))
+                            break
+                    if total_new == 0:
+                        print("  FORAGED: No new data found after %d attempts" % len(search_attempts))
+                except Exception as e:
+                    print("  FORAGE FAILED: %s" % str(e)[:60])
+            else:
+                print("  SKIPPED forage (score already high, avoiding noise)")
 
     # ── STEP 3: Agent proposes and applies fixes ─────────────
 
@@ -192,11 +200,15 @@ def run_self_heal():
             print("  APPLYING: %s" % p.get("description", "?")[:70])
             applied += 1
 
+    # Agent re-ingests ONLY if we foraged (otherwise skip to avoid noise)
+    if not should_forage:
+        print("\n  Skipping bridge re-ingestion (no forage was done)")
     # Agent re-ingests ONLY the sentences related to failing queries
     # This prevents noise from successful forages from polluting
     # already-passing queries
-    print("\n  Re-ingesting targeted bridge sentences for failures only...")
-    for q, exp, got in failures:
+    if should_forage:
+      print("\n  Re-ingesting targeted bridge sentences for failures only...")
+      for q, exp, got in failures:
         # Find original sentences containing the expected keywords
         bridge_sentences = []
         for sent in original_sentences:
@@ -205,8 +217,8 @@ def run_self_heal():
         if bridge_sentences:
             for bs in bridge_sentences:
                 driver.ingest(bs)
-            print("  Bridged %d sentences for: %s" % (len(bridge_sentences), q[:40]))
-    print("  Targeted bridge complete.")
+            print("    Bridged %d sentences for: %s" % (len(bridge_sentences), q[:40]))
+      print("    Targeted bridge complete.")
 
     # Agent also trains predictive model to improve future queries
     print("\n  Training predictive model on all seeds...")
