@@ -36,8 +36,10 @@ class MathDriver:
     def is_math_query(self, prompt: str) -> bool:
         """Detects if the user is asking a calculus/algebra/arithmetic question."""
         lower = prompt.lower()
-        # 1. Explicit math keywords
-        if any(kw in lower for kw in self.math_keywords):
+        # 1. Explicit math keywords (whole word match only!)
+        # Prevents "entanglement" matching "tan", "integral" matching "integrate"
+        prompt_words = set(re.findall(r'\b[a-z]+\b', lower))
+        if self.math_keywords & prompt_words:
             return True
         # 2. Bare arithmetic expression (e.g. "345000000 * 0.0825")
         if self._bare_math_re.search(prompt):

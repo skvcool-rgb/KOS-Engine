@@ -631,13 +631,21 @@ class KOSShellOffline:
                 if len(w) >= 4 and w in answer_lower:
                     original_words_in_answer += 1
 
-            # Strict relevance: at least one 4+ letter ORIGINAL query
-            # word must appear in the answer
+            # Strict relevance: at least one 5+ letter ORIGINAL query
+            # word must appear in the answer, AND it must not be a
+            # generic word that appears in any sentence
+            _GENERIC_WORDS = {"about", "there", "their", "these", "those",
+                              "which", "where", "would", "could", "should",
+                              "being", "still", "other", "after", "before",
+                              "every", "under", "between", "through",
+                              "produce", "perfect", "possible"}
             strict_overlap = {w for w in query_content_words
-                               if w in answer_lower and len(w) >= 4}
+                               if w in answer_lower
+                               and len(w) >= 5
+                               and w not in _GENERIC_WORDS}
 
             is_relevant = (len(strict_overlap) > 0
-                           or original_words_in_answer >= 2
+                           or original_words_in_answer >= 3
                            or "no relevant context" in answer_lower
                            or "don't have" in answer_lower)
 
