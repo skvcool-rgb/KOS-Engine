@@ -288,7 +288,7 @@ impl RustKernel {
     }
 }
 
-// ── Standalone RustVSA ──────────────────────────────────────────────
+// ── Standalone RustVSA (Zero-Copy: vectors NEVER cross PyO3 boundary) ──
 
 #[pyclass]
 struct RustVSA {
@@ -305,51 +305,122 @@ impl RustVSA {
         RustVSA { dim, syms: HashMap::new(), rng: ChaCha8Rng::seed_from_u64(seed) }
     }
 
-    fn node(&mut self, name: String) -> Vec<i8> {
+    /// NODE: create a random bipolar vector. Stays on Rust side.
+    fn node(&mut self, name: String) {
         let v: Vec<i8> = (0..self.dim).map(|_| if self.rng.random_bool(0.5) { 1 } else { -1 }).collect();
-        self.syms.insert(name, v.clone());
-        v
+        self.syms.insert(name, v);
     }
 
-    fn bind(&self, a: Vec<i8>, b: Vec<i8>) -> PyResult<Vec<i8>> {
-        if a.len() != b.len() { return Err(PyValueError::new_err("Dim mismatch")); }
-        Ok(bind(&a, &b))
+    /// Batch NODE creation.
+    fn node_batch(&mut self, names: Vec<String>) {
+        for name in names { self.node(name); }
     }
 
-    fn superpose(&mut self, vecs: Vec<Vec<i8>>) -> PyResult<Vec<i8>> {
-        let refs: Vec<&[i8]> = vecs.iter().map(|v| v.as_slice()).collect();
-        Ok(superpose(&refs, &mut self.rng))
+    /// BIND by name: result = a * b (element-wise multiply). Stored as `result_name`.
+    fn bind_named(&mut self, result_name: String, a: &str, b: &str) -> PyResult<()> {
+        let va = self.syms.get(a).ok_or_else(|| PyValueError::new_err(format!("Unknown: {a}")))?;
+        let vb = self.syms.get(b).ok_or_else(|| PyValueError::new_err(format!("Unknown: {b}")))?;
+        let r = bind(va, vb);
+        self.syms.insert(result_name, r);
+        Ok(())
     }
 
-    fn resonate(&self, a: Vec<i8>, b: Vec<i8>) -> PyResult<f64> {
-        if a.len() != b.len() { return Err(PyValueError::new_err("Dim mismatch")); }
-        Ok(resonate(&a, &b))
+    /// SUPERPOSE by names: result = sum(vectors) + threshold.
+    fn superpose_named(&mut self, result_name: String, names: Vec<String>) -> PyResult<()> {
+        let vecs: Vec<&[i8]> = names.iter()
+            .map(|n| self.syms.get(n.as_str())
+                .map(|v| v.as_slice())
+                .ok_or_else(|| PyValueError::new_err(format!("Unknown: {n}"))))
+            .collect::<PyResult<Vec<_>>>()?;
+        let r = superpose(&vecs, &mut self.rng);
+        self.syms.insert(result_name, r);
+        Ok(())
     }
 
-    fn permute(&self, v: Vec<i8>, shifts: i32) -> Vec<i8> {
+    /// RESONATE by name: cosine similarity between two named vectors.
+    fn resonate_named(&self, a: &str, b: &str) -> PyResult<f64> {
+        let va = self.syms.get(a).ok_or_else(|| PyValueError::new_err(format!("Unknown: {a}")))?;
+        let vb = self.syms.get(b).ok_or_else(|| PyValueError::new_err(format!("Unknown: {b}")))?;
+        Ok(resonate(va, vb))
+    }
+
+    /// PERMUTE by name: circular shift.
+    fn permute_named(&mut self, result_name: String, source: &str, shifts: i32) -> PyResult<()> {
+        let v = self.syms.get(source).ok_or_else(|| PyValueError::new_err(format!("Unknown: {source}")))?;
         let n = v.len() as i32;
         let s = ((shifts % n) + n) % n;
         let mut r = vec![0i8; v.len()];
         for i in 0..v.len() { r[((i as i32 + s) % n) as usize] = v[i]; }
-        r
+        self.syms.insert(result_name, r);
+        Ok(())
     }
 
-    fn cleanup(&self, q: Vec<i8>, threshold: f64) -> Vec<(String, f64)> {
+    /// CLEANUP by name: find nearest known symbols to a named vector.
+    fn cleanup_named(&self, query_name: &str, threshold: f64) -> PyResult<Vec<(String, f64)>> {
+        let qv = self.syms.get(query_name)
+            .ok_or_else(|| PyValueError::new_err(format!("Unknown: {query_name}")))?;
         let mut r: Vec<(String, f64)> = self.syms.iter()
+            .filter(|(n, _)| n.as_str() != query_name)
             .filter_map(|(n, v)| {
-                let s = resonate(&q, v);
-                if s.abs() >= threshold { Some((n.clone(), s)) } else { None }
+                let s = resonate(qv, v);
+                if s.abs() >= threshold && s.abs() < 0.99 {
+                    Some((n.clone(), s))
+                } else {
+                    None
+                }
             }).collect();
         r.sort_by(|a, b| b.1.abs().partial_cmp(&a.1.abs()).unwrap_or(Ordering::Equal));
-        r
+        Ok(r)
     }
 
-    fn store(&mut self, name: String, v: Vec<i8>) { self.syms.insert(name, v); }
-    fn get(&self, name: &str) -> PyResult<Vec<i8>> {
-        self.syms.get(name).cloned().ok_or_else(|| PyValueError::new_err(format!("Unknown: {name}")))
+    /// Full analogy pipeline in one call — ZERO boundary crossings.
+    /// Builds two systems, creates mapping, queries, returns answers.
+    fn analogy(&mut self,
+               system_a: Vec<String>,  // names of system A role-bindings
+               system_b: Vec<String>,  // names of system B role-bindings
+               query: &str,            // concept to find analog of
+    ) -> PyResult<Vec<(String, f64)>> {
+        // Superpose each system
+        let a_refs: Vec<&[i8]> = system_a.iter()
+            .map(|n| self.syms.get(n.as_str()).map(|v| v.as_slice())
+                .ok_or_else(|| PyValueError::new_err(format!("Unknown: {n}"))))
+            .collect::<PyResult<Vec<_>>>()?;
+        let b_refs: Vec<&[i8]> = system_b.iter()
+            .map(|n| self.syms.get(n.as_str()).map(|v| v.as_slice())
+                .ok_or_else(|| PyValueError::new_err(format!("Unknown: {n}"))))
+            .collect::<PyResult<Vec<_>>>()?;
+
+        let sys_a = superpose(&a_refs, &mut self.rng);
+        let sys_b = superpose(&b_refs, &mut self.rng);
+
+        // Mapping = bind(system_a, system_b)
+        let mapping = bind(&sys_a, &sys_b);
+
+        // Unbind query from mapping
+        let qv = self.syms.get(query)
+            .ok_or_else(|| PyValueError::new_err(format!("Unknown: {query}")))?;
+        let answer = bind(&mapping, qv);
+
+        // Cleanup: find nearest
+        let mut r: Vec<(String, f64)> = self.syms.iter()
+            .filter(|(n, _)| n.as_str() != query)
+            .filter_map(|(n, v)| {
+                let s = resonate(&answer, v);
+                if s.abs() >= 0.05 && s.abs() < 0.99 {
+                    Some((n.clone(), s))
+                } else {
+                    None
+                }
+            }).collect();
+        r.sort_by(|a, b| b.1.abs().partial_cmp(&a.1.abs()).unwrap_or(Ordering::Equal));
+        r.truncate(10);
+        Ok(r)
     }
+
     fn symbol_count(&self) -> usize { self.syms.len() }
     fn dimensions(&self) -> usize { self.dim }
+    fn has_symbol(&self, name: &str) -> bool { self.syms.contains_key(name) }
+    fn symbol_names(&self) -> Vec<String> { self.syms.keys().cloned().collect() }
 }
 
 // ── Module ──────────────────────────────────────────────────────────
