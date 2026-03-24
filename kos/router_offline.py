@@ -481,6 +481,65 @@ class KOSShellOffline:
                                         new_results, self.lexicon, seeds,
                                         user_prompt)
 
-            return self._synthesize_answer(user_prompt, evidence_text)
+            # ================================================
+            # RELEVANCE GATE: Reject irrelevant evidence
+            # If ZERO query keywords appear in the evidence,
+            # the answer is noise from graph fan-out, not real.
+            # ================================================
+            answer_text = self._synthesize_answer(user_prompt, evidence_text)
+            answer_lower = answer_text.lower()
+
+            # Check: does the answer relate to what was asked?
+            query_content_words = {w for w in raw_words
+                                    if len(w) > 3 and w not in STOPWORDS}
+            answer_words = set(re.findall(r'[a-z]+', answer_lower))
+            relevance_overlap = query_content_words & answer_words
+
+            # Also check if any seed word appears in the answer
+            seed_words_in_answer = 0
+            for s in best_seeds:
+                sw = self.lexicon.get_word(s)
+                if sw and sw.lower() in answer_lower:
+                    seed_words_in_answer += 1
+
+            # Strict relevance: at least one 4+ letter query word
+            # must appear in the answer, OR a seed word must match
+            strict_overlap = {w for w in query_content_words
+                               if w in answer_lower and len(w) >= 4}
+
+            is_relevant = (len(strict_overlap) > 0
+                           or seed_words_in_answer >= 2
+                           or "no relevant context" in answer_lower
+                           or "don't have" in answer_lower)
+
+            if is_relevant:
+                return answer_text
+            else:
+                # Answer is irrelevant — try foraging if available
+                if self.forager and not self._forager_attempted:
+                    self._forager_attempted = True
+                    search_query = " ".join(raw_words[:4])
+                    new_nodes = self.forager.forage_query(
+                        search_query, verbose=False)
+                    if new_nodes > 0:
+                        # Re-query after foraging
+                        seeds2 = []
+                        known_words2 = list(self.lexicon.word_to_uuid.keys())
+                        for w in raw_words:
+                            uid = self._resolve_word(w, known_words2)
+                            if uid and uid not in seeds2:
+                                seeds2.append(uid)
+                        if seeds2:
+                            results2 = self.kernel.query(seeds2, top_k=10)
+                            if results2:
+                                evidence2 = weaver.weave(
+                                    self.kernel,
+                                    [self.lexicon.get_word(s) for s in seeds2],
+                                    results2, self.lexicon, seeds2,
+                                    user_prompt)
+                                return self._synthesize_answer(
+                                    user_prompt, evidence2)
+
+                return "I don't have data on this topic."
         else:
             return "I don't have data on this topic."
