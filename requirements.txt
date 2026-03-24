@@ -15,17 +15,14 @@ requests>=2.31.0
 networkx>=3.0
 pyvis>=0.3.0
 
-# Semantic vector fallback (Layer 5)
-sentence-transformers>=2.2.0
-
-# Scaling (Month 2)
-faiss-cpu>=1.7.0
+# Web UI
+streamlit>=1.30.0
 
 # Optional: LLM mode (not required for offline)
 openai>=1.0.0
 
-# Optional: Web UI
-streamlit>=1.30.0
-
-# Optional: Formal verification
-z3-solver>=4.12.0
+# NOTE: These are optional heavy dependencies.
+# Uncomment locally if needed. Railway free tier cannot handle them.
+# sentence-transformers>=2.2.0   # Layer 5 semantic fallback (~2GB with torch)
+# faiss-cpu>=1.7.0               # Scaling to 100K+ nodes
+# z3-solver>=4.12.0              # Formal verification
