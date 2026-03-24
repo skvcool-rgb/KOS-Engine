@@ -426,6 +426,48 @@ class TextDriver:
             # End sentence for coreference tracking
             self.resolver.end_sentence()
 
+        # ── DOMAIN CO-OCCURRENCE (Agent Proposal D) ────────────
+        # After all sentences are ingested, find pairs of sentences
+        # that share 2+ nouns and wire their remaining nouns together.
+        # This creates cross-sentence bridges.
+        sentence_nodes = {}  # sent_idx -> set of uids
+        for i, sent in enumerate(sentences):
+            tokens = nltk.word_tokenize(sent)
+            tokens = self._merge_compounds(tokens)
+            tagged = nltk.pos_tag(tokens)
+            uids = set()
+            for w, p in tagged:
+                if p.startswith('NN') or '_' in w:  # compound nouns have '_'
+                    lem = _safe_lemmatize(w.lower(), 'n')
+                    uid = self.lexicon.word_to_uuid.get(lem)
+                    if uid:
+                        uids.add(uid)
+            sentence_nodes[i] = uids
+
+        # Cross-wire sentences that share 2+ concepts
+        sent_keys = list(sentence_nodes.keys())
+        for i in range(len(sent_keys)):
+            for j in range(i + 1, len(sent_keys)):
+                shared = sentence_nodes[sent_keys[i]] & sentence_nodes[sent_keys[j]]
+                if len(shared) >= 2:
+                    # Wire ALL nouns from both sentences together (weak bridge)
+                    all_uids = sentence_nodes[sent_keys[i]] | sentence_nodes[sent_keys[j]]
+                    for u1 in all_uids:
+                        for u2 in all_uids:
+                            if u1 != u2 and u2 not in self.kernel.nodes.get(u1, type('', (), {'connections': {}})()).connections if hasattr(self.kernel.nodes.get(u1), 'connections') else True:
+                                pass  # Skip complex check, just wire
+                    # Simpler: wire unique-to-A with unique-to-B
+                    only_a = sentence_nodes[sent_keys[i]] - shared
+                    only_b = sentence_nodes[sent_keys[j]] - shared
+                    for ua in only_a:
+                        for ub in only_b:
+                            self.kernel.add_connection(
+                                ua, ub, 0.3,
+                                "[CO-OCCURRENCE] Cross-sentence bridge")
+                            self.kernel.add_connection(
+                                ub, ua, 0.3,
+                                "[CO-OCCURRENCE] Cross-sentence bridge")
+
         return {
             'sentences': len(sentences),
             'clauses': total_clauses,
@@ -433,12 +475,55 @@ class TextDriver:
             'svo_edges': total_svo,
         }
 
+    # ── COMPOUND NOUNS (Agent Proposal C) ──────────────────────
+    # "neural networks" → "neural_network" (one node, not two)
+    COMPOUND_NOUNS = {
+        ("neural", "network"): "neural_network",
+        ("neural", "networks"): "neural_network",
+        ("solar", "cell"): "solar_cell",
+        ("solar", "cells"): "solar_cell",
+        ("solar", "panel"): "solar_panel",
+        ("solar", "panels"): "solar_panel",
+        ("fuel", "cell"): "fuel_cell",
+        ("fuel", "cells"): "fuel_cell",
+        ("climate", "change"): "climate_change",
+        ("machine", "learning"): "machine_learning",
+        ("deep", "learning"): "deep_learning",
+        ("coral", "reef"): "coral_reef",
+        ("coral", "reefs"): "coral_reef",
+        ("blood", "cell"): "blood_cell",
+        ("blood", "cells"): "blood_cell",
+        ("quantum", "computer"): "quantum_computer",
+        ("quantum", "computers"): "quantum_computer",
+        ("carbon", "dioxide"): "carbon_dioxide",
+    }
+
+    def _merge_compounds(self, tokens):
+        """Merge known compound nouns into single tokens."""
+        merged = []
+        i = 0
+        while i < len(tokens):
+            if i + 1 < len(tokens):
+                pair = (tokens[i].lower(), tokens[i+1].lower())
+                compound = self.COMPOUND_NOUNS.get(pair)
+                if compound:
+                    merged.append(compound)
+                    i += 2
+                    continue
+            merged.append(tokens[i])
+            i += 1
+        return merged
+
     def _ingest_clause(self, clause: str, original_sentence: str):
         """Process a single clause (may be a sub-sentence)."""
 
         # Pass 0: Coreference resolution
         resolved_tokens = []
         raw_tokens = nltk.word_tokenize(clause)
+
+        # Pass 0.5: Compound noun merging (Agent Proposal C)
+        raw_tokens = self._merge_compounds(raw_tokens)
+
         raw_tagged = nltk.pos_tag(raw_tokens)
 
         for w, p in raw_tagged:

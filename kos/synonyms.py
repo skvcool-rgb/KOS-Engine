@@ -46,6 +46,12 @@ _DOMAIN_SYNONYMS = {
     "cells": "cell", "battery": "cell",
     "efficient": "efficiency", "effective": "efficiency",
 
+    # Machine Learning (Agent Proposal A: learn <-> backpropagation)
+    "learn": "backpropagation", "learning": "backpropagation",
+    "train": "backpropagation", "training": "backpropagation",
+    "optimize": "gradient", "optimization": "gradient",
+    "convergence": "gradient", "descent": "gradient",
+
     # Medicine
     "drug": "medicine", "medication": "medicine",
     "treatment": "medicine", "therapy": "medicine",
