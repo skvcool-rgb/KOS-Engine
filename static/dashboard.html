@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KOS Agent Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #1a1a2e;
+            --border: #2a2a3e;
+            --text: #e0e0e8;
+            --text2: #8888a0;
+            --accent: #00ff88;
+            --accent2: #00ccff;
+            --warning: #ffaa00;
+            --danger: #ff4444;
+            --purple: #aa66ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ─────────────────────────────── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header h1 span { color: var(--accent); }
+        .header .status {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--text2);
+        }
+        .header .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent); animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ── Layout ─────────────────────────────── */
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: calc(100vh - 52px);
+        }
+
+        /* ── Sidebar ────────────────────────────── */
+        .sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        .nav-item {
+            padding: 10px 20px; cursor: pointer;
+            font-size: 13px; color: var(--text2);
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+        }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active {
+            color: var(--accent); border-left-color: var(--accent);
+            background: rgba(0,255,136,0.05);
+        }
+        .nav-item .icon { margin-right: 8px; }
+
+        /* ── Main Content ───────────────────────── */
+        .main { padding: 24px; overflow-y: auto; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ── Metric Cards ───────────────────────── */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .metric {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px;
+        }
+        .metric .label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+        .metric .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .metric .value.green { color: var(--accent); }
+        .metric .value.blue { color: var(--accent2); }
+        .metric .value.orange { color: var(--warning); }
+        .metric .value.purple { color: var(--purple); }
+
+        /* ── Cards ──────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px; padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card h3 { font-size: 15px; margin-bottom: 12px; color: var(--accent2); }
+
+        /* ── Chat / Query ───────────────────────── */
+        .query-box {
+            display: flex; gap: 8px; margin-bottom: 16px;
+        }
+        .query-box input {
+            flex: 1; padding: 10px 14px;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text);
+            font-size: 14px; outline: none;
+        }
+        .query-box input:focus { border-color: var(--accent); }
+        .query-box button, .btn {
+            padding: 10px 20px;
+            background: var(--accent); color: #000;
+            border: none; border-radius: 6px;
+            font-weight: 600; cursor: pointer;
+            font-size: 13px; transition: opacity 0.15s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn.danger { background: var(--danger); color: #fff; }
+        .btn.blue { background: var(--accent2); color: #000; }
+
+        /* ── Results ────────────────────────────── */
+        .result {
+            background: var(--surface2); border-radius: 6px;
+            padding: 14px; margin-bottom: 8px;
+            border-left: 3px solid var(--accent);
+            font-size: 14px; line-height: 1.5;
+        }
+        .result .meta { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
+        /* ── Table ──────────────────────────────── */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 8px 12px; color: var(--text2); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        tr:hover { background: var(--surface2); }
+
+        /* ── Health Bars ────────────────────────── */
+        .health-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .health-bar .name { width: 180px; font-size: 13px; color: var(--text2); }
+        .health-bar .bar {
+            flex: 1; height: 8px; background: var(--surface2);
+            border-radius: 4px; overflow: hidden;
+        }
+        .health-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .health-bar .val { width: 50px; text-align: right; font-size: 12px; font-weight: 600; }
+
+        /* ── Textarea ───────────────────────────── */
+        textarea {
+            width: 100%; min-height: 120px; padding: 12px;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text); font-family: inherit;
+            font-size: 13px; resize: vertical; outline: none;
+        }
+        textarea:focus { border-color: var(--accent); }
+
+        /* ── Graph Viz ──────────────────────────── */
+        .node-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+        }
+        .node-card {
+            background: var(--surface2); border-radius: 6px; padding: 10px;
+            border-left: 3px solid var(--accent2);
+        }
+        .node-card .word { font-weight: 600; font-size: 14px; }
+        .node-card .info { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+        /* ── Log ────────────────────────────────── */
+        .log-entry {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 12px; padding: 4px 0; color: var(--text2);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .log-entry .time { color: var(--accent); margin-right: 8px; }
+
+        .loading { text-align: center; padding: 40px; color: var(--text2); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1><span>KOS</span> Agent Dashboard</h1>
+    <div class="status">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+        <span style="margin-left: 16px" id="uptimeText"></span>
+    </div>
+</div>
+
+<div class="layout">
+    <div class="sidebar">
+        <div class="nav-item active" onclick="showPage('overview')"><span class="icon">&#9632;</span> Overview</div>
+        <div class="nav-item" onclick="showPage('query')"><span class="icon">&#9654;</span> Query</div>
+        <div class="nav-item" onclick="showPage('ingest')"><span class="icon">&#43;</span> Ingest</div>
+        <div class="nav-item" onclick="showPage('health')"><span class="icon">&#9829;</span> Health</div>
+        <div class="nav-item" onclick="showPage('graph')"><span class="icon">&#9670;</span> Graph</div>
+        <div class="nav-item" onclick="showPage('tasks')"><span class="icon">&#9744;</span> Tasks</div>
+        <div class="nav-item" onclick="showPage('history')"><span class="icon">&#8986;</span> History</div>
+    </div>
+
+    <div class="main">
+
+        <!-- ══ OVERVIEW ══════════════════════════ -->
+        <div id="page-overview" class="page active">
+            <h2 style="margin-bottom: 16px">System Overview</h2>
+            <div class="metrics" id="overviewMetrics"></div>
+            <div class="card">
+                <h3>Recent Queries</h3>
+                <div id="recentQueries"><p class="loading">No queries yet</p></div>
+            </div>
+        </div>
+
+        <!-- ══ QUERY ═════════════════════════════ -->
+        <div id="page-query" class="page">
+            <h2 style="margin-bottom: 16px">Ask KOS</h2>
+            <div class="query-box">
+                <input type="text" id="queryInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')doQuery()">
+                <button onclick="doQuery()">Ask</button>
+            </div>
+            <div id="queryResults"></div>
+        </div>
+
+        <!-- ══ INGEST ════════════════════════════ -->
+        <div id="page-ingest" class="page">
+            <h2 style="margin-bottom: 16px">Ingest Knowledge</h2>
+            <textarea id="ingestText" placeholder="Paste text here to add to the knowledge graph..."></textarea>
+            <div style="margin-top: 8px; display: flex; gap: 8px;">
+                <button class="btn" onclick="doIngest()">Ingest</button>
+                <span id="ingestResult" style="font-size: 13px; color: var(--text2); line-height: 38px;"></span>
+            </div>
+        </div>
+
+        <!-- ══ HEALTH ════════════════════════════ -->
+        <div id="page-health" class="page">
+            <h2 style="margin-bottom: 16px">Health Monitor</h2>
+            <button class="btn blue" onclick="doHealth()" style="margin-bottom: 16px">Run Health Check</button>
+            <div class="card">
+                <h3>Learning Mechanisms</h3>
+                <div id="healthBars"></div>
+            </div>
+            <div class="card">
+                <h3>Benchmark Results</h3>
+                <div id="benchmarkResults"><p class="loading">Click "Run Health Check" to test</p></div>
+            </div>
+        </div>
+
+        <!-- ══ GRAPH ═════════════════════════════ -->
+        <div id="page-graph" class="page">
+            <h2 style="margin-bottom: 16px">Graph Explorer</h2>
+            <button class="btn secondary" onclick="loadGraph()" style="margin-bottom: 16px">Refresh</button>
+            <div class="card">
+                <h3>Top Connected Nodes</h3>
+                <div id="topNodes" class="node-list"></div>
+            </div>
+        </div>
+
+        <!-- ══ TASKS ═════════════════════════════ -->
+        <div id="page-tasks" class="page">
+            <h2 style="margin-bottom: 16px">Task Manager</h2>
+            <div class="query-box">
+                <input type="text" id="taskInput" placeholder="Assign a task (e.g., 'query: What is perovskite?' or 'ingest: ...' or 'health')" onkeydown="if(event.key==='Enter')doTask()">
+                <button onclick="doTask()">Assign</button>
+            </div>
+            <div class="card">
+                <h3>Task Log</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Task</th><th>Status</th><th>Result</th></tr></thead>
+                    <tbody id="taskTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ HISTORY ═══════════════════════════ -->
+        <div id="page-history" class="page">
+            <h2 style="margin-bottom: 16px">Query History</h2>
+            <div id="historyLog"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// API HELPERS
+// ══════════════════════════════════════════════════════════
+
+async function api(path, opts = {}) {
+    try {
+        const r = await fetch('/api/' + path, {
+            headers: {'Content-Type': 'application/json'},
+            ...opts
+        });
+        return await r.json();
+    } catch(e) {
+        console.error('API Error:', e);
+        return null;
+    }
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.target.closest('.nav-item').classList.add('active');
+
+    if (name === 'graph') loadGraph();
+    if (name === 'history') loadHistory();
+    if (name === 'tasks') loadTasks();
+}
+
+// ══════════════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════════════
+
+async function refreshOverview() {
+    const d = await api('status');
+    if (!d) {
+        document.getElementById('statusText').textContent = 'OFFLINE';
+        document.getElementById('statusDot').style.background = '#ff4444';
+        return;
+    }
+
+    document.getElementById('statusText').textContent = d.status;
+    document.getElementById('statusDot').style.background = d.status === 'ONLINE' ? '#00ff88' : '#ff4444';
+    document.getElementById('uptimeText').textContent = d.uptime_human;
+
+    document.getElementById('overviewMetrics').innerHTML = `
+        <div class="metric"><div class="label">Nodes</div><div class="value green">${d.nodes}</div></div>
+        <div class="metric"><div class="label">Edges</div><div class="value blue">${d.edges}</div></div>
+        <div class="metric"><div class="label">Queries</div><div class="value purple">${d.queries_total}</div></div>
+        <div class="metric"><div class="label">Avg Latency</div><div class="value orange">${d.avg_latency_ms}ms</div></div>
+        <div class="metric"><div class="label">Pred. Accuracy</div><div class="value green">${d.prediction_accuracy}%</div></div>
+        <div class="metric"><div class="label">Contradictions</div><div class="value ${d.contradictions > 0 ? 'orange' : 'green'}">${d.contradictions}</div></div>
+        <div class="metric"><div class="label">Super-Hubs</div><div class="value blue">${d.super_hubs}</div></div>
+        <div class="metric"><div class="label">Orphans</div><div class="value ${d.orphans > 5 ? 'orange' : 'green'}">${d.orphans}</div></div>
+    `;
+}
+
+// ══════════════════════════════════════════════════════════
+// QUERY
+// ══════════════════════════════════════════════════════════
+
+async function doQuery() {
+    const input = document.getElementById('queryInput');
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    const results = document.getElementById('queryResults');
+    results.innerHTML = '<p class="loading">Thinking...</p>';
+
+    const d = await api('query', {
+        method: 'POST',
+        body: JSON.stringify({ prompt })
+    });
+
+    if (!d) { results.innerHTML = '<p class="loading">Error</p>'; return; }
+
+    results.innerHTML = `
+        <div class="result">
+            <strong>Q:</strong> ${escHtml(prompt)}<br><br>
+            <strong>A:</strong> ${escHtml(d.answer)}
+            <div class="meta">${d.latency_ms}ms</div>
+        </div>
+    ` + results.innerHTML;
+
+    input.value = '';
+    refreshOverview();
+}
+
+// ══════════════════════════════════════════════════════════
+// INGEST
+// ══════════════════════════════════════════════════════════
+
+async function doIngest() {
+    const text = document.getElementById('ingestText').value.trim();
+    if (!text) return;
+
+    const d = await api('ingest', {
+        method: 'POST',
+        body: JSON.stringify({ text })
+    });
+
+    if (d) {
+        document.getElementById('ingestResult').textContent =
+            `Ingested! +${d.nodes_added} nodes (${d.nodes_after} total) in ${d.latency_ms}ms`;
+        document.getElementById('ingestText').value = '';
+        refreshOverview();
+    }
+}
+
+// ══════════════════════════════════════════════════════════
+// HEALTH
+// ══════════════════════════════════════════════════════════
+
+async function doHealth() {
+    const bars = document.getElementById('healthBars');
+    const bench = document.getElementById('benchmarkResults');
+    bars.innerHTML = '<p class="loading">Running health check...</p>';
+
+    const d = await api('health');
+    if (!d) { bars.innerHTML = '<p class="loading">Error</p>'; return; }
+
+    const bm = d.benchmark || {};
+    const acc = (bm.accuracy || 0) * 100;
+
+    const mechanisms = [
+        { name: 'Benchmark Accuracy', val: acc, color: acc >= 80 ? '#00ff88' : acc >= 50 ? '#ffaa00' : '#ff4444' },
+        { name: 'Prediction Accuracy', val: d.predictive?.accuracy || 0, color: '#00ccff' },
+        { name: 'Orphans Fixed', val: Math.min(100, (d.rebalance?.orphans_fixed || 0) * 10), color: '#aa66ff' },
+        { name: 'Hubs Rebalanced', val: Math.min(100, (d.rebalance?.hubs_fixed || 0) * 10), color: '#aa66ff' },
+        { name: 'Contradictions Resolved', val: d.contradictions?.resolved > 0 ? 100 : (d.contradictions?.contradictions_total > 0 ? 30 : 0), color: '#ffaa00' },
+        { name: 'Weight Normalization', val: d.normalization?.clipped > 0 ? 100 : 50, color: '#00ccff' },
+        { name: 'Formulas Discovered', val: Math.min(100, (d.formulas?.formulas_found || 0) * 20), color: '#00ff88' },
+    ];
+
+    bars.innerHTML = mechanisms.map(m => `
+        <div class="health-bar">
+            <div class="name">${m.name}</div>
+            <div class="bar"><div class="fill" style="width:${m.val}%;background:${m.color}"></div></div>
+            <div class="val" style="color:${m.color}">${Math.round(m.val)}%</div>
+        </div>
+    `).join('');
+
+    // Benchmark details
+    const passed = bm.passed || 0;
+    const total = bm.total || 0;
+    const failed = bm.failed || [];
+
+    bench.innerHTML = `
+        <div style="font-size: 28px; font-weight: 700; color: ${acc >= 80 ? '#00ff88' : '#ffaa00'}; margin-bottom: 12px">
+            ${passed}/${total} (${acc.toFixed(0)}%)
+        </div>
+        ${failed.length > 0 ? '<p style="color:#ff4444;font-size:13px">Failed: ' + failed.map(escHtml).join(', ') + '</p>' : '<p style="color:#00ff88">All benchmarks passed!</p>'}
+        <p style="color:var(--text2);font-size:12px;margin-top:8px">Completed in ${(d.time_ms || 0).toFixed(0)}ms</p>
+    `;
+
+    refreshOverview();
+}
+
+// ══════════════════════════════════════════════════════════
+// GRAPH
+// ══════════════════════════════════════════════════════════
+
+async function loadGraph() {
+    const d = await api('graph/top_nodes');
+    if (!d) return;
+
+    document.getElementById('topNodes').innerHTML = d.map(n => `
+        <div class="node-card">
+            <div class="word">${escHtml(n.word)}</div>
+            <div class="info">${n.connections} connections | myelin: ${n.myelin_total}</div>
+        </div>
+    `).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// TASKS
+// ══════════════════════════════════════════════════════════
+
+async function doTask() {
+    const input = document.getElementById('taskInput');
+    const task = input.value.trim();
+    if (!task) return;
+
+    await api('task', {
+        method: 'POST',
+        body: JSON.stringify({ task })
+    });
+
+    input.value = '';
+    loadTasks();
+}
+
+async function loadTasks() {
+    const d = await api('tasks');
+    if (!d) return;
+
+    document.getElementById('taskTable').innerHTML = d.reverse().map(t => `
+        <tr>
+            <td>${t.id}</td>
+            <td>${escHtml(t.task.substring(0, 60))}</td>
+            <td style="color:${t.status === 'completed' ? '#00ff88' : '#ffaa00'}">${t.status}</td>
+            <td style="font-size:12px">${escHtml((t.result || '').substring(0, 80))}</td>
+        </tr>
+    `).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════════════════════
+
+async function loadHistory() {
+    const d = await api('queries');
+    if (!d || d.length === 0) {
+        document.getElementById('historyLog').innerHTML = '<p class="loading">No queries yet</p>';
+        return;
+    }
+
+    document.getElementById('historyLog').innerHTML = d.reverse().map(q => `
+        <div class="log-entry">
+            <span class="time">${new Date(q.timestamp * 1000).toLocaleTimeString()}</span>
+            <strong>${escHtml(q.prompt)}</strong>
+            <span style="color:var(--text2)"> &rarr; ${escHtml(q.answer.substring(0, 100))}</span>
+            <span style="color:var(--accent);margin-left:8px">${q.latency_ms}ms</span>
+        </div>
+    `).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+
+function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Auto-refresh
+refreshOverview();
+setInterval(refreshOverview, 5000);
+</script>
+
+</body>
+</html>
