@@ -302,7 +302,7 @@ async def get_top_nodes():
         "word": lexicon.get_word(nid) or str(nid)[:8],
         "connections": len(node.connections),
         "activation": round(node.activation, 3),
-        "myelin_total": sum(d.get('myelin', 0) for d in node.connections.values()),
+        "myelin_total": sum(d.get('myelin', 0) if isinstance(d, dict) else 0 for d in node.connections.values()),
     } for nid, node in ranked]
 
 
