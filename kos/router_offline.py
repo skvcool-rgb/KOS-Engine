@@ -190,10 +190,15 @@ class KOSShellOffline:
         if w in self.lexicon.word_to_uuid:
             return self.lexicon.word_to_uuid[w]
 
-        # Layer 1b: Synonym expansion before fuzzy matching
-        synonym = SYNONYM_MAP.get(w)
-        if synonym and synonym in self.lexicon.word_to_uuid:
+        # Layer 1b: Synonym expansion (auto-generated from WordNet + domain)
+        from .synonyms import get_synonym
+        synonym = get_synonym(w)
+        if synonym != w and synonym in self.lexicon.word_to_uuid:
             return self.lexicon.word_to_uuid[synonym]
+        # Fallback to hand-coded map
+        synonym2 = SYNONYM_MAP.get(w)
+        if synonym2 and synonym2 in self.lexicon.word_to_uuid:
+            return self.lexicon.word_to_uuid[synonym2]
 
         # Layer 2: Fuzzy
         matches = difflib.get_close_matches(w, known_words, n=1, cutoff=0.6)
@@ -255,10 +260,14 @@ class KOSShellOffline:
         meaningful = [t for t in tokens
                       if t not in STOPWORDS and len(t) > 2]
 
-        # Synonym expansion
+        # Synonym expansion (auto-generated + hand-coded)
+        from .synonyms import get_synonym
         expanded = []
         for t in meaningful:
-            syn = SYNONYM_MAP.get(t, t)
+            # Try auto-generated first, then hand-coded
+            syn = get_synonym(t)
+            if syn == t:
+                syn = SYNONYM_MAP.get(t, t)
             expanded.append(syn)
             if syn != t:
                 expanded.append(t)  # Keep original too

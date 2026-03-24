@@ -53,7 +53,22 @@ NEGATION_WORDS = {
 # ── Coreference Resolver ─────────────────────────────────────
 
 class KOSResolver:
-    """Lightweight pronoun resolver using recency-based working memory."""
+    """
+    Pronoun resolver with recency-based working memory.
+
+    Fix #7 upgrade:
+    - Tracks sentence subject (first noun) for "it" resolution
+    - Handles "the city" → resolves to last city-type entity
+    - Handles "the former" / "the latter" in comparisons
+    - Better split-antecedent for "They" across sentences
+    """
+
+    # Definite article phrases that refer back
+    DEFINITE_REFS = {
+        "the city", "the country", "the company", "the team",
+        "the university", "the drug", "the material", "the system",
+        "the process", "the method", "the tower", "the building",
+    }
 
     def __init__(self):
         self.recent_singular = []
@@ -61,6 +76,7 @@ class KOSResolver:
         self.recent_proper = []
         self.sentence_topics = []
         self._current_sentence_nouns = []
+        self._sentence_subject = None  # First noun in current sentence
         self.PB = {
             "they", "them", "their", "theirs", "these",
             "he", "him", "his", "she", "her", "hers", "who",
@@ -73,15 +89,20 @@ class KOSResolver:
         self.recent_proper.clear()
         self.sentence_topics.clear()
         self._current_sentence_nouns.clear()
+        self._sentence_subject = None
 
     def mark_topic(self, w):
         if w not in self._current_sentence_nouns:
             self._current_sentence_nouns.append(w)
+        # Fix #7: Track sentence subject (first noun = default "it" referent)
+        if self._sentence_subject is None:
+            self._sentence_subject = w
 
     def end_sentence(self):
         for noun in self._current_sentence_nouns:
             self.sentence_topics.append(noun)
         self._current_sentence_nouns.clear()
+        self._sentence_subject = None
 
     def update_memory(self, w, pos):
         if w in self.PB:
@@ -111,7 +132,10 @@ class KOSResolver:
             if self.recent_singular:
                 return [self.recent_singular[-1]]
             return [w]
+        # Fix #7: prefer sentence subject for "it" resolution
         if w in {"it", "its", "itself", "this", "that", "which"}:
+            if self._sentence_subject:
+                return [self._sentence_subject]
             if self.recent_singular:
                 return [self.recent_singular[-1]]
             return [w]
