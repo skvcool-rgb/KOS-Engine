@@ -1,9 +1,10 @@
 """
-KOS V2.0 — Kernel (Spreading Activation Engine).
+KOS V4.1 — Kernel (Spreading Activation Engine + VSA Backplane).
 
 Priority-queue driven propagation with inline reset.
 Provenance tracking for source evidence citations.
 Save/load brain persistence via pickle.
+VSA backplane: every node silently accumulates a 10,000-D state vector.
 """
 import heapq
 import pickle
@@ -12,16 +13,28 @@ from .node import ConceptNode
 
 
 class KOSKernel:
-    def __init__(self):
+    def __init__(self, enable_vsa: bool = True, vsa_dimensions: int = 10_000):
         self.nodes = {}
         self.provenance = defaultdict(set)
         self.current_tick = 0
         self.max_ticks = 15
         self.tiebreaker = 0
 
+        # VSA Backplane — silent hyperdimensional substrate
+        self.vsa = None
+        if enable_vsa:
+            try:
+                from kasm.bridge import VSABackplane
+                self.vsa = VSABackplane(dimensions=vsa_dimensions)
+            except ImportError:
+                pass  # KASM not available, run in scalar-only mode
+
     def add_node(self, concept_id: str):
         if concept_id not in self.nodes:
             self.nodes[concept_id] = ConceptNode(concept_id)
+            # Silent VSA registration
+            if self.vsa is not None:
+                self.vsa.register_node(concept_id)
         return self.nodes[concept_id]
 
     def add_connection(self, source_id: str, target_id: str,
@@ -32,6 +45,9 @@ class KOSKernel:
         if source_text:
             pair = tuple(sorted([source_id, target_id]))
             self.provenance[pair].add(source_text)
+        # Silent VSA binding — the node state vector absorbs this edge
+        if self.vsa is not None:
+            self.vsa.on_edge_created(source_id, target_id, weight)
 
     def propagate(self, seed_ids: list,
                   seed_energy: float = 3.0) -> dict:
@@ -81,6 +97,33 @@ class KOSKernel:
         results = self.propagate(concept_ids)
         return [(n, e) for n, e in results.items()
                 if n not in concept_ids][:top_k]
+
+    # ── VSA Operations (Fused KASM) ────────────────────────────
+
+    def resonate_match(self, query_id: str,
+                       threshold: float = 0.05) -> list:
+        """
+        Find concepts semantically similar to query_id using
+        VSA cosine similarity on state vectors.
+
+        Returns: [(node_id, similarity_score), ...]
+        """
+        if self.vsa is None:
+            return []
+        candidates = list(self.nodes.keys())
+        return self.vsa.resonate_query(query_id, candidates, threshold)
+
+    def export_vectors(self, filepath: str) -> int:
+        """Export graph knowledge as compressed VSA vectors (.npz)."""
+        if self.vsa is None:
+            raise RuntimeError("VSA backplane not enabled")
+        return self.vsa.export_vectors(filepath)
+
+    def import_vectors(self, filepath: str, merge: bool = True) -> int:
+        """Import VSA vectors from another KOS instance."""
+        if self.vsa is None:
+            raise RuntimeError("VSA backplane not enabled")
+        return self.vsa.import_vectors(filepath, merge)
 
     # ── Persistence ───────────────────────────────────────────
 
