@@ -36,7 +36,8 @@ from collections import defaultdict
 class PredictionRecord:
     """A single prediction: expected activation pattern for a seed set."""
     __slots__ = ['seed_key', 'predicted_activations', 'confidence',
-                 'hit_count', 'miss_count', 'created_tick']
+                 'hit_count', 'miss_count', 'created_tick',
+                 'consecutive_low_error', 'locked']
 
     def __init__(self, seed_key: tuple, predicted: dict,
                  confidence: float, tick: int):
@@ -46,6 +47,8 @@ class PredictionRecord:
         self.hit_count = 0
         self.miss_count = 0
         self.created_tick = tick
+        self.consecutive_low_error = 0  # Tracks stable convergence
+        self.locked = False  # True = prediction snapped to actual
 
     @property
     def accuracy(self) -> float:
@@ -281,15 +284,56 @@ class PredictiveCodingEngine:
             record.hit_count += hits
             record.miss_count += misses + surprises
 
-            # Exponential moving average: blend old prediction toward actual
-            alpha = 0.3  # Learning rate for prediction update
+            # ── FIX 1: Adaptive Learning Rate ────────────────────
+            # Alpha increases with accuracy: uncertain predictions
+            # update cautiously, confident predictions converge fast.
+            # Biology: the brain locks in stable patterns quickly
+            # but is cautious with novel/conflicting signals.
+            base_alpha = 0.3
+            alpha = min(0.95, base_alpha + record.accuracy * 0.65)
+
+            # ── FIX 2: Snap-to-Lock ─────────────────────────────
+            # If prediction error has been below threshold for 3+
+            # consecutive cycles, snap predictions to actual values.
+            # Biology: stable neural patterns "crystallize" —
+            # the brain stops updating what it's confident about.
+            current_mae = 0.0
+            mae_count = 0
             for nid, energy in actual.items():
                 if nid in record.predicted_activations:
-                    old = record.predicted_activations[nid]
-                    record.predicted_activations[nid] = (
-                        (1 - alpha) * old + alpha * energy)
-                else:
-                    record.predicted_activations[nid] = energy * alpha
+                    current_mae += abs(energy - record.predicted_activations[nid])
+                    mae_count += 1
+            if mae_count > 0:
+                current_mae /= mae_count
+
+            LOCK_THRESHOLD = 0.05  # MAE below this = stable
+            LOCK_CYCLES = 3        # Consecutive stable cycles to lock
+
+            if current_mae < LOCK_THRESHOLD:
+                record.consecutive_low_error += 1
+            else:
+                record.consecutive_low_error = 0
+                record.locked = False  # Unlock if error spikes (new evidence)
+
+            if record.consecutive_low_error >= LOCK_CYCLES:
+                # SNAP: set all predictions to exact actual values
+                record.predicted_activations = dict(actual)
+                record.locked = True
+                record.confidence = 1.0
+            else:
+                # ── Standard EMA update with adaptive alpha ──────
+                for nid, energy in actual.items():
+                    if nid in record.predicted_activations:
+                        old = record.predicted_activations[nid]
+                        record.predicted_activations[nid] = (
+                            (1 - alpha) * old + alpha * energy)
+                    else:
+                        # ── FIX 3: Full absorption of new nodes ──
+                        # New nodes get actual energy immediately,
+                        # not alpha-scaled. The brain doesn't
+                        # partially notice a new stimulus — it
+                        # either detects it or it doesn't.
+                        record.predicted_activations[nid] = energy
 
             # Remove predictions that consistently miss
             to_remove = []
