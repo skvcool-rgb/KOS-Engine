@@ -1,0 +1,15 @@
+A qubit is the fundamental unit of quantum computing.
+Unlike classical bits, a qubit can exist in superposition of 0 and 1 simultaneously.
+Entanglement links two qubits so measuring one instantly determines the other.
+Quantum gates manipulate qubits similar to how logic gates manipulate bits.
+The Hadamard gate puts a qubit into equal superposition of 0 and 1.
+The CNOT gate entangles two qubits creating a controlled-NOT operation.
+Decoherence destroys quantum states when qubits interact with the environment.
+Error correction in quantum computing requires many physical qubits per logical qubit.
+Shor algorithm factors large numbers exponentially faster than classical algorithms.
+Grover algorithm searches unsorted databases quadratically faster than classical search.
+IBM and Google are leading companies building superconducting quantum processors.
+Trapped ion quantum computers use individual atoms confined by electromagnetic fields.
+Quantum supremacy means a quantum computer solves a problem no classical computer can solve in reasonable time.
+Quantum annealing is a specialized approach used by D-Wave for optimization problems.
+Topological qubits use anyons to store information in a way that resists decoherence.

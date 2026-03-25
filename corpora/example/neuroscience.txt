@@ -1,0 +1,15 @@
+Neurons are the fundamental cells of the nervous system that transmit electrical signals.
+Synapses are junctions between neurons where neurotransmitters cross the synaptic cleft.
+Dopamine is a neurotransmitter involved in reward motivation and motor control.
+Serotonin regulates mood sleep appetite and is targeted by antidepressant medications.
+The hippocampus is critical for forming new long-term memories.
+The amygdala processes emotional responses especially fear and threat detection.
+The prefrontal cortex handles executive functions planning and decision making.
+Neuroplasticity allows the brain to reorganize neural pathways based on experience.
+Long-term potentiation strengthens synaptic connections through repeated stimulation.
+Myelin sheaths insulate axons and increase the speed of electrical signal transmission.
+Glial cells support neurons by providing nutrients and removing waste.
+The blood-brain barrier protects the brain from harmful substances in the bloodstream.
+Mirror neurons fire both when performing an action and when observing another perform it.
+Sleep consolidation transfers memories from hippocampus to cortex during slow-wave sleep.
+The default mode network activates during rest and is involved in self-referential thinking.
