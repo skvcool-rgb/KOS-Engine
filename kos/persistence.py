@@ -128,10 +128,18 @@ class GraphPersistence:
 
         for node_id, edges in graph_data:
             node = ConceptNode(node_id)
-            for tgt_name, weight, myelin in edges:
+            for edge_tuple in edges:
+                if len(edge_tuple) == 4:
+                    tgt_name, weight, myelin, edge_type = edge_tuple
+                elif len(edge_tuple) == 3:
+                    tgt_name, weight, myelin = edge_tuple
+                    edge_type = 0
+                else:
+                    continue
                 node.connections[tgt_name] = {
                     'w': weight,
                     'myelin': myelin,
+                    'edge_type': edge_type,
                 }
             kernel.nodes[node_id] = node
 

@@ -1,0 +1,61 @@
+{
+  "agents": [
+    {
+      "id": "agent_physics_cfbbb4",
+      "name": "physicsAgent",
+      "domain": "physics",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.422914"
+    },
+    {
+      "id": "agent_computer_science_3c7f39",
+      "name": "computerscienceAgent",
+      "domain": "computer science",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.439385"
+    },
+    {
+      "id": "agent_chemistry_6499c9",
+      "name": "chemistryAgent",
+      "domain": "chemistry",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.447242"
+    },
+    {
+      "id": "agent_physics_cfbbb4",
+      "name": "physicsAgent",
+      "domain": "physics",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.454857"
+    },
+    {
+      "id": "agent_chemistry_6499c9",
+      "name": "chemistryAgent",
+      "domain": "chemistry",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.461352"
+    },
+    {
+      "id": "agent_physics_cfbbb4",
+      "name": "physicsAgent",
+      "domain": "physics",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.467581"
+    },
+    {
+      "id": "agent_general_knowledge_17f311",
+      "name": "generalknowledgeAgent",
+      "domain": "general knowledge",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.478839"
+    },
+    {
+      "id": "agent_mathematics_3a9088",
+      "name": "mathematicsAgent",
+      "domain": "mathematics",
+      "status": "PENDING",
+      "generated_at": "2026-03-25T14:57:16.486057"
+    }
+  ],
+  "last_updated": "2026-03-25T14:57:16.491618"
+}

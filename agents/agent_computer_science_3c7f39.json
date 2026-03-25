@@ -1,0 +1,55 @@
+{
+  "id": "agent_computer_science_3c7f39",
+  "blueprint": {
+    "name": "computerscienceAgent",
+    "domain": "computer science",
+    "description": "Specialized agent for computer science domain with 48 knowledge nodes. Core concepts: shop.n.01, memory.n.01, KASM_a61fa7f2, cerebral_cortex.n.01, comparison.n.03. Can answer questions about deep question answering, quantitative analysis, concept retrieval.",
+    "capabilities": [
+      "deep question answering",
+      "quantitative analysis",
+      "concept retrieval",
+      "relationship mapping"
+    ],
+    "knowledge_nodes": 20,
+    "top_nodes": [
+      "shop.n.01",
+      "memory.n.01",
+      "KASM_a61fa7f2",
+      "cerebral_cortex.n.01",
+      "comparison.n.03",
+      "KASM_c14cdb19",
+      "entree.n.02",
+      "database.n.01",
+      "structure.n.01",
+      "question.n.01",
+      "detector.n.01",
+      "row.n.01",
+      "key.n.01",
+      "document.n.01",
+      "KASM_ca7224dc",
+      "standardization.n.02",
+      "monitoring.n.01",
+      "redundancy.n.01",
+      "cassandra.n.01",
+      "KASM_1cc9a79b"
+    ],
+    "entry_queries": [
+      "What is shop.n.01?",
+      "How does shop.n.01 work?",
+      "What is memory.n.01?",
+      "How does memory.n.01 work?",
+      "What is KASM_a61fa7f2?",
+      "How does KASM_a61fa7f2 work?",
+      "What is cerebral_cortex.n.01?",
+      "How does cerebral_cortex.n.01 work?",
+      "What is comparison.n.03?",
+      "How does comparison.n.03 work?",
+      "What is the relationship between shop.n.01 and memory.n.01?"
+    ],
+    "created_at": "2026-03-25T14:57:16.425756"
+  },
+  "code_path": "C:\\Users\\suraj\\Downloads\\Claud Code\\kos-engine\\agents\\agent_computer_science_3c7f39.py",
+  "safety_check": "PASSED",
+  "status": "PENDING",
+  "generated_at": "2026-03-25T14:57:16.439385"
+}

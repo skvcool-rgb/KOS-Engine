@@ -1,0 +1,55 @@
+{
+  "id": "agent_physics_cfbbb4",
+  "blueprint": {
+    "name": "physicsAgent",
+    "domain": "physics",
+    "description": "Specialized agent for physics domain with 41 knowledge nodes. Core concepts: produce.n.01, KASM_cfacfd3e, release.n.01, begin.n.01, knock.n.03. Can answer questions about deep question answering, quantitative analysis, concept retrieval.",
+    "capabilities": [
+      "deep question answering",
+      "quantitative analysis",
+      "concept retrieval",
+      "relationship mapping"
+    ],
+    "knowledge_nodes": 20,
+    "top_nodes": [
+      "produce.n.01",
+      "KASM_cfacfd3e",
+      "release.n.01",
+      "begin.n.01",
+      "knock.n.03",
+      "theory.n.01",
+      "radiation.n.01",
+      "minute.n.01",
+      "microwave.n.01",
+      "KASM_d6a98598",
+      "background.n.01",
+      "year.n.01",
+      "afterglow.n.01",
+      "nucleosynthesis.n.01",
+      "KASM_01307b41",
+      "kelvin.n.01",
+      "fraction.n.01",
+      "expansion.n.01",
+      "combine.n.01",
+      "survey.n.01"
+    ],
+    "entry_queries": [
+      "What is produce.n.01?",
+      "How does produce.n.01 work?",
+      "What is KASM_cfacfd3e?",
+      "How does KASM_cfacfd3e work?",
+      "What is release.n.01?",
+      "How does release.n.01 work?",
+      "What is begin.n.01?",
+      "How does begin.n.01 work?",
+      "What is knock.n.03?",
+      "How does knock.n.03 work?",
+      "What is the relationship between produce.n.01 and KASM_cfacfd3e?"
+    ],
+    "created_at": "2026-03-25T14:57:16.463518"
+  },
+  "code_path": "C:\\Users\\suraj\\Downloads\\Claud Code\\kos-engine\\agents\\agent_physics_cfbbb4.py",
+  "safety_check": "PASSED",
+  "status": "PENDING",
+  "generated_at": "2026-03-25T14:57:16.467581"
+}

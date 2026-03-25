@@ -1,0 +1,55 @@
+{
+  "id": "agent_general_knowledge_17f311",
+  "blueprint": {
+    "name": "generalknowledgeAgent",
+    "domain": "general knowledge",
+    "description": "Specialized agent for general knowledge domain with 25 knowledge nodes. Core concepts: information.n.05, approach.n.01, charles.n.01, boyle.n.01, heat_content.n.01. Can answer questions about deep question answering, quantitative analysis, concept retrieval.",
+    "capabilities": [
+      "deep question answering",
+      "quantitative analysis",
+      "concept retrieval",
+      "relationship mapping"
+    ],
+    "knowledge_nodes": 20,
+    "top_nodes": [
+      "information.n.05",
+      "approach.n.01",
+      "charles.n.01",
+      "boyle.n.01",
+      "heat_content.n.01",
+      "KASM_29a1bfba",
+      "KASM_7cf467af",
+      "gas.n.01",
+      "ideal.n.01",
+      "pressure.n.01",
+      "equilibrium.n.01",
+      "form.n.01",
+      "nothing.n.01",
+      "crystal.n.01",
+      "square.n.01",
+      "volume.n.01",
+      "decrease.n.01",
+      "KASM_e78618f4",
+      "KASM_fa8847b0",
+      "convert.n.01"
+    ],
+    "entry_queries": [
+      "What is information.n.05?",
+      "How does information.n.05 work?",
+      "What is approach.n.01?",
+      "How does approach.n.01 work?",
+      "What is charles.n.01?",
+      "How does charles.n.01 work?",
+      "What is boyle.n.01?",
+      "How does boyle.n.01 work?",
+      "What is heat_content.n.01?",
+      "How does heat_content.n.01 work?",
+      "What is the relationship between information.n.05 and approach.n.01?"
+    ],
+    "created_at": "2026-03-25T14:57:16.474471"
+  },
+  "code_path": "C:\\Users\\suraj\\Downloads\\Claud Code\\kos-engine\\agents\\agent_general_knowledge_17f311.py",
+  "safety_check": "PASSED",
+  "status": "PENDING",
+  "generated_at": "2026-03-25T14:57:16.478839"
+}

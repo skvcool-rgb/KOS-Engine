@@ -1,0 +1,55 @@
+{
+  "id": "agent_chemistry_6499c9",
+  "blueprint": {
+    "name": "chemistryAgent",
+    "domain": "chemistry",
+    "description": "Specialized agent for chemistry domain with 46 knowledge nodes. Core concepts: KASM_299bcf54, cause.n.01, flow.n.01, wind.n.01, power.n.01. Can answer questions about deep question answering, quantitative analysis, concept retrieval.",
+    "capabilities": [
+      "deep question answering",
+      "quantitative analysis",
+      "concept retrieval",
+      "relationship mapping"
+    ],
+    "knowledge_nodes": 20,
+    "top_nodes": [
+      "KASM_299bcf54",
+      "cause.n.01",
+      "flow.n.01",
+      "wind.n.01",
+      "power.n.01",
+      "KASM_bf0bb4ee",
+      "chemical.n.01",
+      "property.n.01",
+      "pulsar.n.01",
+      "orbit.n.01",
+      "number.n.01",
+      "range.n.02",
+      "atom.n.02",
+      "component.n.01",
+      "neutron.n.01",
+      "nucleus.n.01",
+      "group.n.01",
+      "neptune.n.01",
+      "kilometer.n.01",
+      "table.n.01"
+    ],
+    "entry_queries": [
+      "What is KASM_299bcf54?",
+      "How does KASM_299bcf54 work?",
+      "What is cause.n.01?",
+      "How does cause.n.01 work?",
+      "What is flow.n.01?",
+      "How does flow.n.01 work?",
+      "What is wind.n.01?",
+      "How does wind.n.01 work?",
+      "What is power.n.01?",
+      "How does power.n.01 work?",
+      "What is the relationship between KASM_299bcf54 and cause.n.01?"
+    ],
+    "created_at": "2026-03-25T14:57:16.457307"
+  },
+  "code_path": "C:\\Users\\suraj\\Downloads\\Claud Code\\kos-engine\\agents\\agent_chemistry_6499c9.py",
+  "safety_check": "PASSED",
+  "status": "PENDING",
+  "generated_at": "2026-03-25T14:57:16.461352"
+}
