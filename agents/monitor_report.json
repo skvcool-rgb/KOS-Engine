@@ -1,0 +1,114 @@
+{
+  "timestamp": "2026-03-25T15:13:30.493569",
+  "agents_loaded": 5,
+  "agent_results": {
+    "agent_physics_cfbbb4": {
+      "name": "physicsAgent",
+      "domain": "physics",
+      "queries_tested": 5,
+      "hits": 4,
+      "hit_rate": 0.8,
+      "avg_confidence": 0.7
+    },
+    "agent_computer_science_3c7f39": {
+      "name": "computerscienceAgent",
+      "domain": "computer science",
+      "queries_tested": 5,
+      "hits": 5,
+      "hit_rate": 1.0,
+      "avg_confidence": 0.88
+    },
+    "agent_chemistry_6499c9": {
+      "name": "chemistryAgent",
+      "domain": "chemistry",
+      "queries_tested": 5,
+      "hits": 4,
+      "hit_rate": 0.8,
+      "avg_confidence": 0.68
+    },
+    "agent_general_knowledge_17f311": {
+      "name": "generalknowledgeAgent",
+      "domain": "general knowledge",
+      "queries_tested": 5,
+      "hits": 5,
+      "hit_rate": 1.0,
+      "avg_confidence": 0.82
+    },
+    "agent_mathematics_3a9088": {
+      "name": "mathematicsAgent",
+      "domain": "mathematics",
+      "queries_tested": 5,
+      "hits": 5,
+      "hit_rate": 1.0,
+      "avg_confidence": 0.86
+    }
+  },
+  "routing_log": [
+    {
+      "query": "What causes earthquakes?",
+      "routed_to": null,
+      "score": 0
+    },
+    {
+      "query": "What is dark matter?",
+      "routed_to": null,
+      "score": 0
+    },
+    {
+      "query": "How does machine learning differ from traditional programming?",
+      "routed_to": "computerscienceAgent",
+      "domain": "computer science",
+      "score": 0.44999999999999996,
+      "confidence": 0.9,
+      "evidence": 10
+    },
+    {
+      "query": "How does CRISPR gene editing work?",
+      "routed_to": "physicsAgent",
+      "domain": "physics",
+      "score": 0.15,
+      "confidence": 0.9,
+      "evidence": 10
+    },
+    {
+      "query": "What is the greenhouse effect?",
+      "routed_to": "physicsAgent",
+      "domain": "physics",
+      "score": 0.15,
+      "confidence": 0.9,
+      "evidence": 10
+    },
+    {
+      "query": "How do drugs interact with receptors?",
+      "routed_to": "physicsAgent",
+      "domain": "physics",
+      "score": 0.3,
+      "confidence": 0.9,
+      "evidence": 10
+    },
+    {
+      "query": "How do semiconductors work?",
+      "routed_to": null,
+      "score": 0
+    },
+    {
+      "query": "How does the heart pump blood?",
+      "routed_to": "chemistryAgent",
+      "domain": "chemistry",
+      "score": 0.3,
+      "confidence": 0.9,
+      "evidence": 10
+    },
+    {
+      "query": "What is an algorithm?",
+      "routed_to": null,
+      "score": 0
+    },
+    {
+      "query": "What is the role of mitochondria?",
+      "routed_to": null,
+      "score": 0
+    }
+  ],
+  "routing_rate": 0.5
+}
