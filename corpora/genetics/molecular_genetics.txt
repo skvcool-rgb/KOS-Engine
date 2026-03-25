@@ -1,0 +1,30 @@
+DNA deoxyribonucleic acid is the molecule that carries genetic instructions in all living organisms.
+The DNA double helix was discovered by James Watson and Francis Crick in 1953 using X-ray data from Rosalind Franklin.
+DNA replication is semiconservative meaning each new double helix contains one old strand and one new strand.
+DNA polymerase synthesizes new DNA strands by adding nucleotides complementary to the template strand.
+The central dogma of molecular biology states that information flows from DNA to RNA to protein.
+Transcription copies a gene DNA sequence into messenger RNA using RNA polymerase.
+Translation converts the mRNA sequence into a protein at the ribosome.
+Codons are three-nucleotide sequences in mRNA that specify amino acids during translation.
+The genetic code is nearly universal with 64 codons encoding 20 amino acids and 3 stop signals.
+Transfer RNA carries amino acids to the ribosome and matches them to the correct codon via its anticodon.
+Introns are non-coding sequences that are removed from pre-mRNA by splicing.
+Exons are coding sequences that are joined together to form the mature mRNA.
+Alternative splicing allows a single gene to produce multiple different protein variants.
+Gene expression is regulated by transcription factors that bind to promoter and enhancer regions.
+Epigenetics studies heritable changes in gene expression that do not involve changes to the DNA sequence.
+DNA methylation typically silences gene expression by adding methyl groups to cytosine bases.
+Histone modification alters chromatin structure to activate or repress gene transcription.
+CRISPR-Cas9 is a gene editing tool that can precisely cut and modify DNA sequences.
+CRISPR was originally discovered as a bacterial immune defense system against viruses.
+Polymerase chain reaction PCR amplifies specific DNA sequences by millions of copies.
+Gel electrophoresis separates DNA fragments by size using an electric field.
+The Human Genome Project completed in 2003 sequenced all 3.2 billion base pairs of human DNA.
+Humans have approximately 20000 to 25000 protein-coding genes.
+Single nucleotide polymorphisms SNPs are the most common type of genetic variation among people.
+Genome-wide association studies identify genetic variants associated with diseases and traits.
+Gene therapy introduces functional genes into cells to treat genetic disorders.
+RNA interference silences gene expression by degrading specific mRNA molecules.
+Telomeres are repetitive DNA sequences at chromosome ends that protect against degradation.
+Telomerase is an enzyme that extends telomeres and is active in stem cells and cancer cells.
+Transposons are mobile genetic elements that can move within genomes and cause mutations.

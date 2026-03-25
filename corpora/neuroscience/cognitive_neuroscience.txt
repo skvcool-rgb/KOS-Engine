@@ -1,0 +1,30 @@
+Cognitive neuroscience studies the neural mechanisms underlying cognitive functions like perception memory and language.
+Working memory temporarily holds and manipulates information and depends on the prefrontal cortex.
+Long-term memory is stored across distributed cortical networks and can last a lifetime.
+Declarative memory includes episodic memories of personal experiences and semantic memories of facts.
+Procedural memory stores motor skills and habits and is mediated by the basal ganglia and cerebellum.
+Memory consolidation transfers information from short-term hippocampal storage to long-term cortical storage during sleep.
+The hippocampus is essential for spatial navigation and forming new explicit memories.
+Place cells in the hippocampus fire when an animal is in a specific location in its environment.
+Grid cells in the entorhinal cortex fire in regular hexagonal patterns as an animal moves through space.
+The visual cortex processes visual information in a hierarchical manner from simple to complex features.
+The primary visual cortex V1 processes edges orientations and basic visual features.
+Face recognition involves the fusiform face area a specialized region in the temporal lobe.
+Broca area in the left frontal lobe is essential for speech production and language processing.
+Wernicke area in the left temporal lobe is critical for language comprehension.
+Attention selectively enhances processing of relevant information while suppressing irrelevant stimuli.
+The reticular activating system in the brainstem regulates wakefulness and arousal.
+Emotion processing involves the amygdala prefrontal cortex and insula working together.
+The reward system uses dopamine pathways from the ventral tegmental area to the nucleus accumbens.
+Executive functions including planning inhibition and cognitive flexibility depend on the prefrontal cortex.
+Consciousness remains one of the greatest unsolved problems in neuroscience and philosophy.
+The global workspace theory proposes that consciousness arises when information is broadcast widely across the brain.
+Integrated information theory proposes that consciousness corresponds to the amount of integrated information in a system.
+Brain-computer interfaces decode neural activity to allow direct communication between the brain and external devices.
+Functional MRI measures brain activity by detecting changes in blood oxygenation levels.
+Electroencephalography EEG measures electrical activity of the brain with millisecond temporal resolution.
+Optogenetics uses light-sensitive proteins to activate or inhibit specific neurons with precise timing.
+The connectome is the complete map of neural connections in the brain.
+Neurogenesis the generation of new neurons occurs in the hippocampus and olfactory bulb of adult mammals.
+Traumatic brain injury can cause cognitive impairments depending on the location and severity of damage.
+Neurodegenerative diseases progressively destroy neurons leading to cognitive and motor decline.

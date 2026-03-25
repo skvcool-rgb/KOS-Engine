@@ -1,0 +1,30 @@
+Organic chemistry is the study of carbon-containing compounds and their reactions.
+Carbon can form four covalent bonds due to its four valence electrons.
+Hydrocarbons contain only carbon and hydrogen atoms.
+Alkanes are saturated hydrocarbons with single bonds following the formula CnH2n+2.
+Alkenes contain at least one carbon-carbon double bond and are unsaturated.
+Alkynes contain at least one carbon-carbon triple bond.
+Aromatic compounds contain a planar ring of atoms with delocalized pi electrons such as benzene.
+Benzene has six carbon atoms in a hexagonal ring with alternating single and double bonds that are actually delocalized.
+Functional groups determine the chemical properties and reactivity of organic molecules.
+The hydroxyl group OH characterizes alcohols.
+The carboxyl group COOH characterizes carboxylic acids.
+The amino group NH2 characterizes amines and is found in amino acids.
+The carbonyl group C double bond O is found in aldehydes and ketones.
+Esters form from the reaction of a carboxylic acid with an alcohol releasing water.
+Polymers are large molecules made by linking many small monomer units together.
+Addition polymerization joins monomers with double bonds without losing atoms.
+Condensation polymerization joins monomers by removing small molecules like water.
+Chirality describes molecules that are non-superimposable mirror images of each other called enantiomers.
+Enantiomers have identical physical properties except for the direction they rotate polarized light.
+Stereoisomers have the same molecular formula and connectivity but different spatial arrangements.
+Nucleophilic substitution reactions replace a leaving group with a nucleophile.
+SN1 reactions proceed through a carbocation intermediate and follow first-order kinetics.
+SN2 reactions proceed through a single concerted step with backside attack and follow second-order kinetics.
+Elimination reactions remove atoms from adjacent carbons to form a double bond.
+Grignard reagents are organomagnesium compounds used to form carbon-carbon bonds.
+Friedel-Crafts reactions add alkyl or acyl groups to aromatic rings using Lewis acid catalysts.
+Oxidation of primary alcohols produces aldehydes and further oxidation produces carboxylic acids.
+Reduction adds hydrogen atoms to a molecule or removes oxygen atoms.
+Markovnikov rule states that in addition reactions the hydrogen adds to the carbon with more hydrogen atoms.
+Isomers are molecules with the same molecular formula but different structural arrangements.

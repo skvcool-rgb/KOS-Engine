@@ -1,0 +1,30 @@
+Special relativity is based on two postulates that the laws of physics are the same in all inertial frames and the speed of light is constant.
+Time dilation causes moving clocks to tick slower relative to a stationary observer.
+Length contraction causes objects moving at high speed to appear shorter along the direction of motion.
+The Lorentz transformation relates space and time coordinates between two inertial reference frames.
+Mass-energy equivalence is expressed by Einstein famous equation E equals mc squared.
+Nothing with mass can travel at or faster than the speed of light in vacuum.
+The speed of light in vacuum is exactly 299792458 meters per second.
+Relativistic momentum increases without bound as an object approaches the speed of light.
+The twin paradox illustrates that a traveling twin ages less than a stationary twin due to time dilation.
+General relativity describes gravity as the curvature of spacetime caused by mass and energy.
+The Einstein field equations relate the geometry of spacetime to the distribution of matter and energy.
+Massive objects like stars and planets curve spacetime around them causing other objects to follow curved paths.
+Gravitational time dilation causes clocks in stronger gravitational fields to tick slower.
+Gravitational lensing bends light from distant objects as it passes through curved spacetime near massive objects.
+Black holes are regions where spacetime curvature becomes so extreme that nothing can escape including light.
+The Schwarzschild radius defines the event horizon of a non-rotating black hole.
+Hawking radiation is thermal radiation predicted to be emitted by black holes due to quantum effects near the event horizon.
+Gravitational waves are ripples in spacetime produced by accelerating massive objects.
+LIGO detected gravitational waves for the first time in 2015 from merging black holes confirming Einstein prediction.
+The equivalence principle states that gravitational and inertial mass are identical.
+Frame dragging causes rotating massive objects to drag spacetime around them.
+The cosmological constant represents dark energy that drives the accelerating expansion of the universe.
+GPS satellites must account for both special and general relativistic time dilation to maintain accuracy.
+Geodesics are the straightest possible paths through curved spacetime.
+The precession of Mercury orbit was one of the first confirmations of general relativity.
+Neutron stars are extremely dense remnants of stellar collapse with intense gravitational fields.
+Pulsars are rapidly rotating neutron stars that emit beams of electromagnetic radiation.
+Time travel to the future is physically possible through time dilation at high velocities or strong gravitational fields.
+The Friedmann equations describe the expansion of the universe within general relativity.
+The Big Bang theory states that the universe expanded from an extremely hot and dense initial state approximately 13.8 billion years ago.

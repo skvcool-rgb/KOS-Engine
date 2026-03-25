@@ -1,0 +1,30 @@
+Biochemistry studies the chemical processes and substances within living organisms.
+Proteins are polymers of amino acids linked by peptide bonds.
+There are twenty standard amino acids used by all living organisms to build proteins.
+The primary structure of a protein is its linear sequence of amino acids.
+The secondary structure includes alpha helices and beta sheets stabilized by hydrogen bonds.
+The tertiary structure is the three-dimensional folding of a protein determined by side chain interactions.
+The quaternary structure describes the arrangement of multiple protein subunits.
+Enzymes are biological catalysts that accelerate chemical reactions by lowering activation energy.
+The active site of an enzyme binds the substrate with high specificity.
+Michaelis-Menten kinetics describes enzyme reaction rates as a function of substrate concentration.
+Allosteric regulation modifies enzyme activity by binding molecules at sites other than the active site.
+Carbohydrates are sugars and starches that serve as energy sources and structural components.
+Glucose is a six-carbon monosaccharide that is the primary energy source for cells.
+Glycolysis breaks down glucose into two molecules of pyruvate producing ATP and NADH.
+The citric acid cycle oxidizes acetyl-CoA to produce CO2 NADH FADH2 and GTP.
+The electron transport chain uses NADH and FADH2 to generate a proton gradient that drives ATP synthesis.
+Oxidative phosphorylation produces approximately 30 to 32 ATP molecules per glucose molecule.
+ATP adenosine triphosphate is the primary energy currency of all living cells.
+Lipids are hydrophobic molecules including fats oils and phospholipids.
+Phospholipids form bilayers that are the structural basis of all cell membranes.
+Fatty acids can be saturated with no double bonds or unsaturated with one or more double bonds.
+Cholesterol is a lipid that maintains membrane fluidity and is a precursor to steroid hormones.
+Nucleotides are the building blocks of DNA and RNA consisting of a base sugar and phosphate group.
+The four DNA bases are adenine thymine guanine and cytosine.
+The four RNA bases are adenine uracil guanine and cytosine with uracil replacing thymine.
+DNA double helix is held together by hydrogen bonds between complementary base pairs A-T and G-C.
+Coenzymes are organic molecules that assist enzymes including NAD FAD and coenzyme A.
+Vitamins are essential organic compounds that often function as coenzymes or their precursors.
+Metabolism encompasses all chemical reactions in an organism including catabolism and anabolism.
+Signal transduction pathways relay chemical signals from the cell surface to intracellular targets.

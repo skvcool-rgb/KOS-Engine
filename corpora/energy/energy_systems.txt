@@ -1,0 +1,30 @@
+Solar photovoltaic cells convert sunlight into electricity using semiconductor materials primarily silicon.
+Solar cell efficiency has improved from 6 percent in 1954 to over 47 percent in multi-junction laboratory cells.
+Perovskite solar cells are an emerging technology with rapidly improving efficiency and low manufacturing costs.
+Wind turbines convert kinetic energy of wind into electrical energy using rotating blades and generators.
+Onshore wind turbines typically have capacities of 2 to 5 megawatts per turbine.
+Offshore wind farms benefit from stronger and more consistent winds but face higher installation costs.
+Hydroelectric power generates electricity from the potential energy of water flowing through turbines.
+Hydroelectric dams provide approximately 16 percent of global electricity production.
+Pumped-storage hydroelectricity stores energy by pumping water uphill during low demand and releasing it during peak demand.
+Nuclear fission splits heavy atoms like uranium-235 to release enormous amounts of energy.
+A nuclear reactor controls the fission chain reaction using control rods and moderators.
+Nuclear power plants produce no direct carbon dioxide emissions during operation.
+Nuclear fusion combines light atoms like hydrogen isotopes to release energy following E equals mc squared.
+ITER is an international project building a tokamak fusion reactor to demonstrate net fusion energy.
+Geothermal energy extracts heat from Earth interior for electricity generation and direct heating.
+Biomass energy comes from organic materials including wood agricultural waste and dedicated energy crops.
+Hydrogen can be produced by electrolysis of water using renewable electricity and used as a clean fuel.
+Fuel cells convert hydrogen and oxygen directly into electricity water and heat.
+Battery energy storage systems use rechargeable batteries to store electricity for later use.
+Lithium-ion batteries dominate the energy storage market due to high energy density and declining costs.
+Solid-state batteries replace liquid electrolytes with solid materials for improved safety and energy density.
+Grid-scale energy storage is essential for integrating intermittent renewable energy sources.
+Smart grids use digital communication technology to detect and react to local changes in electricity usage.
+The levelized cost of energy measures the average cost of electricity generation over a project lifetime.
+Solar and wind energy have achieved cost parity with fossil fuels in many regions worldwide.
+Carbon capture utilization and storage removes CO2 from industrial emissions or the atmosphere.
+Direct air capture technology removes carbon dioxide directly from ambient air.
+Combined heat and power systems generate electricity and useful thermal energy simultaneously.
+Superconducting magnetic energy storage uses superconducting coils to store energy in a magnetic field.
+The global energy transition aims to shift from fossil fuels to renewable and clean energy sources.

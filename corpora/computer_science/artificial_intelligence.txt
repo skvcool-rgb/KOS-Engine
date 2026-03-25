@@ -1,0 +1,30 @@
+Artificial intelligence is the field of creating machines that can perform tasks requiring human intelligence.
+Machine learning is a subset of AI where systems learn from data without being explicitly programmed.
+Supervised learning trains models on labeled data to predict outputs for new inputs.
+Unsupervised learning discovers patterns in unlabeled data through clustering and dimensionality reduction.
+Reinforcement learning trains agents to make decisions by rewarding desired behaviors and penalizing undesired ones.
+Neural networks are computing systems inspired by biological neural networks in the brain.
+A perceptron is the simplest neural network consisting of a single layer of weights and an activation function.
+Deep learning uses neural networks with many hidden layers to learn hierarchical representations.
+Backpropagation is the algorithm used to calculate gradients and update weights in neural networks.
+Convolutional neural networks CNNs are specialized for processing grid-like data such as images.
+Recurrent neural networks RNNs process sequential data by maintaining hidden state across time steps.
+Long short-term memory LSTM networks solve the vanishing gradient problem in standard RNNs.
+Transformers use self-attention mechanisms to process sequences in parallel without recurrence.
+The attention mechanism allows models to focus on relevant parts of the input when generating output.
+Large language models are transformer-based models trained on massive text corpora to generate human-like text.
+GPT Generative Pre-trained Transformer generates text by predicting the next token in a sequence.
+BERT Bidirectional Encoder Representations from Transformers understands context by reading text in both directions.
+Transfer learning applies knowledge learned from one task to improve performance on a related task.
+Generative adversarial networks consist of a generator and discriminator that compete to produce realistic data.
+Overfitting occurs when a model memorizes training data and performs poorly on new data.
+Regularization techniques like dropout and L2 penalty prevent overfitting by constraining model complexity.
+The bias-variance tradeoff balances underfitting from high bias against overfitting from high variance.
+Gradient descent is an optimization algorithm that iteratively adjusts parameters to minimize a loss function.
+Stochastic gradient descent updates parameters using random subsets of training data for efficiency.
+The vanishing gradient problem occurs when gradients become extremely small in deep networks preventing learning.
+Batch normalization normalizes layer inputs to accelerate training and improve stability.
+Reinforcement learning from human feedback RLHF aligns language models with human preferences.
+Diffusion models generate data by learning to reverse a gradual noising process.
+Retrieval-augmented generation combines language models with external knowledge retrieval for more accurate responses.
+Artificial general intelligence AGI refers to hypothetical AI with human-level reasoning across all domains.

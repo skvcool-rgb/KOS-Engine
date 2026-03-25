@@ -1,0 +1,30 @@
+Pharmacology is the study of how drugs interact with biological systems to produce therapeutic effects.
+Pharmacokinetics describes how the body absorbs distributes metabolizes and excretes drugs.
+Pharmacodynamics describes how drugs produce their effects at the molecular and cellular level.
+Drug bioavailability is the fraction of an administered dose that reaches systemic circulation.
+The therapeutic index is the ratio of the toxic dose to the therapeutic dose and measures drug safety.
+Receptor agonists bind to receptors and activate them to produce a biological response.
+Receptor antagonists bind to receptors and block the natural ligand from activating them.
+Antibiotics kill or inhibit the growth of bacteria and include penicillins cephalosporins and fluoroquinolones.
+Penicillin discovered by Alexander Fleming in 1928 inhibits bacterial cell wall synthesis.
+Antibiotic resistance occurs when bacteria evolve mechanisms to survive antibiotic exposure.
+MRSA methicillin-resistant Staphylococcus aureus is a serious antibiotic-resistant infection.
+Antiviral drugs inhibit viral replication and include acyclovir for herpes and oseltamivir for influenza.
+Nonsteroidal anti-inflammatory drugs NSAIDs like ibuprofen reduce inflammation by inhibiting cyclooxygenase enzymes.
+Opioid analgesics like morphine bind to mu receptors in the brain to produce pain relief and euphoria.
+Statins lower cholesterol by inhibiting HMG-CoA reductase the enzyme in cholesterol biosynthesis.
+ACE inhibitors lower blood pressure by blocking the conversion of angiotensin I to angiotensin II.
+Beta blockers reduce heart rate and blood pressure by blocking beta-adrenergic receptors.
+Selective serotonin reuptake inhibitors SSRIs treat depression by increasing serotonin levels in synapses.
+Immunosuppressants like cyclosporine prevent organ transplant rejection by suppressing T cell activation.
+Monoclonal antibodies are engineered proteins that target specific molecules for cancer therapy and autoimmune diseases.
+Chemotherapy drugs kill rapidly dividing cells and are used to treat cancer.
+Drug-drug interactions occur when one drug affects the pharmacokinetics or pharmacodynamics of another.
+The cytochrome P450 enzyme system in the liver metabolizes the majority of pharmaceutical drugs.
+Prodrugs are inactive compounds that are metabolized into active drugs inside the body.
+The blood-brain barrier limits drug delivery to the central nervous system.
+Pharmacogenomics studies how genetic variation affects individual responses to drugs.
+Drug tolerance develops when repeated use reduces the drug effect requiring higher doses.
+Physical dependence occurs when the body adapts to a drug and withdrawal symptoms appear upon cessation.
+Clinical trials test drug safety and efficacy through phase I II III and IV studies.
+The FDA approves drugs for market after reviewing safety and efficacy data from clinical trials.

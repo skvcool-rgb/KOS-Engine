@@ -1,0 +1,30 @@
+Macroeconomics studies the economy as a whole including national output employment and price levels.
+Gross domestic product GDP measures the total market value of all final goods and services produced within a country.
+GDP can be calculated by the expenditure approach as consumption plus investment plus government spending plus net exports.
+Real GDP adjusts for inflation and measures output in constant prices to track actual economic growth.
+The GDP growth rate indicates the pace of economic expansion or contraction.
+Unemployment rate is the percentage of the labor force that is actively seeking but unable to find work.
+Frictional unemployment occurs when workers are between jobs and searching for new employment.
+Structural unemployment results from a mismatch between worker skills and job requirements.
+Cyclical unemployment rises during economic recessions and falls during expansions.
+Inflation is a sustained increase in the general price level measured by indices like the Consumer Price Index.
+Hyperinflation is extremely rapid inflation that destroys a currency purchasing power.
+Deflation is a sustained decrease in the general price level that can discourage spending and investment.
+The Phillips curve suggests an inverse relationship between inflation and unemployment in the short run.
+Fiscal policy uses government spending and taxation to influence the economy.
+Expansionary fiscal policy increases government spending or cuts taxes to stimulate economic growth.
+Contractionary fiscal policy decreases spending or raises taxes to reduce inflation.
+Monetary policy is conducted by central banks to manage interest rates and money supply.
+The Federal Reserve is the central bank of the United States and sets the federal funds rate.
+Lowering interest rates encourages borrowing and spending stimulating economic activity.
+Raising interest rates discourages borrowing and spending reducing inflationary pressure.
+Quantitative easing is when central banks purchase financial assets to increase money supply and lower interest rates.
+The money multiplier describes how an initial deposit creates a larger increase in the total money supply through lending.
+Exchange rates determine the value of one currency relative to another and affect international trade.
+A trade deficit occurs when a country imports exceed its exports.
+Comparative advantage states that countries benefit from specializing in goods they produce at the lowest opportunity cost.
+The business cycle consists of expansion peak contraction and trough phases.
+A recession is commonly defined as two consecutive quarters of declining real GDP.
+The national debt is the total amount of money a government owes to creditors.
+Supply-side economics argues that lower taxes and reduced regulation stimulate economic growth.
+Keynesian economics advocates government intervention through fiscal policy to manage aggregate demand.

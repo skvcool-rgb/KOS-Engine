@@ -1,0 +1,30 @@
+Mechanical engineering applies physics and materials science to design build and maintain mechanical systems.
+Stress is the internal force per unit area within a material caused by external loads.
+Strain is the deformation of a material relative to its original dimensions.
+Young modulus relates stress to strain in the elastic region of a material.
+The yield strength is the stress at which a material begins to deform permanently.
+Fatigue failure occurs when a material fractures after repeated cyclic loading below its ultimate strength.
+Fluid mechanics studies the behavior of liquids and gases at rest and in motion.
+Bernoulli equation relates fluid pressure velocity and elevation along a streamline.
+Reynolds number determines whether fluid flow is laminar smooth or turbulent chaotic.
+Viscosity measures a fluid resistance to flow and depends on temperature.
+Heat exchangers transfer thermal energy between two fluids without mixing them.
+Thermodynamic cycles like the Rankine and Brayton cycles describe the operation of power plants and gas turbines.
+The Otto cycle describes the idealized operation of spark-ignition internal combustion engines.
+The Diesel cycle describes compression-ignition engines that have higher efficiency than Otto cycle engines.
+Gear trains transmit rotational motion and torque between shafts using meshing gears.
+Bearings reduce friction between moving parts by providing a smooth rolling or sliding surface.
+Vibration analysis identifies resonance frequencies and prevents structural failure from oscillations.
+Finite element analysis divides structures into small elements to numerically solve stress and deformation problems.
+Computational fluid dynamics simulates fluid flow using numerical methods to solve the Navier-Stokes equations.
+3D printing or additive manufacturing builds objects layer by layer from digital models.
+CNC computer numerical control machining uses programmed instructions to precisely cut material.
+Robotics combines mechanical engineering electronics and software to create autonomous or semi-autonomous machines.
+Industrial robots perform repetitive tasks like welding painting and assembly with high precision.
+HVAC systems control heating ventilation and air conditioning in buildings.
+Turbines convert fluid energy into mechanical energy and are used in power generation and jet engines.
+Composite materials combine two or more constituent materials to achieve properties not available from individual materials.
+Carbon fiber composites are lightweight and strong and used in aerospace and automotive applications.
+Hydraulic systems use pressurized fluid to transmit force and perform mechanical work.
+Pneumatic systems use compressed air to transmit force for tools and automation.
+Quality control uses statistical methods to ensure products meet specified standards and tolerances.

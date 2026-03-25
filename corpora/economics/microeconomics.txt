@@ -1,0 +1,30 @@
+Microeconomics studies individual agents and markets and how they make decisions about resource allocation.
+The law of demand states that quantity demanded decreases as price increases holding other factors constant.
+The law of supply states that quantity supplied increases as price increases holding other factors constant.
+Market equilibrium occurs at the price where quantity demanded equals quantity supplied.
+Price elasticity of demand measures how much quantity demanded changes in response to a price change.
+Inelastic demand means quantity demanded changes less than proportionally to price changes.
+Consumer surplus is the difference between what consumers are willing to pay and the market price.
+Producer surplus is the difference between the market price and the minimum price producers would accept.
+Marginal cost is the additional cost of producing one more unit of a good or service.
+Marginal revenue is the additional revenue from selling one more unit of a good or service.
+Firms maximize profit by producing where marginal revenue equals marginal cost.
+Perfect competition features many firms selling identical products with no barriers to entry.
+Monopoly exists when a single firm dominates a market with no close substitutes and barriers to entry.
+Oligopoly is a market structure with few large firms whose decisions affect each other.
+Game theory analyzes strategic interactions between rational decision-makers.
+The Nash equilibrium is a strategy combination where no player can benefit by unilaterally changing strategy.
+The prisoner dilemma shows how individual rationality can lead to collectively suboptimal outcomes.
+Externalities are costs or benefits of a transaction that affect third parties not involved in the transaction.
+Negative externalities like pollution cause social costs to exceed private costs.
+A Pigouvian tax corrects negative externalities by taxing the activity equal to the marginal social cost.
+Public goods are non-rivalrous and non-excludable meaning one person use does not reduce availability to others.
+Moral hazard occurs when a party takes greater risks because another party bears the cost.
+Adverse selection occurs when asymmetric information leads to market transactions favoring one party.
+The tragedy of the commons describes how shared resources are overused when individuals act in self-interest.
+Opportunity cost is the value of the next best alternative foregone when making a choice.
+Diminishing marginal returns states that adding more of one input while holding others constant eventually yields less additional output.
+Economies of scale occur when increasing production reduces the average cost per unit.
+Price discrimination charges different prices to different consumers based on willingness to pay.
+Behavioral economics incorporates psychological insights into economic models of decision-making.
+The Coase theorem states that with low transaction costs parties can negotiate to correct externalities regardless of initial property rights.

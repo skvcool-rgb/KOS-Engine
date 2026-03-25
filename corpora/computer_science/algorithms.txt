@@ -1,0 +1,30 @@
+An algorithm is a finite sequence of well-defined instructions for solving a computational problem.
+Time complexity measures how the runtime of an algorithm scales with input size.
+Big O notation describes the upper bound of an algorithm time complexity.
+O(1) constant time means the algorithm runtime does not depend on input size.
+O(log n) logarithmic time is achieved by algorithms that halve the problem size each step like binary search.
+O(n) linear time means the runtime grows proportionally with input size.
+O(n log n) is the optimal time complexity for comparison-based sorting algorithms.
+O(n squared) quadratic time is typical of nested loop algorithms like bubble sort.
+O(2 to the n) exponential time grows extremely fast and is typical of brute-force combinatorial problems.
+Binary search finds an element in a sorted array by repeatedly halving the search interval.
+Quicksort is a divide-and-conquer sorting algorithm with average O(n log n) time complexity.
+Merge sort guarantees O(n log n) time complexity by recursively splitting and merging sorted halves.
+Heap sort uses a binary heap data structure to sort elements in O(n log n) time.
+Hash tables provide average O(1) time for insertion lookup and deletion using hash functions.
+A hash collision occurs when two different keys map to the same hash table index.
+Binary search trees store elements in sorted order with O(log n) average operations.
+Red-black trees and AVL trees are self-balancing binary search trees that guarantee O(log n) height.
+B-trees are balanced search trees optimized for disk access used in databases and file systems.
+Graphs consist of vertices and edges and model relationships between objects.
+Breadth-first search explores a graph level by level using a queue.
+Depth-first search explores a graph by going as deep as possible before backtracking using a stack.
+Dijkstra algorithm finds the shortest path from a source vertex to all other vertices in a weighted graph.
+The A-star algorithm uses heuristics to find the shortest path more efficiently than Dijkstra.
+Dynamic programming solves complex problems by breaking them into overlapping subproblems and storing solutions.
+Greedy algorithms make locally optimal choices at each step hoping to find a global optimum.
+The traveling salesman problem asks for the shortest route visiting all cities exactly once and is NP-hard.
+P is the class of problems solvable in polynomial time by a deterministic Turing machine.
+NP is the class of problems whose solutions can be verified in polynomial time.
+The P versus NP question asks whether every problem whose solution can be quickly verified can also be quickly solved.
+Recursion is a technique where a function calls itself to solve smaller instances of the same problem.

@@ -1,0 +1,30 @@
+Cancer is a group of diseases characterized by uncontrolled cell growth and the ability to invade other tissues.
+Oncogenes are mutated genes that promote cell growth and contribute to cancer development.
+Tumor suppressor genes like p53 normally prevent uncontrolled cell division and their inactivation promotes cancer.
+Metastasis is the spread of cancer cells from the primary tumor to distant organs through blood or lymph.
+Diabetes mellitus is a metabolic disorder characterized by chronically elevated blood glucose levels.
+Type 1 diabetes is an autoimmune disease where the immune system destroys insulin-producing beta cells.
+Type 2 diabetes results from insulin resistance and inadequate insulin secretion and is associated with obesity.
+Cardiovascular disease is the leading cause of death worldwide and includes heart attacks and strokes.
+Atherosclerosis is the buildup of plaques in arterial walls that restricts blood flow.
+A myocardial infarction or heart attack occurs when blood flow to the heart muscle is blocked.
+A stroke occurs when blood flow to the brain is interrupted causing brain cell death.
+Alzheimer disease is a neurodegenerative disorder characterized by amyloid plaques and neurofibrillary tangles.
+Parkinson disease results from the loss of dopamine-producing neurons in the substantia nigra.
+HIV human immunodeficiency virus attacks CD4 T cells and weakens the immune system.
+AIDS acquired immunodeficiency syndrome is the advanced stage of HIV infection with severely compromised immunity.
+Malaria is caused by Plasmodium parasites transmitted through infected Anopheles mosquito bites.
+Tuberculosis is caused by Mycobacterium tuberculosis and primarily affects the lungs.
+Influenza viruses mutate rapidly through antigenic drift and shift causing seasonal epidemics and pandemics.
+COVID-19 is caused by SARS-CoV-2 a coronavirus that primarily affects the respiratory system.
+Autoimmune diseases occur when the immune system mistakenly attacks the body own tissues.
+Rheumatoid arthritis is an autoimmune disease that causes chronic inflammation of the joints.
+Multiple sclerosis is an autoimmune disease that damages the myelin sheath around nerve fibers.
+Sickle cell disease is a genetic disorder causing red blood cells to form an abnormal crescent shape.
+Cystic fibrosis is caused by mutations in the CFTR gene affecting chloride channels in epithelial cells.
+Antimicrobial resistance is a growing global health threat as pathogens evolve to resist treatment.
+Prions are misfolded proteins that cause fatal neurodegenerative diseases like Creutzfeldt-Jakob disease.
+Sepsis is a life-threatening organ dysfunction caused by a dysregulated immune response to infection.
+Chronic obstructive pulmonary disease COPD is an inflammatory lung disease that obstructs airflow.
+Osteoporosis weakens bones by reducing bone density and increasing fracture risk.
+Depression is a mood disorder involving persistent sadness and loss of interest linked to neurotransmitter imbalances.

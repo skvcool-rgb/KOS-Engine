@@ -1,0 +1,30 @@
+Statistics is the science of collecting analyzing interpreting and presenting data.
+Descriptive statistics summarize data using measures like mean median mode and standard deviation.
+The mean is the arithmetic average of a dataset.
+The median is the middle value when data is sorted and is robust to outliers.
+Standard deviation measures the spread of data around the mean.
+Variance is the square of the standard deviation and measures data dispersion.
+The normal distribution is a bell-shaped probability distribution defined by its mean and standard deviation.
+The central limit theorem states that the sum of many independent random variables approaches a normal distribution.
+A confidence interval estimates a population parameter with a specified probability of containing the true value.
+A 95 percent confidence interval means that if the sampling were repeated the interval would contain the true parameter 95 percent of the time.
+Hypothesis testing evaluates whether sample data provides sufficient evidence against a null hypothesis.
+The p-value is the probability of observing results at least as extreme as the data assuming the null hypothesis is true.
+Type I error occurs when the null hypothesis is rejected when it is actually true also called a false positive.
+Type II error occurs when the null hypothesis is not rejected when it is actually false also called a false negative.
+The t-test compares the means of two groups to determine if they are statistically different.
+ANOVA analysis of variance tests for differences in means among three or more groups.
+Chi-squared test evaluates whether observed frequencies differ significantly from expected frequencies.
+Regression analysis models the relationship between dependent and independent variables.
+Linear regression fits a straight line to data minimizing the sum of squared residuals.
+The coefficient of determination R-squared measures the proportion of variance in the dependent variable explained by the model.
+Correlation measures the strength and direction of the linear relationship between two variables.
+Correlation does not imply causation as two variables may be associated without one causing the other.
+Bayes theorem calculates the probability of an event given prior knowledge using the formula P(A|B) equals P(B|A) times P(A) divided by P(B).
+Bayesian statistics updates probability estimates as new evidence is obtained.
+The law of large numbers states that as sample size increases the sample mean converges to the population mean.
+Random sampling ensures every member of a population has an equal chance of being selected.
+Bootstrapping estimates the sampling distribution of a statistic by resampling with replacement from the data.
+The maximum likelihood method estimates parameters by finding values that maximize the probability of the observed data.
+Principal component analysis reduces data dimensionality while preserving the maximum variance.
+Monte Carlo simulation uses repeated random sampling to estimate complex mathematical quantities.

@@ -1,0 +1,30 @@
+Cosmology is the study of the origin structure evolution and ultimate fate of the universe.
+The Big Bang theory states the universe began as an extremely hot dense state approximately 13.8 billion years ago.
+The cosmic microwave background radiation is the thermal afterglow of the Big Bang detected at 2.7 Kelvin.
+The cosmic microwave background was first detected by Arno Penzias and Robert Wilson in 1965.
+The universe is expanding and the rate of expansion is described by the Hubble constant.
+Edwin Hubble discovered in 1929 that galaxies are moving away from us with velocities proportional to their distances.
+Dark matter does not emit or absorb light but exerts gravitational effects and comprises approximately 27 percent of the universe.
+Dark energy is a mysterious force driving the accelerating expansion of the universe comprising approximately 68 percent.
+Ordinary matter makes up only about 5 percent of the total energy content of the universe.
+Galaxy rotation curves provide evidence for dark matter as outer stars orbit faster than expected from visible mass alone.
+Gravitational lensing of background galaxies by foreground clusters provides further evidence for dark matter.
+The observable universe has a diameter of approximately 93 billion light-years.
+There are approximately two trillion galaxies in the observable universe.
+The Milky Way is a barred spiral galaxy approximately 100000 light-years in diameter containing 100 to 400 billion stars.
+The Andromeda Galaxy is the nearest large galaxy to the Milky Way at approximately 2.5 million light-years away.
+Galaxy clusters are the largest gravitationally bound structures in the universe.
+Cosmic inflation is a rapid exponential expansion of the universe that occurred within the first fraction of a second after the Big Bang.
+Inflation explains the uniformity and flatness of the observable universe.
+Nucleosynthesis in the first few minutes after the Big Bang produced hydrogen helium and trace lithium.
+Stars form from the gravitational collapse of dense regions within molecular clouds of gas and dust.
+The Hertzsprung-Russell diagram classifies stars by luminosity and temperature.
+Main-sequence stars fuse hydrogen into helium and spend most of their lives in this phase.
+Red giant stars have exhausted their core hydrogen and expanded to many times their original size.
+White dwarfs are the remnant cores of low-mass stars with roughly the mass of the Sun compressed to Earth size.
+Neutron stars are extremely dense remnants of massive star supernovae with diameters of about 20 kilometers.
+A supernova is the explosive death of a massive star that briefly outshines an entire galaxy.
+Type Ia supernovae are used as standard candles to measure cosmic distances and led to the discovery of dark energy.
+Black holes form when massive stars collapse and their gravity prevents even light from escaping.
+Supermassive black holes with millions to billions of solar masses reside at the centers of most galaxies.
+The James Webb Space Telescope launched in 2021 observes the universe in infrared to study the earliest galaxies.

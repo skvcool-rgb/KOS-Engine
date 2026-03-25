@@ -1,0 +1,30 @@
+Nuclear physics studies the constituents and interactions of atomic nuclei.
+The strong nuclear force binds protons and neutrons together in the nucleus overcoming electromagnetic repulsion.
+The binding energy per nucleon is highest for iron-56 making it the most stable nucleus.
+Radioactive decay is the spontaneous emission of particles or radiation from an unstable nucleus.
+Alpha decay emits a helium-4 nucleus reducing the atomic number by two and mass number by four.
+Beta decay converts a neutron into a proton emitting an electron and antineutrino.
+Gamma decay emits high-energy photons from an excited nucleus without changing its composition.
+The half-life is the time required for half of a radioactive sample to decay.
+Carbon-14 dating uses the known half-life of 5730 years to determine the age of organic materials.
+Nuclear fission splits a heavy nucleus into lighter nuclei releasing energy and neutrons.
+Uranium-235 is the primary fissile isotope used in nuclear reactors and weapons.
+A chain reaction occurs when fission neutrons cause additional fission events in a self-sustaining process.
+Control rods absorb neutrons to regulate the rate of fission in a nuclear reactor.
+Nuclear fusion combines light nuclei like hydrogen isotopes to form heavier nuclei releasing energy.
+The proton-proton chain is the primary fusion process powering the Sun.
+Deuterium and tritium are hydrogen isotopes used in experimental fusion reactors.
+Plasma is an ionized gas state of matter required for sustained fusion reactions.
+Magnetic confinement uses strong magnetic fields to contain hot plasma in a tokamak or stellarator.
+Inertial confinement uses intense lasers to compress and heat fuel pellets to achieve fusion.
+Nuclear waste from fission includes spent fuel rods containing long-lived radioactive isotopes.
+Breeder reactors produce more fissile material than they consume by converting fertile isotopes.
+The nuclear shell model explains the stability of nuclei with magic numbers of protons or neutrons.
+The liquid drop model treats the nucleus as a drop of incompressible nuclear fluid.
+Neutron stars are composed almost entirely of neutrons and are among the densest objects in the universe.
+Nuclear magnetic resonance uses the magnetic properties of nuclei for chemical analysis and medical imaging.
+MRI magnetic resonance imaging creates detailed images of organs using nuclear magnetic resonance.
+Particle accelerators accelerate charged particles to high energies for nuclear and particle physics experiments.
+The Large Hadron Collider at CERN is the world largest particle accelerator at 27 kilometers in circumference.
+Antimatter is composed of antiparticles with the same mass but opposite charge as normal matter.
+When matter and antimatter meet they annihilate each other converting their mass entirely into energy.

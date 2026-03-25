@@ -1,0 +1,30 @@
+An atom consists of a nucleus containing protons and neutrons surrounded by electrons in orbitals.
+The atomic number defines an element and equals the number of protons in its nucleus.
+Isotopes are atoms of the same element with different numbers of neutrons.
+The periodic table organizes elements by increasing atomic number and groups them by chemical properties.
+Electronegativity measures the tendency of an atom to attract shared electrons in a chemical bond.
+Fluorine is the most electronegative element on the periodic table.
+Ionic bonds form when electrons are transferred from a metal to a nonmetal.
+Covalent bonds form when atoms share electron pairs.
+Metallic bonds involve a sea of delocalized electrons shared among metal atoms in a lattice.
+Hydrogen bonds are intermolecular forces between a hydrogen atom bonded to nitrogen oxygen or fluorine and a nearby electronegative atom.
+Van der Waals forces are weak intermolecular attractions that arise from temporary dipoles.
+The octet rule states that atoms tend to form bonds to achieve eight electrons in their valence shell.
+Oxidation is the loss of electrons and reduction is the gain of electrons.
+An oxidizing agent gains electrons and is reduced during a chemical reaction.
+A reducing agent loses electrons and is oxidized during a chemical reaction.
+The mole is defined as exactly 6.02214076 times 10 to the 23rd particles.
+Avogadro number equals 6.022 times 10 to the 23rd and represents the number of atoms in one mole of a substance.
+Molar mass is the mass of one mole of a substance measured in grams per mole.
+Chemical equilibrium occurs when the rates of forward and reverse reactions are equal.
+Le Chatelier principle states that a system at equilibrium shifts to counteract any imposed change.
+The pH scale measures the hydrogen ion concentration with pH 7 being neutral below 7 acidic and above 7 basic.
+Acids donate protons according to the Bronsted-Lowry definition.
+Bases accept protons according to the Bronsted-Lowry definition.
+Buffer solutions resist changes in pH when small amounts of acid or base are added.
+Catalysts increase reaction rates by lowering the activation energy without being consumed.
+Activation energy is the minimum energy required for a chemical reaction to proceed.
+The Arrhenius equation relates reaction rate to temperature and activation energy.
+Exothermic reactions release heat to the surroundings and have a negative enthalpy change.
+Endothermic reactions absorb heat from the surroundings and have a positive enthalpy change.
+Hess law states that the total enthalpy change of a reaction is independent of the pathway taken.

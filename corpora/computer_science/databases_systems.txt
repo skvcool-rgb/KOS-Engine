@@ -1,0 +1,30 @@
+A database is an organized collection of structured data stored and accessed electronically.
+Relational databases organize data into tables with rows and columns linked by keys.
+SQL Structured Query Language is the standard language for querying and manipulating relational databases.
+Primary keys uniquely identify each record in a database table.
+Foreign keys establish relationships between tables by referencing primary keys in other tables.
+Database normalization reduces redundancy by organizing data into related tables.
+ACID properties ensure database transactions are Atomic Consistent Isolated and Durable.
+Indexes speed up data retrieval by creating sorted data structures that point to table rows.
+B-tree indexes are the most common database index structure supporting range queries efficiently.
+Query optimization selects the most efficient execution plan for a database query.
+Joins combine data from multiple tables based on related columns.
+NoSQL databases provide flexible schemas and horizontal scaling for unstructured or semi-structured data.
+Document databases like MongoDB store data as JSON-like documents with nested structures.
+Key-value stores like Redis provide fast lookups using unique keys mapped to values.
+Column-family databases like Cassandra store data in columns rather than rows for efficient analytical queries.
+Graph databases like Neo4j store data as nodes and edges to model complex relationships.
+CAP theorem states that a distributed system can provide at most two of consistency availability and partition tolerance.
+Eventual consistency allows distributed databases to become consistent over time rather than immediately.
+Sharding distributes data across multiple servers to handle larger datasets and higher throughput.
+Replication copies data across multiple servers for fault tolerance and read performance.
+Write-ahead logging ensures database recovery by recording changes before applying them.
+Stored procedures are precompiled SQL code stored in the database for reusable logic.
+Database views are virtual tables defined by SQL queries that simplify complex data access.
+Object-relational mapping translates between programming objects and database tables.
+Connection pooling reuses database connections to reduce the overhead of creating new connections.
+Time-series databases are optimized for storing and querying timestamped data from sensors and monitoring.
+Data warehouses consolidate data from multiple sources for analytical processing and business intelligence.
+ETL extract transform load processes move data from source systems into data warehouses.
+In-memory databases store data in main memory for faster access compared to disk-based databases.
+Distributed databases span multiple machines and locations while appearing as a single unified database.

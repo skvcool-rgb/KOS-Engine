@@ -1,0 +1,30 @@
+Calculus is the mathematical study of continuous change developed independently by Newton and Leibniz.
+A limit describes the value that a function approaches as the input approaches a specified value.
+The derivative of a function measures the instantaneous rate of change at any point.
+The derivative of position with respect to time gives velocity.
+The derivative of velocity with respect to time gives acceleration.
+The power rule states that the derivative of x to the n equals n times x to the n minus 1.
+The chain rule computes the derivative of a composite function as the product of derivatives.
+The product rule states that the derivative of f times g equals f prime times g plus f times g prime.
+The quotient rule computes the derivative of f divided by g.
+A critical point occurs where the derivative equals zero or is undefined.
+The second derivative test determines whether a critical point is a maximum minimum or inflection point.
+Integration is the reverse process of differentiation and computes the area under a curve.
+The fundamental theorem of calculus connects differentiation and integration.
+A definite integral computes the net area between a function and the x-axis over an interval.
+An indefinite integral represents a family of antiderivatives.
+Integration by parts is based on the product rule and integrates products of functions.
+Substitution simplifies integrals by changing the variable of integration.
+Taylor series represent functions as infinite sums of polynomial terms based on derivatives at a point.
+The Maclaurin series is a Taylor series centered at zero.
+L Hopital rule evaluates limits of indeterminate forms by differentiating the numerator and denominator.
+Differential equations relate a function to its derivatives and model many physical phenomena.
+Ordinary differential equations involve functions of a single variable and their derivatives.
+Partial differential equations involve functions of multiple variables and their partial derivatives.
+The heat equation models the diffusion of heat through a material over time.
+The wave equation describes the propagation of waves in a medium.
+Laplace equation describes steady-state solutions where the second derivatives sum to zero.
+Multivariable calculus extends differentiation and integration to functions of several variables.
+The gradient is a vector of partial derivatives that points in the direction of steepest increase.
+The divergence of a vector field measures the rate at which field lines spread out from a point.
+The curl of a vector field measures the rotation of the field at a point.

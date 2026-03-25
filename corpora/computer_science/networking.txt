@@ -1,0 +1,30 @@
+The internet is a global network of interconnected computer networks using standardized protocols.
+TCP/IP is the fundamental protocol suite that enables communication across the internet.
+The OSI model divides network communication into seven layers from physical to application.
+IP addresses uniquely identify devices on a network with IPv4 using 32 bits and IPv6 using 128 bits.
+DNS Domain Name System translates human-readable domain names to IP addresses.
+HTTP Hypertext Transfer Protocol is the foundation of data communication on the World Wide Web.
+HTTPS adds TLS encryption to HTTP to secure data in transit.
+TCP Transmission Control Protocol provides reliable ordered delivery of data between applications.
+UDP User Datagram Protocol provides faster but unreliable connectionless data delivery.
+Routers forward data packets between different networks based on IP addresses.
+Switches forward data frames within a local network based on MAC addresses.
+Firewalls monitor and filter network traffic based on security rules.
+A VPN Virtual Private Network creates an encrypted tunnel over a public network for secure communication.
+Latency is the time delay between sending data and receiving a response.
+Bandwidth is the maximum rate of data transfer across a network path.
+Load balancing distributes network traffic across multiple servers to improve performance and reliability.
+CDN Content Delivery Network caches content at edge locations to reduce latency for users.
+WebSocket protocol enables full-duplex communication between client and server over a single connection.
+REST Representational State Transfer is an architectural style for designing networked applications using HTTP.
+GraphQL is a query language for APIs that allows clients to request exactly the data they need.
+Microservices architecture decomposes applications into small independent services that communicate over networks.
+Containerization packages applications and dependencies together for consistent deployment across environments.
+Kubernetes orchestrates container deployment scaling and management across clusters.
+Cloud computing provides on-demand computing resources over the internet including IaaS PaaS and SaaS.
+Edge computing processes data near the source rather than in centralized cloud data centers.
+The blockchain is a distributed ledger that records transactions across many computers.
+Cryptographic hash functions produce fixed-size outputs from variable inputs and are used for data integrity.
+Public key cryptography uses key pairs for secure communication and digital signatures.
+TLS Transport Layer Security encrypts network communications using symmetric and asymmetric cryptography.
+Zero-trust security assumes no implicit trust and verifies every access request regardless of network location.

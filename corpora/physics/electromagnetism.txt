@@ -1,0 +1,30 @@
+Electric charge comes in two types positive and negative and like charges repel while opposite charges attract.
+Coulomb law states that the electrostatic force between two charges is proportional to the product of the charges and inversely proportional to the square of the distance.
+The electric field at a point is the force per unit positive charge placed at that point.
+Gauss law states that the total electric flux through a closed surface equals the enclosed charge divided by the permittivity of free space.
+Electric potential is the work done per unit charge to move a charge from infinity to a point in the field.
+Capacitance is the ability of a system to store electric charge per unit voltage.
+A parallel plate capacitor has capacitance proportional to the plate area and inversely proportional to the separation distance.
+Dielectrics increase capacitance by reducing the electric field between the plates.
+Electric current is the rate of flow of electric charge measured in amperes.
+Ohm law states that voltage equals current times resistance.
+Resistance in a wire is proportional to its length and inversely proportional to its cross-sectional area.
+Resistivity depends on the material and temperature of the conductor.
+Kirchhoff current law states that the total current entering a junction equals the total current leaving.
+Kirchhoff voltage law states that the sum of voltage drops around any closed loop equals zero.
+A magnetic field is produced by moving electric charges and exerts forces on other moving charges.
+The Biot-Savart law calculates the magnetic field produced by a current-carrying wire.
+Ampere law relates the magnetic field around a closed loop to the current passing through the loop.
+Faraday law of induction states that a changing magnetic flux through a loop induces an electromotive force.
+Lenz law states that an induced current flows in a direction to oppose the change in flux that produced it.
+Maxwell equations unify electricity and magnetism into a single framework of four equations.
+Electromagnetic waves travel at the speed of light and consist of oscillating electric and magnetic fields perpendicular to each other.
+The electromagnetic spectrum ranges from radio waves through microwaves infrared visible light ultraviolet X-rays to gamma rays.
+The Lorentz force describes the force on a charged particle moving through electric and magnetic fields.
+Inductance measures the tendency of a conductor to oppose changes in current flowing through it.
+An LC circuit oscillates at a resonant frequency determined by the inductance and capacitance.
+Electromagnetic radiation carries energy and momentum and exerts radiation pressure on surfaces.
+Superconductors have zero electrical resistance below a critical temperature.
+The Meissner effect causes superconductors to expel magnetic fields from their interior.
+The Hall effect produces a voltage across a conductor when a magnetic field is applied perpendicular to the current flow.
+Eddy currents are loops of electric current induced within conductors by changing magnetic fields.

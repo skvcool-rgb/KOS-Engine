@@ -1,0 +1,30 @@
+Electrical engineering designs and develops systems that generate transmit and use electrical energy.
+Alternating current AC changes direction periodically and is used for power transmission.
+Direct current DC flows in one direction and is used in batteries and electronic circuits.
+Transformers change AC voltage levels using electromagnetic induction between coupled coils.
+Power grids transmit electricity at high voltage to reduce transmission losses.
+Semiconductors have electrical conductivity between conductors and insulators and include silicon and germanium.
+A diode allows current to flow in only one direction and is made from a p-n semiconductor junction.
+A transistor is a semiconductor device that amplifies or switches electronic signals.
+MOSFET metal-oxide-semiconductor field-effect transistor is the most widely used transistor type in integrated circuits.
+Integrated circuits combine billions of transistors on a single silicon chip.
+Moore law observed that the number of transistors on a chip roughly doubles every two years.
+Operational amplifiers are versatile analog circuits used for amplification filtering and signal conditioning.
+Analog-to-digital converters transform continuous signals into discrete digital values.
+Digital-to-analog converters transform discrete digital values back into continuous signals.
+Boolean algebra is the mathematical foundation of digital logic using AND OR and NOT operations.
+Flip-flops are digital circuits that store one bit of data and form the basis of registers and memory.
+FPGA field-programmable gate arrays are reconfigurable integrated circuits for custom digital logic.
+Microprocessors execute instructions from computer programs using an arithmetic logic unit and control unit.
+Embedded systems are specialized computer systems designed to perform dedicated functions within larger devices.
+Signal processing analyzes modifies and synthesizes signals such as sound images and sensor data.
+The Fourier transform decomposes signals into their constituent frequencies.
+The Nyquist theorem states that a signal must be sampled at twice its highest frequency to be accurately reconstructed.
+Control systems use feedback to maintain desired output by adjusting inputs.
+PID controllers use proportional integral and derivative terms to minimize error in control systems.
+Power electronics convert and control electrical power using semiconductor switching devices.
+Solar photovoltaic cells convert sunlight directly into electricity using the photovoltaic effect.
+Lithium-ion batteries store energy through reversible lithium ion movement between electrodes.
+Supercapacitors store energy electrostatically and can charge and discharge much faster than batteries.
+Wireless communication transmits information through electromagnetic waves without physical conductors.
+5G networks use millimeter wave frequencies and massive MIMO to achieve higher data rates and lower latency.

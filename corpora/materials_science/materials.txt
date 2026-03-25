@@ -1,0 +1,30 @@
+Materials science studies the relationships between the structure properties processing and performance of materials.
+Crystalline materials have atoms arranged in a regular repeating pattern called a crystal lattice.
+Amorphous materials lack long-range atomic order and include glasses and some polymers.
+Metals are characterized by high electrical and thermal conductivity ductility and metallic bonding.
+Steel is an alloy of iron and carbon with properties that depend on carbon content and heat treatment.
+Stainless steel contains chromium which forms a passive oxide layer that resists corrosion.
+Aluminum alloys are lightweight and corrosion-resistant and widely used in aerospace and transportation.
+Titanium alloys have high strength-to-weight ratio and excellent corrosion resistance.
+Ceramics are hard brittle inorganic materials with high melting points and electrical insulation properties.
+Silicon carbide and aluminum oxide are advanced ceramics used in cutting tools and armor.
+Polymers are long-chain molecules made of repeating monomer units with diverse mechanical properties.
+Thermoplastics soften when heated and can be remolded including polyethylene polypropylene and nylon.
+Thermosets harden permanently when cured and cannot be remolded including epoxy and phenolic resins.
+Elastomers are polymers with high elasticity that can stretch and return to their original shape.
+Semiconductors have conductivity that increases with temperature and can be controlled by doping.
+Doping introduces impurity atoms into a semiconductor to increase its conductivity.
+N-type semiconductors have excess electrons from donor dopants like phosphorus in silicon.
+P-type semiconductors have excess holes from acceptor dopants like boron in silicon.
+Nanomaterials have at least one dimension smaller than 100 nanometers and exhibit unique properties.
+Carbon nanotubes are cylindrical nanostructures with exceptional strength and electrical conductivity.
+Graphene is a single layer of carbon atoms with remarkable strength conductivity and flexibility.
+Biomaterials are designed to interact with biological systems for medical devices and implants.
+Shape memory alloys like nitinol can return to a predetermined shape when heated.
+Piezoelectric materials generate electric charge when mechanically stressed.
+Superconductors exhibit zero electrical resistance below their critical temperature.
+High-temperature superconductors operate at temperatures achievable with liquid nitrogen cooling.
+Metamaterials are engineered materials with properties not found in nature such as negative refractive index.
+Perovskites are a class of materials with a specific crystal structure showing promise for solar cells.
+Corrosion is the degradation of metals through chemical reactions with their environment.
+Fracture toughness measures a material resistance to crack propagation.

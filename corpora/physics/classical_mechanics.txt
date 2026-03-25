@@ -1,0 +1,30 @@
+Newton first law states that an object at rest stays at rest and an object in motion stays in motion unless acted upon by an external force.
+Newton second law states that force equals mass multiplied by acceleration, expressed as F equals ma.
+Newton third law states that for every action there is an equal and opposite reaction.
+Momentum is the product of an object mass and its velocity and is conserved in closed systems.
+Kinetic energy equals one half times mass times velocity squared.
+Potential energy due to gravity equals mass times gravitational acceleration times height.
+The work-energy theorem states that net work done on an object equals its change in kinetic energy.
+Angular momentum is conserved in the absence of external torques.
+Torque is the rotational equivalent of force and equals force times the lever arm distance.
+The moment of inertia determines how much torque is needed to achieve angular acceleration.
+Friction is a contact force that opposes relative motion between two surfaces.
+Static friction is generally stronger than kinetic friction for the same pair of surfaces.
+The coefficient of friction depends on the materials of both surfaces in contact.
+Hooke law states that the force exerted by a spring is proportional to its displacement from equilibrium.
+Simple harmonic motion occurs when the restoring force is proportional to displacement.
+The period of a simple pendulum depends on its length and gravitational acceleration but not its mass.
+Centripetal acceleration keeps an object moving in a circular path and is directed toward the center.
+The gravitational force between two masses is proportional to the product of their masses and inversely proportional to the square of the distance between them.
+Escape velocity from Earth surface is approximately 11.2 kilometers per second.
+Kepler first law states that planets orbit the Sun in ellipses with the Sun at one focus.
+Kepler second law states that a line from a planet to the Sun sweeps equal areas in equal times.
+Kepler third law relates the square of the orbital period to the cube of the semi-major axis.
+The conservation of energy states that energy cannot be created or destroyed only transformed between forms.
+Elastic collisions conserve both momentum and kinetic energy.
+Inelastic collisions conserve momentum but not kinetic energy.
+Terminal velocity occurs when the drag force on a falling object equals the gravitational force.
+Projectile motion can be decomposed into independent horizontal and vertical components.
+The Coriolis effect deflects moving objects on rotating reference frames like Earth.
+Lagrangian mechanics reformulates classical mechanics using the difference of kinetic and potential energy.
+Hamiltonian mechanics describes a system using generalized coordinates and momenta.

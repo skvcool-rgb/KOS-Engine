@@ -1,0 +1,30 @@
+The cell is the fundamental unit of life and all living organisms are composed of cells.
+Prokaryotic cells lack a membrane-bound nucleus and include bacteria and archaea.
+Eukaryotic cells have a membrane-bound nucleus and include plants animals fungi and protists.
+The cell membrane is a phospholipid bilayer that controls what enters and exits the cell.
+The nucleus contains DNA organized into chromosomes and is the control center of the cell.
+Ribosomes are molecular machines that synthesize proteins by translating messenger RNA.
+The endoplasmic reticulum is a network of membranes involved in protein and lipid synthesis.
+The rough endoplasmic reticulum has ribosomes on its surface and produces secretory proteins.
+The smooth endoplasmic reticulum synthesizes lipids and detoxifies chemicals.
+The Golgi apparatus modifies sorts and packages proteins for secretion or delivery to other organelles.
+Lysosomes contain digestive enzymes that break down waste materials and cellular debris.
+Mitochondria are the powerhouses of the cell generating ATP through oxidative phosphorylation.
+Mitochondria have their own DNA and are thought to have originated from ancient endosymbiotic bacteria.
+Chloroplasts in plant cells capture light energy and convert it to chemical energy through photosynthesis.
+The cytoskeleton provides structural support and facilitates cell movement and division.
+Microtubules are hollow tubes of tubulin protein that form the mitotic spindle and maintain cell shape.
+Actin filaments are thin flexible fibers that enable cell movement and muscle contraction.
+Cell division by mitosis produces two genetically identical daughter cells.
+Meiosis is a specialized cell division that produces four haploid gametes from one diploid cell.
+Apoptosis is programmed cell death essential for development and tissue homeostasis.
+Stem cells are undifferentiated cells capable of self-renewal and differentiation into specialized cell types.
+Tight junctions form impermeable barriers between adjacent cells in epithelial tissues.
+Gap junctions allow direct communication between adjacent cells through protein channels.
+The cell cycle consists of interphase G1 S G2 phases and mitotic M phase.
+Checkpoints in the cell cycle ensure proper DNA replication and chromosome segregation.
+Cancer results from uncontrolled cell division caused by mutations in oncogenes and tumor suppressor genes.
+Autophagy is the cellular process of recycling damaged organelles and proteins.
+Vesicle transport moves materials between organelles and to the cell surface.
+Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.
+Active transport uses ATP to move substances against their concentration gradient.

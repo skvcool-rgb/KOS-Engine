@@ -1,0 +1,30 @@
+Linear algebra studies vector spaces and linear transformations between them.
+A vector is a mathematical object with magnitude and direction in a vector space.
+A matrix is a rectangular array of numbers that represents a linear transformation.
+Matrix multiplication is not commutative meaning AB generally does not equal BA.
+The determinant of a matrix is a scalar that indicates whether the matrix is invertible.
+A matrix is invertible if and only if its determinant is nonzero.
+The identity matrix is a square matrix with ones on the diagonal and zeros elsewhere.
+Eigenvalues and eigenvectors describe how a linear transformation scales vectors along specific directions.
+The characteristic equation det(A minus lambda I) equals zero yields the eigenvalues of matrix A.
+The rank of a matrix equals the number of linearly independent rows or columns.
+A system of linear equations can be solved using Gaussian elimination row reduction.
+The null space of a matrix is the set of all vectors that map to the zero vector.
+The column space of a matrix is the set of all possible outputs of the linear transformation.
+Orthogonal vectors are perpendicular and their dot product equals zero.
+The dot product of two vectors equals the product of their magnitudes times the cosine of the angle between them.
+The cross product of two vectors produces a vector perpendicular to both with magnitude equal to the parallelogram area.
+Singular value decomposition factors any matrix into three matrices U Sigma and V transpose.
+Principal component analysis uses eigenvectors to identify directions of maximum variance in data.
+The spectral theorem states that symmetric matrices have real eigenvalues and orthogonal eigenvectors.
+A positive definite matrix has all positive eigenvalues and defines an ellipsoidal quadratic form.
+The trace of a matrix equals the sum of its diagonal elements and equals the sum of its eigenvalues.
+The Gram-Schmidt process converts a set of linearly independent vectors into an orthonormal basis.
+A linear transformation preserves vector addition and scalar multiplication.
+The dimension of a vector space equals the number of vectors in any basis.
+The rank-nullity theorem states that rank plus nullity equals the number of columns of a matrix.
+Tensor products extend linear algebra to multilinear maps and higher-dimensional arrays.
+The Cayley-Hamilton theorem states that every square matrix satisfies its own characteristic equation.
+Diagonalization expresses a matrix as a product of its eigenvector matrix diagonal eigenvalue matrix and inverse eigenvector matrix.
+Hermitian matrices are the complex analog of symmetric matrices with real eigenvalues.
+The condition number of a matrix measures its sensitivity to numerical perturbations.

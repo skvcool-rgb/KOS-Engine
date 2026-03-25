@@ -1,0 +1,30 @@
+Quantum mechanics describes the behavior of matter and energy at the atomic and subatomic scale.
+The wave-particle duality principle states that all matter exhibits both wave and particle properties.
+The Heisenberg uncertainty principle states that position and momentum cannot both be precisely determined simultaneously.
+The Schrodinger equation describes how the quantum state of a physical system evolves over time.
+The wave function contains all information about a quantum system and its square gives the probability density.
+Quantum superposition allows a system to exist in multiple states simultaneously until measured.
+Measurement in quantum mechanics causes the wave function to collapse to a definite eigenstate.
+The Pauli exclusion principle states that no two identical fermions can occupy the same quantum state.
+Fermions have half-integer spin and include electrons protons and neutrons.
+Bosons have integer spin and include photons gluons and the Higgs boson.
+Quantum tunneling allows particles to pass through energy barriers that would be impenetrable classically.
+The photoelectric effect demonstrated that light consists of quantized packets of energy called photons.
+Planck constant relates the energy of a photon to its frequency as E equals h times frequency.
+The de Broglie wavelength of a particle equals Planck constant divided by its momentum.
+Quantum entanglement creates correlations between particles that persist regardless of distance.
+The Bell inequalities show that quantum mechanics cannot be explained by local hidden variable theories.
+The EPR paradox highlighted apparent conflicts between quantum mechanics and local realism.
+Quantum decoherence explains the emergence of classical behavior from quantum systems through environmental interaction.
+The hydrogen atom energy levels are quantized and given by the Bohr model as negative 13.6 eV divided by n squared.
+Electron orbitals are described by quantum numbers n l m and s representing energy angular momentum magnetic moment and spin.
+The Stern-Gerlach experiment demonstrated the quantization of angular momentum.
+Quantum field theory combines quantum mechanics with special relativity to describe particle physics.
+The standard model of particle physics classifies all known elementary particles and three of the four fundamental forces.
+Quarks combine to form hadrons including protons and neutrons through the strong nuclear force.
+Leptons include electrons muons taus and their associated neutrinos.
+The strong nuclear force is mediated by gluons and binds quarks together inside protons and neutrons.
+The weak nuclear force is responsible for radioactive beta decay and is mediated by W and Z bosons.
+The Higgs mechanism gives mass to elementary particles through their interaction with the Higgs field.
+The Higgs boson was discovered at CERN in 2012 confirming the existence of the Higgs field.
+Quantum chromodynamics describes the strong interaction between quarks and gluons using color charge.

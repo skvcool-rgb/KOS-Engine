@@ -1,0 +1,30 @@
+The zeroth law of thermodynamics states that if two systems are each in thermal equilibrium with a third they are in thermal equilibrium with each other.
+The first law of thermodynamics states that energy is conserved and heat added to a system equals internal energy change plus work done by the system.
+The second law of thermodynamics states that entropy of an isolated system never decreases over time.
+The third law of thermodynamics states that the entropy of a perfect crystal approaches zero as temperature approaches absolute zero.
+Entropy is a measure of the number of microscopic configurations consistent with the macroscopic state.
+Heat always flows spontaneously from a hotter body to a cooler body never the reverse without external work.
+The Carnot cycle defines the maximum efficiency possible for a heat engine operating between two temperatures.
+Carnot efficiency equals one minus the ratio of cold reservoir temperature to hot reservoir temperature.
+Specific heat capacity is the energy required to raise one kilogram of a substance by one degree Celsius.
+Latent heat is the energy absorbed or released during a phase transition at constant temperature.
+The ideal gas law states that pressure times volume equals the number of moles times the gas constant times temperature.
+Boyle law states that at constant temperature the pressure of a gas is inversely proportional to its volume.
+Charles law states that at constant pressure the volume of a gas is directly proportional to its temperature.
+The Boltzmann constant relates the average kinetic energy of particles to the temperature of the gas.
+The Maxwell-Boltzmann distribution describes the speeds of particles in an ideal gas.
+An adiabatic process occurs without heat exchange between the system and its surroundings.
+An isothermal process occurs at constant temperature.
+An isobaric process occurs at constant pressure.
+An isochoric process occurs at constant volume.
+Free energy determines whether a chemical reaction occurs spontaneously at constant temperature and pressure.
+Gibbs free energy equals enthalpy minus temperature times entropy.
+A heat pump moves thermal energy from a cold reservoir to a hot reservoir using external work.
+The Stefan-Boltzmann law states that the total energy radiated by a black body is proportional to the fourth power of its temperature.
+Thermal conductivity measures how well a material conducts heat.
+Convection transfers heat through bulk fluid motion driven by density differences.
+Radiation transfers heat through electromagnetic waves without requiring a medium.
+Phase diagrams show the stable phases of a substance as a function of temperature and pressure.
+The triple point is the unique temperature and pressure at which solid liquid and gas coexist in equilibrium.
+Supercritical fluids form above the critical temperature and pressure where liquid and gas phases merge.
+The equipartition theorem states that each quadratic degree of freedom contributes half kT to the average energy.
