@@ -57,7 +57,7 @@ class WebForager:
             "User-Agent": "KOS-Engine/5.0 (Knowledge Forager; "
                           "+https://github.com/skvcool-rgb/KOS-Engine)"
         }
-        self.max_chars = 50_000  # Don't ingest more than 50K chars per page
+        self.max_chars = 10_000  # First ~30 sentences have key facts; 50K was overkill
 
     def _fetch_and_clean(self, url: str) -> str:
         """

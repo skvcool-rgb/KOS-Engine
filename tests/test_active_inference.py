@@ -1,5 +1,5 @@
 """
-KOS V5.0 — Active Inference Integration Test.
+KOS V7.0 — Active Inference Integration Test (Offline).
 
 This test proves the complete cognitive loop:
 1. The OS receives a question it CANNOT answer (no prior knowledge)
@@ -9,8 +9,7 @@ This test proves the complete cognitive loop:
 5. System 2 re-evaluates with new knowledge
 6. The OS answers correctly — having taught itself
 
-This is the Turing Leap: a system that knows when it doesn't know,
-and autonomously acts to fix its own ignorance.
+Uses KOSShellOffline — no OpenAI API key needed.
 """
 
 import sys
@@ -22,23 +21,23 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from kos.graph import KOSKernel
 from kos.lexicon import KASMLexicon
 from kos.drivers.text import TextDriver
-from kos.router import KOSShell
+from kos.router_offline import KOSShellOffline
 from kos.daemon import KOSDaemon
 
 
 def run_active_inference_test():
     print("=" * 70)
-    print("  KOS V5.0: ACTIVE INFERENCE INTEGRATION TEST")
+    print("  KOS V7.0: ACTIVE INFERENCE INTEGRATION TEST (Offline)")
     print("  System 2 + Autonomous Foraging + Self-Teaching")
     print("=" * 70)
 
     # ── Phase 1: Boot with MINIMAL knowledge ─────────────────────
     print("\n[PHASE 1] Booting KOS with minimal seed knowledge...")
 
-    kernel = KOSKernel(enable_vsa=False)  # VSA optional for this test
+    kernel = KOSKernel(enable_vsa=False)
     lexicon = KASMLexicon()
     driver = TextDriver(kernel, lexicon)
-    shell = KOSShell(kernel, lexicon, enable_forager=True)
+    shell = KOSShellOffline(kernel, lexicon, enable_forager=True)
 
     # Seed with a tiny amount of knowledge — NOT about climate
     seed_corpus = """
@@ -61,7 +60,8 @@ def run_active_inference_test():
     elapsed = (time.perf_counter() - t0) * 1000
 
     print(f"\n[RESULT] Latency: {elapsed:.0f}ms")
-    print(f"[RESULT] Entropy after: {shell.shadow.SYSTEM_ENTROPY:.1f}")
+    if hasattr(shell, 'shadow') and shell.shadow:
+        print(f"[RESULT] Entropy after: {shell.shadow.SYSTEM_ENTROPY:.1f}")
     print(f"[RESULT] Nodes after: {len(kernel.nodes)} (+{len(kernel.nodes) - node_count} learned)")
     print(f"[RESULT] Answer: {response.strip()[:200]}")
 
@@ -73,8 +73,9 @@ def run_active_inference_test():
     response2 = shell.chat("Tell me about Toronto weather")
     elapsed2 = (time.perf_counter() - t1) * 1000
 
-    print(f"\n[RESULT] Latency: {elapsed2:.0f}ms (should be faster — no foraging needed)")
-    print(f"[RESULT] Entropy: {shell.shadow.SYSTEM_ENTROPY:.1f}")
+    print(f"\n[RESULT] Latency: {elapsed2:.0f}ms (should be faster -- no foraging needed)")
+    if hasattr(shell, 'shadow') and shell.shadow:
+        print(f"[RESULT] Entropy: {shell.shadow.SYSTEM_ENTROPY:.1f}")
     print(f"[RESULT] Answer: {response2.strip()[:200]}")
 
     # ── Phase 4: Test with a completely unknown topic ────────────
@@ -86,7 +87,8 @@ def run_active_inference_test():
     elapsed3 = (time.perf_counter() - t2) * 1000
 
     print(f"\n[RESULT] Latency: {elapsed3:.0f}ms")
-    print(f"[RESULT] Entropy: {shell.shadow.SYSTEM_ENTROPY:.1f}")
+    if hasattr(shell, 'shadow') and shell.shadow:
+        print(f"[RESULT] Entropy: {shell.shadow.SYSTEM_ENTROPY:.1f}")
     print(f"[RESULT] Nodes now: {len(kernel.nodes)}")
     print(f"[RESULT] Answer: {response3.strip()[:200]}")
 
@@ -97,8 +99,10 @@ def run_active_inference_test():
     print(f"  Starting knowledge:  {node_count} nodes")
     print(f"  Final knowledge:     {len(kernel.nodes)} nodes")
     print(f"  Knowledge acquired:  +{len(kernel.nodes) - node_count} concepts (autonomous)")
-    print(f"  Forager status:      {'ACTIVE' if shell.forager else 'OFFLINE'}")
-    print(f"  Final entropy:       {shell.shadow.SYSTEM_ENTROPY:.1f}")
+    forager = getattr(shell, 'forager', None)
+    print(f"  Forager status:      {'ACTIVE' if forager else 'OFFLINE'}")
+    if hasattr(shell, 'shadow') and shell.shadow:
+        print(f"  Final entropy:       {shell.shadow.SYSTEM_ENTROPY:.1f}")
     print("=" * 70)
 
     climate_words = ["climate", "humid", "continental", "temperature",

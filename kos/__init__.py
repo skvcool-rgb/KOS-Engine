@@ -31,6 +31,10 @@ try:
     from .drivers.vision import VisionDriver
 except ImportError:
     VisionDriver = None
+try:
+    from .drivers.finance import FinanceDriver
+except ImportError:
+    FinanceDriver = None
 
 # V6.1 feature modules — lazy imports for optional dependencies
 try:
@@ -54,11 +58,11 @@ try:
 except ImportError:
     DomainProfiler = None
 
-__version__ = "6.1.0"
+__version__ = "7.0.0"
 __all__ = [
     "ConceptNode", "KOSKernel", "KASMLexicon", "AlgorithmicWeaver",
     "KOSShell", "KOSDaemon", "TextDriver", "KOSResolver",
-    "MathDriver", "ASTDriver", "VisionDriver",
+    "MathDriver", "ASTDriver", "VisionDriver", "FinanceDriver",
     "EmotionDecisionBridge", "CompoundDetector", "SleepCycle",
     "UserModel", "DomainProfiler",
 ]

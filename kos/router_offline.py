@@ -16,7 +16,76 @@ Result:
 
 import re
 import itertools
+import threading
 
+
+# ── Global SentenceTransformer Cache ─────────────────────────────
+# Load once per process, reuse across all KOSShellOffline instances.
+# Background preload thread starts at import time to hide latency.
+_GLOBAL_EMBEDDER = None
+_GLOBAL_ST_UTIL = None
+_EMBEDDER_LOCK = None
+_EMBEDDER_READY = False
+
+def _get_embedder():
+    """Return cached SentenceTransformer + util (loads on first call)."""
+    global _GLOBAL_EMBEDDER, _GLOBAL_ST_UTIL, _EMBEDDER_READY
+    if _EMBEDDER_LOCK is not None:
+        _EMBEDDER_LOCK.wait()  # Block until background load finishes
+    if _GLOBAL_EMBEDDER is None and not _EMBEDDER_READY:
+        _load_embedder_sync()
+    return _GLOBAL_EMBEDDER, _GLOBAL_ST_UTIL
+
+def _load_embedder_sync():
+    """Synchronous model load (fallback if background thread didn't run)."""
+    global _GLOBAL_EMBEDDER, _GLOBAL_ST_UTIL, _EMBEDDER_READY
+    if _GLOBAL_EMBEDDER is not None:
+        return
+    try:
+        from sentence_transformers import SentenceTransformer, util
+        _GLOBAL_EMBEDDER = SentenceTransformer('all-MiniLM-L6-v2')
+        _GLOBAL_ST_UTIL = util
+    except ImportError:
+        pass
+    _EMBEDDER_READY = True
+
+def warm_preload():
+    """Start background thread to preload the SentenceTransformer model.
+    Call at startup to hide the ~30s model load behind init work."""
+    global _EMBEDDER_LOCK
+    import threading
+    _EMBEDDER_LOCK = threading.Event()
+    def _bg():
+        _load_embedder_sync()
+        _EMBEDDER_LOCK.set()
+    t = threading.Thread(target=_bg, daemon=True)
+    t.start()
+
+# Also preload NLTK data in background
+def _preload_nltk():
+    try:
+        import nltk
+        nltk.data.find('taggers/averaged_perceptron_tagger_eng')
+    except LookupError:
+        import nltk
+        nltk.download('averaged_perceptron_tagger_eng', quiet=True)
+        nltk.download('punkt_tab', quiet=True)
+
+def warm_preload_all():
+    """Preload ALL heavy models in background threads at startup.
+    This hides model load latency behind graph construction/ingestion."""
+    import threading
+    # SentenceTransformer (~30s)
+    warm_preload()
+    # NLTK (~1s)
+    threading.Thread(target=_preload_nltk, daemon=True).start()
+
+
+# ── Auto-preload at import time ──────────────────────────────────
+# Start loading the heavy SentenceTransformer model the moment this
+# module is imported. By the time the first query arrives, the model
+# is likely already loaded (or nearly so).
+warm_preload_all()
 
 # ── Synonym Expansion Table ──────────────────────────────────────
 # Maps common user phrasing to domain concepts.
@@ -129,6 +198,7 @@ class KOSShellOffline:
         self._chemistry = None
         self._physics = None
         self._biology = None
+        self._finance = None
         try:
             from .drivers.chemistry import ChemistryDriver
             self._chemistry = ChemistryDriver()
@@ -142,6 +212,11 @@ class KOSShellOffline:
         try:
             from .drivers.biology import BiologyDriver
             self._biology = BiologyDriver()
+        except Exception:
+            pass
+        try:
+            from .drivers.finance import FinanceDriver
+            self._finance = FinanceDriver()
         except Exception:
             pass
 
@@ -247,6 +322,34 @@ class KOSShellOffline:
         # NLTK POS tagger (lazy-loaded)
         self._nltk_loaded = False
 
+        # ── BRAIN: Learning Coordinator ─────────────────────
+        self._learner = None
+        try:
+            from .learning import LearningCoordinator
+            self._learner = LearningCoordinator(kernel, lexicon, pce=self._pce)
+        except Exception:
+            pass
+
+        # ── MEMORY: Persistence + Boot Brain ──────────────
+        self._persistence = None
+        try:
+            from .persistence import GraphPersistence
+            self._persistence = GraphPersistence()
+            if self._persistence.exists():
+                # Load saved brain (Rust binary + metadata)
+                self._persistence.load(kernel, lexicon, pce=self._pce)
+            elif len(kernel.nodes) <= 5:
+                # First boot (<=5 nodes = only system nodes, no real knowledge)
+                try:
+                    from .boot_brain import BOOT_CORPUS
+                    from .drivers.text import TextDriver
+                    boot_driver = TextDriver(kernel, lexicon)
+                    boot_driver.ingest(BOOT_CORPUS)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
         # Sync self-model with graph
         if self._self_model:
             try:
@@ -268,20 +371,28 @@ class KOSShellOffline:
                 self._nltk_loaded = True
 
     def _ensure_embeddings(self):
-        """Lazily build/rebuild cached embeddings for all graph node labels."""
+        """Lazily build/rebuild cached embeddings — incremental for new nodes."""
         if self.embedder is None:
-            try:
-                from sentence_transformers import SentenceTransformer, util
-                self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
-                self._st_util = util
-            except ImportError:
+            self.embedder, self._st_util = _get_embedder()
+            if self.embedder is None:
                 return False
         current_uuids = list(self.kernel.nodes.keys())
-        if self.node_embeddings is None or len(current_uuids) != len(self.embedded_uuids):
+        if self.node_embeddings is None:
+            # First time: encode everything
             self.embedded_uuids = current_uuids
             plain_words = [self.lexicon.get_word(uid) for uid in current_uuids]
             self.node_embeddings = self.embedder.encode(
                 plain_words, convert_to_tensor=True)
+        elif len(current_uuids) != len(self.embedded_uuids):
+            # Incremental: only encode NEW nodes, concat to existing
+            import torch
+            old_set = set(self.embedded_uuids)
+            new_uuids = [u for u in current_uuids if u not in old_set]
+            if new_uuids:
+                new_words = [self.lexicon.get_word(uid) for uid in new_uuids]
+                new_embs = self.embedder.encode(new_words, convert_to_tensor=True)
+                self.node_embeddings = torch.cat([self.node_embeddings, new_embs], dim=0)
+                self.embedded_uuids = self.embedded_uuids + new_uuids
         return True
 
     def _resolve_word(self, w, known_words):
@@ -428,7 +539,8 @@ class KOSShellOffline:
         # 2. Try Python science drivers
         for name, drv in [("physics", self._physics),
                            ("chemistry", self._chemistry),
-                           ("biology", self._biology)]:
+                           ("biology", self._biology),
+                           ("finance", self._finance)]:
             if drv:
                 try:
                     result = drv.process(query)
@@ -516,7 +628,25 @@ class KOSShellOffline:
         4.  Active Inference (autonomous foraging)
         5.  Weaver (deterministic evidence scoring)
         6.  Template Mouth (direct output)
+        7.  BRAIN: Learning from this query (Hebbian + PCE + growth)
         """
+        answer = self._chat_inner(user_prompt)
+
+        # ── BRAIN: Learn from every query ──────────────────
+        if self._learner:
+            try:
+                self._learner.after_query(
+                    getattr(self, '_last_seed_ids', []),
+                    getattr(self, '_last_results', {}),
+                    user_prompt,
+                    answer)
+            except Exception:
+                pass  # Learning failure must never break queries
+
+        return answer
+
+    def _chat_inner(self, user_prompt: str) -> str:
+        """Internal chat logic. Learning wrapper in chat() calls this."""
         # ====================================================
         # -1. SELF-MODEL QUERIES ("what do you know", "what are you")
         # ====================================================
@@ -683,6 +813,30 @@ class KOSShellOffline:
                 except Exception:
                     pass
 
+        # Finance intercept — banking-grade risk assessment
+        if self._finance:
+            fin_phrases = {"value at risk", "credit risk", "market risk",
+                           "risk weighted", "capital adequacy", "capital ratio",
+                           "expected loss", "unexpected loss", "black scholes",
+                           "option pricing", "compound interest", "present value",
+                           "future value", "debt to income", "loan to value",
+                           "stress test", "leverage ratio", "liquidity coverage",
+                           "net stable funding", "probability of default",
+                           "loss given default", "sharpe ratio", "portfolio risk",
+                           "mortgage payment", "emi calculation", "loan amortization"}
+            fin_words = {"var", "cet1", "tier1", "rwa", "lgd", "ead",
+                         "lcr", "nsfr", "npv", "irr", "emi", "dti", "ltv",
+                         "basel", "solvency", "volatility"}
+            phrase_match = any(p in prompt_lower for p in fin_phrases)
+            word_match = len(prompt_words & fin_words) >= 1
+            if phrase_match or word_match:
+                try:
+                    result = self._finance.process(user_prompt)
+                    if result and result.strip() and len(result.strip()) > 20:
+                        return result
+                except Exception:
+                    pass
+
         # Track forager usage for this query
         self._forager_attempted = False
 
@@ -754,6 +908,10 @@ class KOSShellOffline:
             best_seeds = thought["seeds"]
             best_results = thought["results"]
 
+            # Store for learning coordinator
+            self._last_seed_ids = best_seeds
+            self._last_results = {nid: act for nid, act in best_results}
+
             from .weaver import AlgorithmicWeaver
             weaver = AlgorithmicWeaver()
             evidence_text = weaver.weave(
@@ -801,7 +959,11 @@ class KOSShellOffline:
                                 if uid and uid not in seeds:
                                     seeds.append(uid)
                             if seeds:
-                                new_results = self.kernel.query(seeds, top_k=10)
+                                # V8: Use beam search when available
+                                if hasattr(self.kernel, 'query_beam'):
+                                    new_results = self.kernel.query_beam(seeds, top_k=10)
+                                else:
+                                    new_results = self.kernel.query(seeds, top_k=10)
                                 if new_results:
                                     evidence_text = weaver.weave(
                                         self.kernel,

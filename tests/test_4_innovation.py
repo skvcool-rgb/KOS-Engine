@@ -524,6 +524,10 @@ def test_submarine():
     days_simulated = 0
     valve_failures = 0
 
+    # Batch ingestion: accumulate sentences, flush every 100 days.
+    # This avoids 3,650 individual ingest() calls (each with NLTK overhead).
+    batch = []
+
     for day in range(3650):
         kernel.current_tick = day
 
@@ -532,26 +536,25 @@ def test_submarine():
         temp = rng.uniform(18.0, 24.0)
         pressure = rng.uniform(0.95, 1.05)
 
-        # Ingest normal log
-        driver.ingest(f"Day {day} deck {deck} temperature {temp:.1f} degrees "
-                      f"pressure {pressure:.2f} atmospheres normal operations.")
+        batch.append(f"Day {day} deck {deck} temperature {temp:.1f} degrees "
+                     f"pressure {pressure:.2f} atmospheres normal operations.")
 
         # THE HIDDEN PATTERN: Every 30 days on Deck 4
         if day % 30 == 0:
-            # Temperature anomaly on Deck 4
-            driver.ingest(f"Day {day} deck 4 temperature anomaly detected "
-                          f"temperature rise to 28.5 degrees on deck 4. "
-                          f"Unusual thermal fluctuation recorded on deck 4.")
+            batch.append(f"Day {day} deck 4 temperature anomaly detected "
+                         f"temperature rise to 28.5 degrees on deck 4. "
+                         f"Unusual thermal fluctuation recorded on deck 4.")
 
         if day % 30 == 3:
-            # Valve failure 3 days after temperature anomaly
-            driver.ingest(f"Day {day} pressure valve failure on deck 4. "
-                          f"Emergency repair required for deck 4 valve. "
-                          f"Valve malfunction following temperature anomaly on deck 4.")
+            batch.append(f"Day {day} pressure valve failure on deck 4. "
+                         f"Emergency repair required for deck 4 valve. "
+                         f"Valve malfunction following temperature anomaly on deck 4.")
             valve_failures += 1
 
-        # Run predictive coding every 100 days
-        if day % 100 == 99:
+        # Flush batch every 100 days
+        if day % 100 == 99 or day == 3649:
+            driver.ingest('\n'.join(batch))
+            batch = []
             deck4_id = lexicon.word_to_uuid.get('deck')
             if deck4_id:
                 pce.query_with_prediction([deck4_id], top_k=5, verbose=False)

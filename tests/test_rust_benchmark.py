@@ -1,9 +1,9 @@
 """
-KOS V5.0 Benchmark: Rust Arena Engine vs Python Engine
+KOS V7.0 Benchmark: Rust Arena Engine vs Python Engine
 
 Tests:
     1. Basic functionality — does the Rust engine produce correct results?
-    2. VSA operations — BIND, SUPERPOSE, RESONATE, CLEANUP
+    2. VSA operations — BIND, SUPERPOSE, RESONATE, CLEANUP (named API)
     3. Spreading activation — seed + propagate + query
     4. Speed benchmark — Rust vs Python on identical workloads
     5. Scale test — 10K, 25K, 50K nodes
@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def test_1_rust_vsa():
-    """Test RustVSA: analogical reasoning (same as Python test)."""
+    """Test RustVSA: analogical reasoning (named API)."""
     print("=" * 70)
     print("  TEST 1: RustVSA — Analogical Reasoning")
     print("=" * 70)
@@ -26,41 +26,37 @@ def test_1_rust_vsa():
     engine = RustVSA(dim=10_000, seed=42)
 
     # Create concepts
-    sun = engine.node("sun")
-    planet = engine.node("planet")
-    gravity = engine.node("gravity")
-    nucleus = engine.node("nucleus")
-    electron = engine.node("electron")
-    em = engine.node("electromagnetism")
-    role_center = engine.node("role_center")
-    role_orbiter = engine.node("role_orbiter")
-    role_force = engine.node("role_force")
+    engine.node("sun")
+    engine.node("planet")
+    engine.node("gravity")
+    engine.node("nucleus")
+    engine.node("electron")
+    engine.node("electromagnetism")
+    engine.node("role_center")
+    engine.node("role_orbiter")
+    engine.node("role_force")
 
-    # Build structures
-    r_sun = engine.bind(sun, role_center)
-    r_planet = engine.bind(planet, role_orbiter)
-    r_grav = engine.bind(gravity, role_force)
+    # Build structures (named API: bind_named(result, a, b))
+    engine.bind_named("r_sun", "sun", "role_center")
+    engine.bind_named("r_planet", "planet", "role_orbiter")
+    engine.bind_named("r_grav", "gravity", "role_force")
 
-    r_nuc = engine.bind(nucleus, role_center)
-    r_elec = engine.bind(electron, role_orbiter)
-    r_em = engine.bind(em, role_force)
+    engine.bind_named("r_nuc", "nucleus", "role_center")
+    engine.bind_named("r_elec", "electron", "role_orbiter")
+    engine.bind_named("r_em", "electromagnetism", "role_force")
 
-    solar = engine.superpose([r_sun, r_planet, r_grav])
-    atom = engine.superpose([r_nuc, r_elec, r_em])
+    engine.superpose_named("solar", ["r_sun", "r_planet", "r_grav"])
+    engine.superpose_named("atom", ["r_nuc", "r_elec", "r_em"])
 
-    # Analogy
-    mapping = engine.bind(solar, atom)
-    answer = engine.bind(mapping, sun)  # unbind
+    # Analogy: mapping = bind(solar, atom), answer = bind(mapping, sun)
+    engine.bind_named("mapping", "solar", "atom")
+    engine.bind_named("answer", "mapping", "sun")  # unbind
 
-    engine.store("answer", answer)
-    engine.store("nucleus", nucleus)
-    engine.store("electron", electron)
-    engine.store("electromagnetism", em)
-
-    matches = engine.cleanup(answer, 0.05)
+    matches = engine.cleanup_named("answer", 0.05)
 
     # Filter to concept names only
-    concepts = [m for m in matches if m[0] in ("nucleus", "electron", "electromagnetism", "sun", "planet", "gravity")]
+    concept_names = {"nucleus", "electron", "electromagnetism", "sun", "planet", "gravity"}
+    concepts = [(name, score) for name, score in matches if name in concept_names]
 
     print(f"\n  Question: What is the Sun of an Atom?")
     print(f"  Top matches:")
@@ -152,16 +148,15 @@ def test_3_speed_benchmark():
         rs_engine.node(f"rs_{i}")
     rs_node_time = (time.perf_counter() - t0) * 1000
 
-    a = rs_engine.get("rs_0")
-    b = rs_engine.get("rs_1")
+    # Rust uses named API — bind_named repeats on same named vectors
     t0 = time.perf_counter()
     for _ in range(10_000):
-        rs_engine.bind(a, b)
+        rs_engine.bind_named("_bench_bind", "rs_0", "rs_1")
     rs_bind_time = (time.perf_counter() - t0) * 1000
 
     t0 = time.perf_counter()
     for _ in range(10_000):
-        rs_engine.resonate(a, b)
+        rs_engine.resonate_named("rs_0", "rs_1")
     rs_res_time = (time.perf_counter() - t0) * 1000
 
     print(f"\n  {'Operation':<25} {'Python (ms)':>12} {'Rust (ms)':>12} {'Speedup':>10}")
@@ -175,9 +170,9 @@ def test_3_speed_benchmark():
 
     n_edges = 5000
 
-    # Python graph
+    # Python graph (force Python backend for fair comparison)
     from kos.graph import KOSKernel as PyKernel
-    py_k = PyKernel(enable_vsa=False)  # disable VSA for fair comparison
+    py_k = PyKernel(enable_vsa=False, force_python=True)
     t0 = time.perf_counter()
     for i in range(n_edges):
         py_k.add_connection(f"src_{i % 100}", f"tgt_{i % 200}", 0.5 + (i % 10) * 0.05)
@@ -246,7 +241,7 @@ def test_4_scale():
 
 if __name__ == "__main__":
     print("\n" + "#" * 70)
-    print("#  KOS V5.0 — RUST ENGINE BENCHMARK")
+    print("#  KOS V7.0 — RUST ENGINE BENCHMARK")
     print("#  Arena Allocation + SIMD-Ready Hypervectors")
     print("#" * 70)
 
@@ -256,7 +251,7 @@ if __name__ == "__main__":
     r4 = test_4_scale()
 
     print("\n" + "=" * 70)
-    print("  V5.0 FINAL RESULTS")
+    print("  V7.0 FINAL RESULTS")
     print("=" * 70)
     print(f"  1) RustVSA analogy:      {'PASS' if r1 else 'FAIL'}")
     print(f"  2) RustKernel graph:     {'PASS' if r2 else 'FAIL'}")

@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_150233_8a5248",
+  "type": "synonym_addition",
+  "description": "Add 22 new synonym mappings discovered from graph structure overlap",
+  "impact": "Improves Layer 1b resolution for 22 words",
+  "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"with\": \"encode\",\n    \"unlike\": \"recommender\",\n    \"neural_network\": \"recommender\",\n    \"exist\": \"machine_learning\",\n    \"atom\": \"electrolysis\",\n    \"oxygen\": \"electrolysis\",\n    \"graph\": \"recommender\",\n    \"data\": \"semantics\",\n    \"description\": \"semantics\",\n    \"entity\": \"recommender\",\n    \"concept\": \"underlie\",\n    \"semantics\": \"recommender\",\n    \"semantic\": \"recommender\",\n    \"google\": \"recommender\",\n    \"bing\": \"amazon\",\n    \"wolframalpha\": \"amazon\",\n    \"apple\": \"amazon\",\n    \"siri\": \"amazon\",\n    \"alexa\": \"amazon\",\n    \"linkedin\": \"recommender\",\n}\n",
+  "timestamp": "2026-03-24T15:02:33.981452",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

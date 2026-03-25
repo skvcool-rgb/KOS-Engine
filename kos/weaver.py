@@ -1,12 +1,14 @@
 """
-KOS V5.1 — Algorithmic Weaver (Optimized Intent Scoring).
+KOS V8.0 — Algorithmic Weaver (Optimized Intent Scoring + Provenance Trust).
 
-Week 2 Fix #6: Scoring weights are now configurable and include:
+Scoring signals:
     - WHERE/WHEN/WHO/WHAT-ATTRIBUTE intent boosts
     - HOW-MECHANISM intent (process/method queries)
     - Recency boost (newer provenance ranked higher)
     - Keyword density scoring (words per sentence length)
     - Noise suppression (sports, navigation, metadata)
+    - V8: Edge-type trust scoring (provenance from high-trust edges ranked higher)
+    - V8: Source diversity bonus (evidence from multiple paths)
 """
 import re
 
@@ -57,6 +59,9 @@ class AlgorithmicWeaver:
     METADATA_NOISE = {"[daemon", "automatically predicted",
                       "antidote/alternative:"}
 
+    # V8: Edge trust scoring — infer trust from provenance text
+    EDGE_TRUST_BOOST = 15  # Bonus for provenance from high-trust edge types
+
     def weave(self, kernel, seeds_human: list, top_results: list,
               lexicon, seed_uuids: list, raw_prompt: str) -> str:
         prompt_lower = raw_prompt.lower()
@@ -66,6 +71,18 @@ class AlgorithmicWeaver:
                   "tell", "me", "please", "can", "could"}
         prompt_words = {w for w in re.findall(r'\w+', prompt_lower)
                         if w not in ignore and len(w) > 2}
+
+        # V8: Build provenance trust map from edge types
+        edge_trust_map = {}  # provenance_text -> trust_score
+        try:
+            from .edge_types import infer_type, EDGE_CONFIG
+            for pair, texts in getattr(kernel, 'provenance', {}).items():
+                for text in texts:
+                    et = infer_type(text)
+                    trust = EDGE_CONFIG.get(et, {}).get("trust", 0.5)
+                    edge_trust_map[text] = trust
+        except ImportError:
+            pass
 
         # 1. Gather expansive evidence
         evidence_set = set()
@@ -164,6 +181,13 @@ class AlgorithmicWeaver:
             # Short sentence penalty
             if len(sent.strip()) < 30:
                 score += self.SHORT_SENTENCE_PENALTY
+
+            # V8: Edge trust boost — high-trust provenance scores higher
+            trust = edge_trust_map.get(sent, 0.5)
+            if trust >= 0.8:
+                score += self.EDGE_TRUST_BOOST
+            elif trust <= 0.3:
+                score -= 10  # Penalize low-trust (e.g., contradicts)
 
             # DEFINITION boost: "X is a Y" sentences are canonical
             # definitions — prefer them for "tell me about X" queries

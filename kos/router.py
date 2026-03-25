@@ -55,20 +55,27 @@ class KOSShell:
         self._st_util = None
 
     def _ensure_embeddings(self):
-        """Lazily build/rebuild cached embeddings for all graph node labels."""
+        """Lazily build/rebuild cached embeddings — incremental for new nodes."""
         if self.embedder is None:
-            try:
-                from sentence_transformers import SentenceTransformer, util
-                self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
-                self._st_util = util
-            except ImportError:
+            from kos.router_offline import _get_embedder
+            self.embedder, self._st_util = _get_embedder()
+            if self.embedder is None:
                 return False
         current_uuids = list(self.kernel.nodes.keys())
-        if self.node_embeddings is None or len(current_uuids) != len(self.embedded_uuids):
+        if self.node_embeddings is None:
             self.embedded_uuids = current_uuids
             plain_words = [self.lexicon.get_word(uid) for uid in current_uuids]
             self.node_embeddings = self.embedder.encode(
                 plain_words, convert_to_tensor=True)
+        elif len(current_uuids) != len(self.embedded_uuids):
+            import torch
+            old_set = set(self.embedded_uuids)
+            new_uuids = [u for u in current_uuids if u not in old_set]
+            if new_uuids:
+                new_words = [self.lexicon.get_word(uid) for uid in new_uuids]
+                new_embs = self.embedder.encode(new_words, convert_to_tensor=True)
+                self.node_embeddings = torch.cat([self.node_embeddings, new_embs], dim=0)
+                self.embedded_uuids = self.embedded_uuids + new_uuids
         return True
 
     def _resolve_word(self, w, known_words):

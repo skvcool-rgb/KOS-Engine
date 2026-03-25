@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_223919_1fe824",
+  "type": "weaver_rule",
+  "description": "New ECONOMY intent scoring rule for Weaver",
+  "impact": "Fixes failing query: 'What is the economy of Toronto?'",
+  "code": "\n# AUTO-GENERATED WEAVER RULE\n# Based on failing query: \"What is the economy of Toronto?\"\n\n# Add to AlgorithmicWeaver.weave() scoring section:\n\nECONOMY_PROMPT = {'of', 'the', 'economy', 'is', 'toronto?', 'what'}\nECONOMY_BOOST = 35\n\n# Inside the scoring loop:\nhas_economy = bool(\n    ECONOMY_PROMPT & set(prompt_lower.split()))\nif has_economy:\n    # Boost sentences containing relevant evidence\n    economy_evidence = {\" relevant_word1 \", \" relevant_word2 \"}\n    if any(w in sent_lower for w in economy_evidence):\n        score += ECONOMY_BOOST\n",
+  "timestamp": "2026-03-24T22:39:19.225700",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

@@ -18,3 +18,4 @@ node_modules/
 *.jpg
 *.wav
 *.pt
+target/

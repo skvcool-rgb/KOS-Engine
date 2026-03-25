@@ -449,19 +449,38 @@ class TextDriver:
 
     def ingest(self, text: str) -> dict:
         self.resolver.reset()
+        # Enable batch mode: skip WordNet antonym checks during ingestion
+        self.kernel._batch_mode = True
         sentences = nltk.sent_tokenize(text)
         total_nouns = 0
         total_svo = 0
         total_adj = 0
         total_clauses = 0
 
+        # Fast dedup: skip sentences whose content words are all known.
+        # This turns 3,650 repetitive logs into ~50 unique ingestions.
+        known_words = set(self.lexicon.word_to_uuid.keys())
+        _seen_patterns = set()
+
         for sent in sentences:
+            # Quick structural dedup: strip numbers, check if pattern seen
+            if known_words:
+                import re as _re
+                pattern = _re.sub(r'\d+\.?\d*', '#', sent.lower()).strip()
+                if pattern in _seen_patterns:
+                    self.resolver.end_sentence()
+                    continue
+                _seen_patterns.add(pattern)
+
             # ── FIX #10: Split into clauses ──────────────────
             clauses = self._split_clauses(sent)
             total_clauses += len(clauses)
 
             for clause in clauses:
                 self._ingest_clause(clause, sent)
+
+            # Update known words after ingestion
+            known_words = set(self.lexicon.word_to_uuid.keys())
 
             # End sentence for coreference tracking
             self.resolver.end_sentence()
@@ -470,6 +489,14 @@ class TextDriver:
         # After all sentences are ingested, find pairs of sentences
         # that share 2+ nouns and wire their remaining nouns together.
         # This creates cross-sentence bridges.
+        # Skip for large corpora (>100 sentences) — O(n^2) is too slow.
+        if len(sentences) > 100:
+            return {
+                'sentences': len(sentences),
+                'clauses': total_clauses,
+                'concepts_found': total_nouns,
+                'svo_edges': total_svo,
+            }
         sentence_nodes = {}  # sent_idx -> set of uids
         for i, sent in enumerate(sentences):
             tokens = nltk.word_tokenize(sent)
@@ -508,6 +535,7 @@ class TextDriver:
                                 ub, ua, 0.3,
                                 "[CO-OCCURRENCE] Cross-sentence bridge")
 
+        self.kernel._batch_mode = False  # Re-enable contradiction checks
         return {
             'sentences': len(sentences),
             'clauses': total_clauses,

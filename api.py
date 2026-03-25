@@ -31,11 +31,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kos.graph import KOSKernel
 from kos.lexicon import KASMLexicon
 from kos.drivers.text import TextDriver
-from kos.router_offline import KOSShellOffline
+from kos.router_offline import KOSShellOffline, warm_preload_all
 from kos.weaver import AlgorithmicWeaver
 from kos.self_improve import SelfImprover
 from kos.feedback import WeaverFeedback, FormulaLearner, ContinuousTuner, AnalogyScanner
 from kos.predictive import PredictiveCodingEngine
+
+# ── Warm preload: start loading heavy models in background ──
+# SentenceTransformer loads in parallel with graph construction below.
+warm_preload_all()
 
 # Optional imports (may not be installed yet)
 try:
@@ -117,7 +121,17 @@ boot_time = time.time()
 # FASTAPI APP
 # ══════════════════════════════════════════════════════════
 
-app = FastAPI(title="KOS Agent API", version="5.1.0")
+app = FastAPI(title="KOS Agent API", version="7.0.0")
+
+
+@app.on_event("startup")
+async def _on_startup():
+    """Force-load SentenceTransformer at server start so first query is fast."""
+    from kos.router_offline import _get_embedder
+    _get_embedder()  # Blocks until model is loaded
+    # Pre-build embeddings for the seed graph
+    shell._ensure_embeddings()
+    print("[KOS] Models warm. Ready to serve.")
 
 # ── API Key Authentication ────────────────────────────
 KOS_API_KEY = os.environ.get("KOS_API_KEY", None)

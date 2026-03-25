@@ -1,24 +1,36 @@
+"""
+KOS V7.0 — Unification & Weaver Verification Test (Offline).
+
+Tests hub survival, daemon safety, and Weaver intent routing
+using KOSShellOffline — no OpenAI API key needed.
+"""
+
+import sys
+import os
 import time
-from kos_core_v4 import KOSKernel, KOSDaemonV4
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from kos.graph import KOSKernel
 from kos.lexicon import KASMLexicon
 from kos.drivers.text import TextDriver
-from kos.router import KOSShell
+from kos.router_offline import KOSShellOffline
+from kos.daemon import KOSDaemon
+
 
 def run_unification_test():
     print("==========================================================")
-    print(" KOS V4.1 : UNIFICATION & WEAVER VERIFICATION TEST")
+    print(" KOS V7.0 : UNIFICATION & WEAVER VERIFICATION TEST (Offline)")
     print("==========================================================")
 
     # 1. Boot the Unified OS
-    kernel = KOSKernel()
+    kernel = KOSKernel(enable_vsa=False)
     lexicon = KASMLexicon()
     driver = TextDriver(kernel, lexicon)
-    shell = KOSShell(kernel, lexicon)
-    daemon = KOSDaemonV4(kernel)
+    shell = KOSShellOffline(kernel, lexicon)
+    daemon = KOSDaemon(kernel)
 
     # 2. The "Haystack" Corpus
-    # We are creating a deliberate Super-Hub around "Toronto" to test
-    # the Top-500 routing scaling, the Daemon, and the Weaver's intent scoring.
     corpus = """
     Toronto is a massive city with connections to dogs, cats, cars, transit, buildings, streets, lights, and noise.
     Toronto is located in the beautiful Canadian province of Ontario.
@@ -36,9 +48,12 @@ def run_unification_test():
         conn_count = len(kernel.nodes[toronto_id].connections)
         print(f"[OK] 'Toronto' hub created successfully with {conn_count} conceptual edges.")
 
-    # 3. VERIFY ROADBLOCK 2 IS FIXED (Daemon Mitosis Prevention)
+    # 3. VERIFY Daemon Mitosis Prevention
     print("\n[>>] Triggering Background Daemon (Testing Hub Survival)...")
-    daemon._contextual_mitosis()  # Manually trigger the previously destructive function
+    if hasattr(daemon, '_contextual_mitosis'):
+        daemon._contextual_mitosis()
+    elif hasattr(daemon, 'run_once'):
+        daemon.run_once()
 
     if toronto_id in kernel.nodes:
         print(f"[PASS] 'Toronto' node survived the Daemon! Contextual Mitosis is safely disabled.")
@@ -46,9 +61,9 @@ def run_unification_test():
         print(f"[FAIL] 'Toronto' was deleted by the Daemon!")
         return
 
-    # 4. VERIFY ROADBLOCK 4 IS FIXED (Weaver Intent Routing)
+    # 4. VERIFY Weaver Intent Routing
     print("\n[>>] Testing Algorithmic Weaver Intent Routing...")
-    print("If successful, the LLM will completely ignore baseball and cats, and answer with exact facts.")
+    print("If successful, the engine will completely ignore baseball and cats, and answer with exact facts.")
 
     scenarios = [
         ("Geographic Intent", "Where is Toronto located?"),
@@ -58,6 +73,7 @@ def run_unification_test():
         ("LAYER 5 SEMANTIC VECTOR", "Tell me about the metropolis."),
     ]
 
+    passed = 0
     for name, prompt in scenarios:
         print(f"\n--- {name} ---")
         print(f"Prompt: \"{prompt}\"")
@@ -67,7 +83,14 @@ def run_unification_test():
         latency = (time.perf_counter() - t0) * 1000
 
         print(f"Latency: {latency:.2f} ms")
-        print(f"Output:  {response.strip()}")
+        print(f"Output:  {response.strip()[:200]}")
+        if response and response.strip():
+            passed += 1
+
+    print(f"\n{'=' * 60}")
+    print(f"  RESULT: {passed}/{len(scenarios)} queries answered")
+    print(f"{'=' * 60}")
+
 
 if __name__ == "__main__":
     run_unification_test()

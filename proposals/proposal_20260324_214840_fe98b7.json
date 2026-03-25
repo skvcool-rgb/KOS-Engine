@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_214840_fe98b7",
+  "type": "threshold_change",
+  "description": "Change spatial_decay: 0.8 -> 0.85",
+  "impact": "Improve deep chain traversal for supply chain queries",
+  "code": "\n# AUTO-GENERATED THRESHOLD CHANGE\n# Parameter: spatial_decay\n# Old value: 0.8\n# New value: 0.85\n# Reason: Improve deep chain traversal for supply chain queries\n\n# Apply in the relevant module:\n# spatial_decay = 0.85\n\n# To apply via config (preferred):\n# Edit .cache/self_tuned_config.json:\n#   \"spatial_decay\": {\"value\": 0.85}\n",
+  "timestamp": "2026-03-24T21:48:40.975970",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

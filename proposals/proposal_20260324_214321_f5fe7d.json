@@ -1,0 +1,10 @@
+{
+  "id": "proposal_20260324_214321_f5fe7d",
+  "type": "weaver_rule",
+  "description": "New SIDE_EFFECT intent scoring rule for Weaver",
+  "impact": "Fixes failing query: 'What are the side effects of apixaban?'",
+  "code": "\n# AUTO-GENERATED WEAVER RULE\n# Based on failing query: \"What are the side effects of apixaban?\"\n\n# Add to AlgorithmicWeaver.weave() scoring section:\n\nSIDE_EFFECT_PROMPT = {'apixaban?', 'effects', 'what', 'are', 'side', 'the', 'of'}\nSIDE_EFFECT_BOOST = 35\n\n# Inside the scoring loop:\nhas_side_effect = bool(\n    SIDE_EFFECT_PROMPT & set(prompt_lower.split()))\nif has_side_effect:\n    # Boost sentences containing relevant evidence\n    side_effect_evidence = {\" relevant_word1 \", \" relevant_word2 \"}\n    if any(w in sent_lower for w in side_effect_evidence):\n        score += SIDE_EFFECT_BOOST\n",
+  "timestamp": "2026-03-24T21:43:21.252552",
+  "status": "PENDING",
+  "safety_check": "PASSED"
+}

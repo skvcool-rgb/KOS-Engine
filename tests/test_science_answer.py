@@ -124,16 +124,17 @@ print("  Verdict: IMPOSSIBLE per known physics")
 print("\n[STEP 4] Synthesized Scientific Answer:")
 print("=" * 60)
 
-synthesized = """Is time travel possible?
+gamma_val = td["gamma"]
+synthesized = f"""Is time travel possible?
 
 FORWARD TIME TRAVEL: YES (proven).
-  Time dilation is real. At 99% of light speed, 1 year for the
-  traveler equals %.1f years on Earth. GPS satellites correct for
-  this effect daily. This is not speculation — it is measured physics.
+  Time dilation is real. At 99%% of light speed, 1 year for the
+  traveler equals {gamma_val:.1f} years on Earth. GPS satellites correct for
+  this effect daily. This is not speculation -- it is measured physics.
 
 BACKWARD TIME TRAVEL: Theoretically allowed, practically impossible.
   General relativity permits closed timelike curves and wormholes.
-  However, stabilizing a traversable wormhole requires 10^70 Joules —
+  However, stabilizing a traversable wormhole requires 10^70 Joules --
   that is 10^17 times MORE energy than exists in the entire
   observable universe. Hawking's chronology protection conjecture
   suggests physics prevents this.
@@ -144,7 +145,7 @@ INFORMATION TIME TRAVEL: No.
 
 CONCLUSION: Forward time travel is proven science. Backward time
 travel is mathematically possible but physically unreachable with
-any known or foreseeable technology.""" % td["gamma"]
+any known or foreseeable technology."""
 
 print(synthesized)
 
