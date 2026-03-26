@@ -162,59 +162,146 @@ class WebForager:
             pass
         return ""
 
+    def _google_search(self, query: str, num_results: int = 3,
+                       verbose: bool = False) -> list:
+        """Search Google via scraping. Returns list of (title, url, snippet) tuples.
+        Falls back gracefully if blocked."""
+        results = []
+        try:
+            search_url = "https://www.google.com/search"
+            params = {"q": query, "num": num_results, "hl": "en"}
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36"
+            }
+            resp = requests.get(search_url, params=params,
+                                headers=headers, timeout=10)
+            if resp.status_code != 200:
+                return results
+
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            # Extract search result links
+            for g in soup.find_all('div', class_='g'):
+                link = g.find('a', href=True)
+                snippet_el = g.find('span', class_='aCOpRe') or g.find('div', class_='VwiC3b')
+                if link and link['href'].startswith('http'):
+                    title = link.get_text(strip=True)
+                    snippet = snippet_el.get_text(strip=True) if snippet_el else ""
+                    url = link['href']
+                    # Skip non-content URLs
+                    if any(skip in url for skip in ['youtube.com', 'facebook.com',
+                            'twitter.com', 'instagram.com', 'tiktok.com']):
+                        continue
+                    results.append((title, url, snippet))
+                    if len(results) >= num_results:
+                        break
+
+            if verbose and results:
+                print(f"[FORAGER-GOOGLE] Found {len(results)} results")
+        except Exception as e:
+            if verbose:
+                print(f"[FORAGER-GOOGLE] Search error: {e}")
+        return results
+
+    def _duckduckgo_instant(self, query: str, verbose: bool = False) -> str:
+        """Use DuckDuckGo Instant Answer API for quick factual answers.
+        Returns answer text or empty string."""
+        try:
+            resp = requests.get("https://api.duckduckgo.com/",
+                                params={"q": query, "format": "json", "no_html": 1},
+                                headers=self.headers, timeout=8)
+            data = resp.json()
+            # Check Abstract (main answer)
+            abstract = data.get("AbstractText", "")
+            if abstract and len(abstract) > 50:
+                if verbose:
+                    print(f"[FORAGER-DDG] Got instant answer ({len(abstract)} chars)")
+                return abstract
+            # Check Answer field
+            answer = data.get("Answer", "")
+            if answer:
+                return answer
+        except Exception:
+            pass
+        return ""
+
     def forage_query(self, query: str, verbose: bool = True) -> int:
         """
-        Search Wikipedia for a topic and ingest the result.
+        Smart multi-source search pipeline:
+        1. DuckDuckGo Instant Answer (fastest, most deterministic)
+        2. Wikipedia search (reliable, factual)
+        3. Google search + top result scrape (broadest coverage)
 
-        Uses progressive fallback:
-        1. Try full query ("tungsten boiling point properties")
-        2. Try first two words ("tungsten boiling")
-        3. Try first word only ("tungsten")
-        4. Try each word individually
-
-        This ensures maximum hit rate on Wikipedia's search.
+        Returns number of new nodes added.
         """
         if verbose:
-            print(f"[FORAGER] Searching Wikipedia for: '{query}'")
+            print(f"[FORAGER] Query: '{query}'")
 
+        total_new = 0
+        before = len(self.kernel.nodes)
+
+        # Strategy 1: DuckDuckGo instant answer (< 1 second, deterministic)
+        ddg_answer = self._duckduckgo_instant(query, verbose=verbose)
+        if ddg_answer:
+            self.driver.ingest(ddg_answer)
+            total_new = len(self.kernel.nodes) - before
+            if verbose:
+                print(f"[FORAGER] DDG instant: +{total_new} nodes")
+            if total_new > 0:
+                return total_new
+
+        # Strategy 2: Wikipedia (2-5 seconds, high quality)
         words = query.strip().split()
-
-        # Progressive search strategies
-        search_attempts = [
-            query,                                    # Full query
-            ' '.join(words[:2]) if len(words) > 2 else None,  # First 2 words
-            words[0] if len(words) > 1 else None,     # First word only
-        ]
-        # Add individual words as last resort (skip stopwords)
         stopwords = {'what', 'is', 'the', 'of', 'how', 'does', 'do', 'are',
                      'was', 'were', 'can', 'will', 'a', 'an', 'and', 'or',
                      'in', 'on', 'at', 'to', 'for', 'with', 'about', 'tell',
-                     'me', 'point', 'properties'}
+                     'me', 'point', 'properties', 'distance', 'far', 'between',
+                     'from', 'much', 'many'}
+
+        search_attempts = [
+            query,
+            ' '.join(words[:3]) if len(words) > 3 else None,
+            ' '.join(words[:2]) if len(words) > 2 else None,
+        ]
         for w in words:
             if w.lower() not in stopwords and len(w) > 3:
                 search_attempts.append(w)
 
-        # Remove None and duplicates while preserving order
         seen = set()
-        clean_attempts = []
-        for s in search_attempts:
-            if s and s not in seen:
-                seen.add(s)
-                clean_attempts.append(s)
-
-        for attempt in clean_attempts:
+        for attempt in search_attempts:
+            if not attempt or attempt in seen:
+                continue
+            seen.add(attempt)
             if verbose:
-                print(f"[FORAGER] Trying: '{attempt}'")
-
+                print(f"[FORAGER] Wikipedia: '{attempt}'")
             url = self._wikipedia_search(attempt, verbose=verbose)
             if url:
-                if verbose:
-                    print(f"[FORAGER] Found article: {url}")
-                return self.forage(url, verbose=verbose)
+                new = self.forage(url, verbose=verbose)
+                total_new = len(self.kernel.nodes) - before
+                if total_new > 0:
+                    return total_new
+
+        # Strategy 3: Google search + scrape top result (broadest, 5-10s)
+        if verbose:
+            print(f"[FORAGER] Trying Google search...")
+        google_results = self._google_search(query, num_results=2, verbose=verbose)
+        for title, url, snippet in google_results:
+            if verbose:
+                print(f"[FORAGER] Google hit: {title[:60]}...")
+            # Ingest snippet immediately (fast, deterministic)
+            if snippet and len(snippet) > 30:
+                self.driver.ingest(snippet)
+            # Also fetch full page
+            new = self.forage(url, verbose=verbose)
+            total_new = len(self.kernel.nodes) - before
+            if total_new > 5:
+                break
 
         if verbose:
-            print(f"[FORAGER] No Wikipedia article found after {len(clean_attempts)} attempts.")
-        return 0
+            print(f"[FORAGER] Total: +{total_new} nodes from all sources")
+        return total_new
 
     def forage_multiple(self, queries: list, verbose: bool = True) -> int:
         """Forage multiple topics sequentially."""

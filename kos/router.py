@@ -53,6 +53,7 @@ class KOSShell:
         self.node_embeddings = None
         self.embedded_uuids = []
         self._st_util = None
+        self._word_emb_cache = {}  # Cache word -> embedding
 
     def _ensure_embeddings(self):
         """Lazily build/rebuild cached embeddings — incremental for new nodes."""
@@ -109,9 +110,13 @@ class KOSShell:
         if resolved:
             return resolved
 
-        # Layer 5: Semantic vector fallback (all-MiniLM-L6-v2)
+        # Layer 5: Semantic vector fallback (all-MiniLM-L6-v2) with cache
         if self.kernel.nodes and self._ensure_embeddings():
-            w_emb = self.embedder.encode(w, convert_to_tensor=True)
+            if w in self._word_emb_cache:
+                w_emb = self._word_emb_cache[w]
+            else:
+                w_emb = self.embedder.encode(w, convert_to_tensor=True)
+                self._word_emb_cache[w] = w_emb
             hits = self._st_util.cos_sim(w_emb, self.node_embeddings)[0]
             best_score = hits.max().item()
             best_idx = hits.argmax().item()

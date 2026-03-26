@@ -5,6 +5,9 @@
   "impact": "Prediction accuracy is 0%, increase learning rate for faster convergence",
   "code": "\n# AUTO-GENERATED THRESHOLD CHANGE\n# Parameter: learning_rate\n# Old value: 0.02\n# New value: 0.05\n# Reason: Prediction accuracy is 0%, increase learning rate for faster convergence\n\n# Apply in the relevant module:\n# learning_rate = 0.05\n\n# To apply via config (preferred):\n# Edit .cache/self_tuned_config.json:\n#   \"learning_rate\": {\"value\": 0.05}\n",
   "timestamp": "2026-03-24T09:23:13.605746",
-  "status": "PENDING",
-  "safety_check": "PASSED"
+  "status": "APPROVED",
+  "safety_check": "PASSED",
+  "approved_at": "2026-03-25T16:06:13",
+  "applied": true,
+  "applied_at": "2026-03-25T20:36:32"
 }

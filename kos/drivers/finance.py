@@ -203,8 +203,21 @@ class FinanceDriver:
         if "stress test" in ql:
             return self._stress_test(query)
 
-        # ── General finance query — return regulatory overview
-        return self._regulatory_overview(query)
+        # ── Only return overview if the query is actually about finance ──
+        # Use multi-word phrases to avoid false positives (e.g. "covalent bond")
+        finance_phrases = {"finance", "banking", "stock market", "investment portfolio",
+                           "interest rate", "inflation rate", "balance sheet",
+                           "income statement", "risk management", "forex",
+                           "exchange rate", "treasury bond", "hedge fund",
+                           "financial risk", "capital ratio", "mutual fund",
+                           "stock price", "dividend yield", "tax rate",
+                           "monetary policy", "fiscal policy", "gdp growth"}
+        finance_words_exclusive = {"banking", "forex", "amortization", "emi calculator"}
+        if any(p in ql for p in finance_phrases) or any(w in ql for w in finance_words_exclusive):
+            return self._regulatory_overview(query)
+
+        # Not a finance query — return empty so router continues
+        return ""
 
     # ══════════════════════════════════════════════════════════
     # VALUE AT RISK (Parametric)

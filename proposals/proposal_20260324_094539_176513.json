@@ -5,6 +5,9 @@
   "impact": "Improves Layer 1b resolution for 17 words",
   "code": "# AUTO-GENERATED SYNONYM ADDITIONS\n# Based on graph structure analysis\n\nNEW_SYNONYMS = {\n    \"city\": \"population\",\n    \"oxygen\": \"lung\",\n    \"quantum_computer\": \"measurement\",\n    \"qubits\": \"measurement\",\n    \"hydrogen\": \"helium\",\n    \"quantum\": \"measurement\",\n    \"qubit\": \"measurement\",\n    \"ju\u02d0\": \"two-level\",\n    \"qudit\": \"device\",\n    \"device\": \"two-level\",\n    \"electron\": \"coherent\",\n    \"examples\": \"measurement\",\n    \"polarization\": \"horizontal\",\n    \"photon\": \"horizontal\",\n    \"1995\": \"during\",\n    \"conversation\": \"wootters\",\n    \"william\": \"wootters\",\n}\n",
   "timestamp": "2026-03-24T09:45:39.918080",
-  "status": "PENDING",
-  "safety_check": "PASSED"
+  "status": "APPROVED",
+  "safety_check": "PASSED",
+  "approved_at": "2026-03-25T16:06:08",
+  "applied": true,
+  "applied_at": "2026-03-25T20:36:32"
 }

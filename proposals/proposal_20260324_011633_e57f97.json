@@ -5,6 +5,9 @@
   "impact": "Current edge weights range from -0.8 to 0.9 with no normalization. Over time, myelination can push effective weights above 1.0, distorting the physics. Proposal: normalize all edge weights to [-1.0, 1.0] after every daemon cycle. Prevents weight inflation and keeps the spreading activation physics numerically stable.",
   "code": "\n# AUTO-GENERATED THRESHOLD CHANGE\n# Parameter: edge_weight_normalization\n# Old value: 0.0\n# New value: 1.0\n# Reason: Current edge weights range from -0.8 to 0.9 with no normalization. Over time, myelination can push effective weights above 1.0, distorting the physics. Proposal: normalize all edge weights to [-1.0, 1.0] after every daemon cycle. Prevents weight inflation and keeps the spreading activation physics numerically stable.\n\n# Apply in the relevant module:\n# edge_weight_normalization = 1.0\n\n# To apply via config (preferred):\n# Edit .cache/self_tuned_config.json:\n#   \"edge_weight_normalization\": {\"value\": 1.0}\n",
   "timestamp": "2026-03-24T01:16:33.020652",
-  "status": "PENDING",
-  "safety_check": "PASSED"
+  "status": "APPROVED",
+  "safety_check": "PASSED",
+  "approved_at": "2026-03-25T16:06:16",
+  "applied": true,
+  "applied_at": "2026-03-25T20:36:32"
 }

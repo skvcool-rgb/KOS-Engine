@@ -5,6 +5,9 @@
   "impact": "Improve deep chain traversal for supply chain queries",
   "code": "\n# AUTO-GENERATED THRESHOLD CHANGE\n# Parameter: spatial_decay\n# Old value: 0.8\n# New value: 0.85\n# Reason: Improve deep chain traversal for supply chain queries\n\n# Apply in the relevant module:\n# spatial_decay = 0.85\n\n# To apply via config (preferred):\n# Edit .cache/self_tuned_config.json:\n#   \"spatial_decay\": {\"value\": 0.85}\n",
   "timestamp": "2026-03-24T22:39:19.228236",
-  "status": "PENDING",
-  "safety_check": "PASSED"
+  "status": "APPROVED",
+  "safety_check": "PASSED",
+  "approved_at": "2026-03-25T16:00:45",
+  "applied": true,
+  "applied_at": "2026-03-25T20:36:32"
 }

@@ -5,6 +5,9 @@
   "impact": "Fixes failing query: 'What is the economy of Toronto?'",
   "code": "\n# AUTO-GENERATED WEAVER RULE\n# Based on failing query: \"What is the economy of Toronto?\"\n\n# Add to AlgorithmicWeaver.weave() scoring section:\n\nECONOMY_PROMPT = {'the', 'what', 'toronto?', 'of', 'is', 'economy'}\nECONOMY_BOOST = 35\n\n# Inside the scoring loop:\nhas_economy = bool(\n    ECONOMY_PROMPT & set(prompt_lower.split()))\nif has_economy:\n    # Boost sentences containing relevant evidence\n    economy_evidence = {\" relevant_word1 \", \" relevant_word2 \"}\n    if any(w in sent_lower for w in economy_evidence):\n        score += ECONOMY_BOOST\n",
   "timestamp": "2026-03-24T00:45:15.538213",
-  "status": "PENDING",
-  "safety_check": "PASSED"
+  "status": "APPROVED",
+  "safety_check": "PASSED",
+  "approved_at": "2026-03-25T16:23:52",
+  "applied": true,
+  "applied_at": "2026-03-25T20:36:32"
 }

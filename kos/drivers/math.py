@@ -19,6 +19,7 @@ class MathDriver:
             # Agent Fix 2: add math function names
             "sqrt", "log", "ln", "sin", "cos", "tan", "exp",
             "abs", "factorial", "summation", "product",
+            "simplify",
         }
         # Regex: matches expressions like "345000000 * 0.0825" or "2+3*4"
         self._bare_math_re = re.compile(
@@ -53,6 +54,12 @@ class MathDriver:
         # 5. Contains math operators between numbers
         if re.search(r'\d+\s*[\+\-\*/\^]\s*\d+', prompt):
             return True
+        # 6. Percentage pattern: "X% of Y"
+        if re.search(r'\d+(\.\d+)?\s*%\s*of\s+\d+', lower):
+            return True
+        # 7. "log base B of N" pattern
+        if re.search(r'log\s+base\s+\d+\s+of\s+\d+', lower):
+            return True
         return False
 
     def _clean_expr(self, text: str) -> str:
@@ -63,8 +70,13 @@ class MathDriver:
         # Strip common question prefixes
         s = re.sub(r'^(?:what\s+is|how\s+much\s+is|compute|evaluate|calculate|solve)\s+',
                    '', s, flags=re.IGNORECASE).strip()
+        # Convert e^(...) to exp(...) before ^ replacement
+        s = re.sub(r'\be\s*\^\s*\(([^)]+)\)', r'exp(\1)', s)
+        s = re.sub(r'\be\s*\^\s*(\w+)', r'exp(\1)', s)
         # Convert ^ to ** for Python/SymPy
         s = s.replace('^', '**')
+        # Insert implicit multiplication: 5x -> 5*x, 2y -> 2*y
+        s = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', s)
         # Convert ln() to log() for SymPy (SymPy log = natural log)
         s = re.sub(r'\bln\b', 'log', s)
         return s
@@ -108,6 +120,83 @@ class MathDriver:
                     "operation": "Differentiation",
                     "result": str(result),
                     "equation": str(expr),
+                }
+
+            # --- ALGEBRA: solve equations with "= 0" ---
+            elif re.search(r'=\s*0', lower) and 'solve' in lower:
+                expr_str = re.split(
+                    r'\bsolve\b', lower, maxsplit=1)[-1].strip()
+                expr_str = self._clean_expr(expr_str)
+                # Remove "= 0" tail
+                expr_str = re.sub(r'\s*=\s*0\s*$', '', expr_str)
+                expr = sp.sympify(expr_str)
+                var = (list(expr.free_symbols)[0]
+                       if expr.free_symbols else sp.Symbol('x'))
+                result = sp.solve(expr, var)
+                return {
+                    "status": "success",
+                    "operation": "Algebra (solve)",
+                    "result": str(result),
+                    "equation": str(expr) + " = 0",
+                }
+
+            # --- SIMPLIFY ---
+            elif 'simplify' in lower:
+                expr_str = re.split(
+                    r'\bsimplify\b', lower, maxsplit=1)[-1].strip()
+                expr_str = self._clean_expr(expr_str)
+                expr = sp.sympify(expr_str)
+                result = sp.simplify(expr)
+                return {
+                    "status": "success",
+                    "operation": "Simplification",
+                    "result": str(result),
+                    "equation": str(expr),
+                }
+
+            # --- FACTORIAL OF N ---
+            elif re.search(r'factorial\s+of\s+(\d+)', lower):
+                m = re.search(r'factorial\s+of\s+(\d+)', lower)
+                n = int(m.group(1))
+                result = sp.factorial(n)
+                return {
+                    "status": "success",
+                    "operation": "Factorial",
+                    "result": str(result),
+                    "equation": f"factorial({n})",
+                }
+
+            # --- LOG BASE B OF N ---
+            elif re.search(r'log\s+base\s+(\d+)\s+of\s+(\d+)', lower):
+                m = re.search(r'log\s+base\s+(\d+)\s+of\s+(\d+)', lower)
+                base = int(m.group(1))
+                n = int(m.group(2))
+                result = sp.log(n, base)
+                # Evaluate to number if possible
+                evaled = result.evalf()
+                if abs(evaled - int(evaled)) < 1e-10:
+                    evaled = int(evaled)
+                return {
+                    "status": "success",
+                    "operation": "Logarithm",
+                    "result": str(evaled),
+                    "equation": f"log({n}, {base})",
+                }
+
+            # --- PERCENTAGE: X% of Y ---
+            elif re.search(r'([\d\.]+)\s*%\s*of\s+([\d\.]+)', lower):
+                m = re.search(r'([\d\.]+)\s*%\s*of\s+([\d\.]+)', lower)
+                pct = float(m.group(1))
+                val = float(m.group(2))
+                result = pct / 100 * val
+                # Return as int if whole number
+                if result == int(result):
+                    result = int(result)
+                return {
+                    "status": "success",
+                    "operation": "Percentage",
+                    "result": str(result),
+                    "equation": f"{pct}% of {val}",
                 }
 
             # --- ARITHMETIC / ALGEBRA ---

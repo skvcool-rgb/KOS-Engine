@@ -122,6 +122,438 @@ class SynthesisEngine:
             "domain": self.domain,
         }
 
+    def synthesize_comparison(self, entity_a: str, entity_b: str,
+                               evidence_a: list, evidence_b: list,
+                               raw_prompt: str = "") -> dict:
+        """
+        Synthesize a structured comparison answer from per-entity evidence.
+
+        Args:
+            entity_a: first entity name
+            entity_b: second entity name
+            evidence_a: evidence strings about entity_a
+            evidence_b: evidence strings about entity_b
+            raw_prompt: original user query
+
+        Returns:
+            Same schema as synthesize(), with a side-by-side comparison response.
+        """
+        # Fall back to normal synthesize if we lack evidence for either entity
+        if not evidence_a and not evidence_b:
+            return self.synthesize([], intent="compare",
+                                   entities=[entity_a, entity_b],
+                                   raw_prompt=raw_prompt)
+        if not evidence_a or not evidence_b:
+            combined = evidence_a or evidence_b
+            return self.synthesize(combined, intent="compare",
+                                   entities=[entity_a, entity_b],
+                                   raw_prompt=raw_prompt)
+
+        # Classify entity types from evidence
+        type_a = self._classify_entity_type(entity_a, evidence_a)
+        type_b = self._classify_entity_type(entity_b, evidence_b)
+
+        # Extract comparable attributes using domain-specific extractors
+        attrs_a = self._extract_attributes(entity_a, evidence_a,
+                                           entity_type=type_a)
+        attrs_b = self._extract_attributes(entity_b, evidence_b,
+                                           entity_type=type_b)
+
+        # Build side-by-side structure for shared attribute keys
+        all_keys = list(dict.fromkeys(list(attrs_a.keys()) + list(attrs_b.keys())))
+        comparison_rows = []
+        for key in all_keys:
+            val_a = attrs_a.get(key, "N/A")
+            val_b = attrs_b.get(key, "N/A")
+            if val_a != "N/A" or val_b != "N/A":
+                comparison_rows.append((key, val_a, val_b))
+
+        # Build the response text
+        parts = []
+
+        # If entity types differ, note the cross-category comparison
+        if type_a != type_b and type_a != "unknown" and type_b != "unknown":
+            parts.append(
+                f"Note: {entity_a} ({type_a}) and {entity_b} ({type_b}) "
+                f"belong to different categories."
+            )
+
+        # Header summaries
+        summary_a = self._one_line_summary(entity_a, attrs_a, evidence_a)
+        summary_b = self._one_line_summary(entity_b, attrs_b, evidence_b)
+        parts.append(f"{summary_a} vs {summary_b}.")
+
+        if comparison_rows:
+            diffs = []
+            for key, val_a, val_b in comparison_rows:
+                if val_a != "N/A" and val_b != "N/A" and val_a != val_b:
+                    diffs.append(f"{key}: {val_a} ({entity_a}) vs {val_b} ({entity_b})")
+            if diffs:
+                parts.append("Key differences: " + "; ".join(diffs[:6]) + ".")
+
+        response = " ".join(parts)
+
+        all_evidence = list(evidence_a) + list(evidence_b)
+        confidence = self._compute_comparison_confidence(
+            entity_a, entity_b, evidence_a, evidence_b, comparison_rows)
+
+        return {
+            "response": response,
+            "raw_evidence": all_evidence,
+            "confidence": confidence,
+            "template_used": "comparison_structured",
+            "domain": self.domain,
+            "comparison": {
+                "entity_a": entity_a,
+                "entity_b": entity_b,
+                "type_a": type_a,
+                "type_b": type_b,
+                "attributes": {key: {"a": va, "b": vb}
+                               for key, va, vb in comparison_rows},
+            },
+        }
+
+    def _classify_entity_type(self, entity: str, evidence: list) -> str:
+        """Classify an entity into a domain type based on keyword detection
+        in evidence text.
+
+        Returns one of: "city", "drug", "technology", "concept", "person",
+        "organization", "language", "material", "unknown".
+        """
+        combined = " ".join(evidence).lower()
+
+        # Keyword sets ordered by specificity (more specific first)
+        _type_keywords = {
+            "drug": [
+                "anticoagulant", "medication", "dosage", "treatment",
+                "side effect", "fda", "pharmaceutical", "drug", "clinical trial",
+                "contraindication", "indication", "mechanism of action",
+            ],
+            "language": [
+                "programming language", "syntax", "compiler", "interpreter",
+                "statically typed", "dynamically typed", "garbage collection",
+            ],
+            "material": [
+                "semiconductor", "photovoltaic", "alloy", "compound",
+                "crystal", "tensile strength", "thermal conductivity",
+                "material", "substrate",
+            ],
+            "technology": [
+                "software", "programming", "algorithm", "computation",
+                "framework", "processor", "open source", "api", "runtime",
+            ],
+            "city": [
+                "population", "founded", "province", "capital",
+                "metropolitan", "municipality", "city", "township",
+            ],
+            "person": [
+                "born", "died", "nobel", "president", "scientist", "author",
+                "biography", "birthplace",
+            ],
+            "organization": [
+                "corporation", "company", "nonprofit", "founded in",
+                "headquartered", "employees", "revenue", "ceo",
+            ],
+            "concept": [
+                "theory", "principle", "method", "technique", "process",
+                "approach", "paradigm", "hypothesis", "framework",
+            ],
+        }
+
+        scores = {}
+        for entity_type, keywords in _type_keywords.items():
+            score = sum(1 for kw in keywords if kw in combined)
+            if score > 0:
+                scores[entity_type] = score
+
+        if not scores:
+            return "unknown"
+
+        return max(scores, key=scores.get)
+
+    def _extract_attributes(self, entity: str, evidence: list,
+                            entity_type: str = "unknown") -> dict:
+        """Extract key-value attributes from evidence for an entity.
+
+        Uses domain-specific extractors when entity_type is known,
+        falling back to city/general extractors otherwise.
+        """
+        attrs = {}
+        combined = " ".join(evidence)
+
+        # --- Domain-specific extractors ---
+        if entity_type == "drug":
+            return self._extract_drug_attributes(entity, combined, evidence)
+        elif entity_type in ("technology", "language"):
+            return self._extract_tech_attributes(entity, combined, evidence)
+        elif entity_type == "material":
+            return self._extract_material_attributes(entity, combined, evidence)
+        elif entity_type == "concept":
+            return self._extract_concept_attributes(entity, combined, evidence)
+
+        # --- Default city / general extractors (original logic) ---
+
+        # Population
+        pop_m = re.search(
+            r'population[:\s]+(?:of\s+)?(?:approximately\s+|about\s+|~)?'
+            r'([\d,.]+\s*(?:million|billion|thousand|[MBKmk])?)',
+            combined, re.I)
+        if pop_m:
+            attrs["population"] = pop_m.group(1).strip()
+
+        # Founded / established year
+        found_m = re.search(
+            r'(?:founded|established|incorporated|settled)[:\s]+(?:in\s+)?(\d{3,4})',
+            combined, re.I)
+        if found_m:
+            attrs["founded"] = found_m.group(1)
+
+        # Location / country / region
+        loc_m = re.search(
+            r'(?:located in|situated in|in the province of|'
+            r'(?:is|are) in|capital of)\s+([A-Z][\w\s,]+?)(?:\.|,|$)',
+            combined)
+        if loc_m:
+            attrs["location"] = loc_m.group(1).strip()[:60]
+
+        # Area
+        area_m = re.search(
+            r'area[:\s]+(?:of\s+)?([\d,.]+\s*(?:km2|sq\s*km|square\s*(?:kilo)?meters?|'
+            r'sq\s*mi|square\s*miles?))',
+            combined, re.I)
+        if area_m:
+            attrs["area"] = area_m.group(1).strip()
+
+        # Known for / description snippet
+        known_m = re.search(
+            r'(?:known (?:for|as)|famous for|renowned for)\s+(.+?)(?:\.|$)',
+            combined, re.I)
+        if known_m:
+            attrs["known for"] = known_m.group(1).strip()[:80]
+
+        # Elevation / altitude
+        elev_m = re.search(
+            r'(?:elevation|altitude)[:\s]+([\d,.]+\s*(?:m|ft|meters?|feet))',
+            combined, re.I)
+        if elev_m:
+            attrs["elevation"] = elev_m.group(1).strip()
+
+        # Currency
+        curr_m = re.search(
+            r'(?:currency|monetary unit)[:\s]+([A-Z][\w\s]+?)(?:\.|,|$)',
+            combined, re.I)
+        if curr_m:
+            attrs["currency"] = curr_m.group(1).strip()[:40]
+
+        # Language
+        lang_m = re.search(
+            r'(?:official language|language)[:\s]+([A-Z][\w\s,]+?)(?:\.|$)',
+            combined, re.I)
+        if lang_m:
+            attrs["language"] = lang_m.group(1).strip()[:60]
+
+        # If no structured attributes found, use first evidence as description
+        if not attrs and evidence:
+            attrs["description"] = evidence[0][:100]
+
+        return attrs
+
+    # -- Domain-specific attribute extractors --------------------------------
+
+    def _extract_drug_attributes(self, entity: str, combined: str,
+                                  evidence: list) -> dict:
+        """Extract drug/medical attributes from evidence."""
+        attrs = {}
+
+        mech_m = re.search(
+            r'(?:mechanism of action|works by|acts by|inhibits|blocks)\s+'
+            r'(.+?)(?:\.|$)', combined, re.I)
+        if mech_m:
+            attrs["mechanism"] = mech_m.group(1).strip()[:100]
+
+        ind_m = re.search(
+            r'(?:indicated for|used (?:for|to treat)|treatment of|treats)\s+'
+            r'(.+?)(?:\.|$)', combined, re.I)
+        if ind_m:
+            attrs["indication"] = ind_m.group(1).strip()[:100]
+
+        se_m = re.search(
+            r'(?:side effects?|adverse (?:effects?|reactions?))[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if se_m:
+            attrs["side_effects"] = se_m.group(1).strip()[:120]
+
+        dos_m = re.search(
+            r'(?:dosage|dose|administered)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if dos_m:
+            attrs["dosage"] = dos_m.group(1).strip()[:80]
+
+        app_m = re.search(
+            r'(?:approved|FDA approval|approval)[:\s]+(?:in\s+)?(\d{4})',
+            combined, re.I)
+        if app_m:
+            attrs["approval_year"] = app_m.group(1)
+
+        contra_m = re.search(
+            r'(?:contraindicated|contraindication|do not use)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if contra_m:
+            attrs["contraindications"] = contra_m.group(1).strip()[:100]
+
+        if not attrs and evidence:
+            attrs["description"] = evidence[0][:100]
+        return attrs
+
+    def _extract_tech_attributes(self, entity: str, combined: str,
+                                  evidence: list) -> dict:
+        """Extract technology / programming language attributes."""
+        attrs = {}
+
+        type_m = re.search(
+            r'(?:is a|is an)\s+(.+?)(?:\.|,|$)', combined, re.I)
+        if type_m:
+            attrs["type"] = type_m.group(1).strip()[:80]
+
+        para_m = re.search(
+            r'(?:paradigm|paradigms)[:\s]+(.+?)(?:\.|$)', combined, re.I)
+        if para_m:
+            attrs["paradigm"] = para_m.group(1).strip()[:80]
+
+        use_m = re.search(
+            r'(?:used for|use cases?|applications?)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if use_m:
+            attrs["use_cases"] = use_m.group(1).strip()[:100]
+
+        perf_m = re.search(
+            r'(?:performance|speed|benchmark)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if perf_m:
+            attrs["performance"] = perf_m.group(1).strip()[:80]
+
+        creator_m = re.search(
+            r'(?:created by|developed by|author|designed by)\s+(.+?)(?:\.|,|$)',
+            combined, re.I)
+        if creator_m:
+            attrs["creator"] = creator_m.group(1).strip()[:60]
+
+        yr_m = re.search(
+            r'(?:released|first appeared|launched|introduced)[:\s]+(?:in\s+)?(\d{4})',
+            combined, re.I)
+        if yr_m:
+            attrs["year_released"] = yr_m.group(1)
+
+        if not attrs and evidence:
+            attrs["description"] = evidence[0][:100]
+        return attrs
+
+    def _extract_material_attributes(self, entity: str, combined: str,
+                                      evidence: list) -> dict:
+        """Extract material / semiconductor attributes."""
+        attrs = {}
+
+        eff_m = re.search(
+            r'(?:efficiency)[:\s]+([\d.]+\s*%?)', combined, re.I)
+        if eff_m:
+            attrs["efficiency"] = eff_m.group(1).strip()
+
+        cost_m = re.search(
+            r'(?:cost|price)[:\s]+(.+?)(?:\.|$)', combined, re.I)
+        if cost_m:
+            attrs["cost"] = cost_m.group(1).strip()[:60]
+
+        dur_m = re.search(
+            r'(?:durability|lifespan|lifetime|degradation)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if dur_m:
+            attrs["durability"] = dur_m.group(1).strip()[:80]
+
+        app_m = re.search(
+            r'(?:applications?|used (?:in|for))[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if app_m:
+            attrs["applications"] = app_m.group(1).strip()[:100]
+
+        comp_m = re.search(
+            r'(?:composed of|composition|made (?:of|from)|formula)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if comp_m:
+            attrs["composition"] = comp_m.group(1).strip()[:80]
+
+        if not attrs and evidence:
+            attrs["description"] = evidence[0][:100]
+        return attrs
+
+    def _extract_concept_attributes(self, entity: str, combined: str,
+                                     evidence: list) -> dict:
+        """Extract concept / theory attributes."""
+        attrs = {}
+
+        def_m = re.search(
+            r'(?:defined as|is a|refers to|describes)\s+(.+?)(?:\.|$)',
+            combined, re.I)
+        if def_m:
+            attrs["definition"] = def_m.group(1).strip()[:120]
+
+        origin_m = re.search(
+            r'(?:proposed by|invented by|originated|developed by|introduced by)'
+            r'\s+(.+?)(?:\.|,|$)', combined, re.I)
+        if origin_m:
+            attrs["origin"] = origin_m.group(1).strip()[:80]
+
+        prop_m = re.search(
+            r'(?:key propert(?:y|ies)|characteristics?|features?)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if prop_m:
+            attrs["key_properties"] = prop_m.group(1).strip()[:100]
+
+        app_m = re.search(
+            r'(?:applications?|used (?:in|for)|applied to)[:\s]+(.+?)(?:\.|$)',
+            combined, re.I)
+        if app_m:
+            attrs["applications"] = app_m.group(1).strip()[:100]
+
+        if not attrs and evidence:
+            attrs["description"] = evidence[0][:100]
+        return attrs
+
+    def _one_line_summary(self, entity: str, attrs: dict,
+                          evidence: list) -> str:
+        """Build a parenthetical summary like 'Toronto (pop 2.7M, founded 1834)'."""
+        parts = []
+        if "population" in attrs:
+            parts.append(f"pop {attrs['population']}")
+        if "founded" in attrs:
+            parts.append(f"founded {attrs['founded']}")
+        if "location" in attrs:
+            parts.append(attrs["location"])
+        if not parts and "description" in attrs:
+            parts.append(attrs["description"][:50])
+        if parts:
+            return f"{entity} ({', '.join(parts[:3])})"
+        return entity
+
+    def _compute_comparison_confidence(self, entity_a, entity_b,
+                                        evidence_a, evidence_b,
+                                        comparison_rows) -> float:
+        """Confidence for comparison answers."""
+        score = 0.0
+        # Both entities have evidence
+        score += 0.25
+        # More evidence per entity
+        score += min(len(evidence_a) / 4.0, 0.2)
+        score += min(len(evidence_b) / 4.0, 0.2)
+        # Comparable attributes found
+        shared = sum(1 for _, va, vb in comparison_rows
+                     if va != "N/A" and vb != "N/A")
+        score += min(shared / 3.0, 0.25)
+        # Entity mentions in evidence
+        a_mentions = sum(1 for e in evidence_a if entity_a.lower() in e.lower())
+        b_mentions = sum(1 for e in evidence_b if entity_b.lower() in e.lower())
+        score += min((a_mentions + b_mentions) / 4.0, 0.1)
+        return min(score, 1.0)
+
     def build_contract(self, evidence: list, confidence: float) -> dict:
         """
         Build a strict JSON contract for LLM formatting.

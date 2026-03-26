@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOS Agent Dashboard</title>
+    <title>KOS Mission Control</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -32,16 +32,16 @@
         .header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            padding: 12px 24px;
+            padding: 10px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .header h1 { font-size: 20px; font-weight: 600; }
+        .header h1 { font-size: 18px; font-weight: 600; }
         .header h1 span { color: var(--accent); }
         .header .status {
             display: flex; align-items: center; gap: 8px;
-            font-size: 13px; color: var(--text2);
+            font-size: 12px; color: var(--text2);
         }
         .header .dot {
             width: 8px; height: 8px; border-radius: 50%;
@@ -52,180 +52,274 @@
         /* ── Layout ─────────────────────────────── */
         .layout {
             display: grid;
-            grid-template-columns: 220px 1fr;
-            min-height: calc(100vh - 52px);
+            grid-template-columns: 200px 1fr;
+            min-height: calc(100vh - 48px);
         }
 
         /* ── Sidebar ────────────────────────────── */
         .sidebar {
             background: var(--surface);
             border-right: 1px solid var(--border);
-            padding: 16px 0;
+            padding: 12px 0;
+            overflow-y: auto;
         }
+        .nav-section { padding: 8px 16px 4px; font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1.5px; }
         .nav-item {
-            padding: 10px 20px; cursor: pointer;
+            padding: 8px 16px; cursor: pointer;
             font-size: 13px; color: var(--text2);
             border-left: 3px solid transparent;
             transition: all 0.15s;
+            display: flex; align-items: center; gap: 8px;
         }
         .nav-item:hover { background: var(--surface2); color: var(--text); }
         .nav-item.active {
             color: var(--accent); border-left-color: var(--accent);
             background: rgba(0,255,136,0.05);
         }
-        .nav-item .icon { margin-right: 8px; }
+        .nav-badge {
+            margin-left: auto; background: var(--danger); color: #fff;
+            font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 700;
+        }
 
         /* ── Main Content ───────────────────────── */
-        .main { padding: 24px; overflow-y: auto; }
+        .main { padding: 20px; overflow-y: auto; }
         .page { display: none; }
         .page.active { display: block; }
+        .page h2 { font-size: 18px; margin-bottom: 16px; }
 
         /* ── Metric Cards ───────────────────────── */
         .metrics {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px; margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; margin-bottom: 20px;
         }
         .metric {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px; padding: 16px;
+            border-radius: 8px; padding: 14px;
         }
-        .metric .label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
-        .metric .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .metric .label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+        .metric .value { font-size: 24px; font-weight: 700; margin-top: 2px; }
         .metric .value.green { color: var(--accent); }
         .metric .value.blue { color: var(--accent2); }
         .metric .value.orange { color: var(--warning); }
         .metric .value.purple { color: var(--purple); }
+        .metric .value.red { color: var(--danger); }
 
         /* ── Cards ──────────────────────────────── */
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px; padding: 20px;
-            margin-bottom: 16px;
+            border-radius: 8px; padding: 16px;
+            margin-bottom: 12px;
         }
-        .card h3 { font-size: 15px; margin-bottom: 12px; color: var(--accent2); }
+        .card h3 { font-size: 14px; margin-bottom: 10px; color: var(--accent2); }
+
+        /* ── Grid layouts ──────────────────────── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
         /* ── Chat / Query ───────────────────────── */
         .query-box {
-            display: flex; gap: 8px; margin-bottom: 16px;
+            display: flex; gap: 8px; margin-bottom: 12px;
         }
         .query-box input {
-            flex: 1; padding: 10px 14px;
+            flex: 1; padding: 8px 12px;
             background: var(--surface2); border: 1px solid var(--border);
             border-radius: 6px; color: var(--text);
-            font-size: 14px; outline: none;
+            font-size: 13px; outline: none;
         }
         .query-box input:focus { border-color: var(--accent); }
         .query-box button, .btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: var(--accent); color: #000;
             border: none; border-radius: 6px;
             font-weight: 600; cursor: pointer;
-            font-size: 13px; transition: opacity 0.15s;
+            font-size: 12px; transition: opacity 0.15s;
+            white-space: nowrap;
         }
         .btn:hover { opacity: 0.85; }
         .btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
         .btn.danger { background: var(--danger); color: #fff; }
         .btn.blue { background: var(--accent2); color: #000; }
+        .btn.purple { background: var(--purple); color: #fff; }
+        .btn.sm { padding: 4px 10px; font-size: 11px; }
 
         /* ── Results ────────────────────────────── */
         .result {
             background: var(--surface2); border-radius: 6px;
-            padding: 14px; margin-bottom: 8px;
+            padding: 12px; margin-bottom: 8px;
             border-left: 3px solid var(--accent);
-            font-size: 14px; line-height: 1.5;
+            font-size: 13px; line-height: 1.5;
         }
-        .result .meta { font-size: 11px; color: var(--text2); margin-top: 6px; }
+        .result .meta { font-size: 11px; color: var(--text2); margin-top: 4px; }
 
         /* ── Table ──────────────────────────────── */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; padding: 8px 12px; color: var(--text2); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
-        td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 6px 10px; color: var(--text2); border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; }
+        td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         tr:hover { background: var(--surface2); }
 
         /* ── Health Bars ────────────────────────── */
-        .health-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .health-bar .name { width: 180px; font-size: 13px; color: var(--text2); }
+        .health-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .health-bar .name { width: 160px; font-size: 12px; color: var(--text2); }
         .health-bar .bar {
-            flex: 1; height: 8px; background: var(--surface2);
-            border-radius: 4px; overflow: hidden;
+            flex: 1; height: 6px; background: var(--surface2);
+            border-radius: 3px; overflow: hidden;
         }
-        .health-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
-        .health-bar .val { width: 50px; text-align: right; font-size: 12px; font-weight: 600; }
+        .health-bar .fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+        .health-bar .val { width: 40px; text-align: right; font-size: 11px; font-weight: 600; }
+
+        /* ── Status badges ─────────────────────── */
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+        }
+        .badge.approved { background: rgba(0,255,136,0.15); color: var(--accent); }
+        .badge.pending { background: rgba(255,170,0,0.15); color: var(--warning); }
+        .badge.rejected { background: rgba(255,68,68,0.15); color: var(--danger); }
+        .badge.running { background: rgba(0,204,255,0.15); color: var(--accent2); }
 
         /* ── Textarea ───────────────────────────── */
         textarea {
-            width: 100%; min-height: 120px; padding: 12px;
+            width: 100%; min-height: 100px; padding: 10px;
             background: var(--surface2); border: 1px solid var(--border);
             border-radius: 6px; color: var(--text); font-family: inherit;
-            font-size: 13px; resize: vertical; outline: none;
+            font-size: 12px; resize: vertical; outline: none;
         }
         textarea:focus { border-color: var(--accent); }
 
-        /* ── Graph Viz ──────────────────────────── */
+        /* ── Node Cards ────────────────────────── */
         .node-list {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 8px;
         }
         .node-card {
-            background: var(--surface2); border-radius: 6px; padding: 10px;
+            background: var(--surface2); border-radius: 6px; padding: 8px;
             border-left: 3px solid var(--accent2);
         }
-        .node-card .word { font-weight: 600; font-size: 14px; }
-        .node-card .info { font-size: 11px; color: var(--text2); margin-top: 4px; }
+        .node-card .word { font-weight: 600; font-size: 13px; }
+        .node-card .info { font-size: 10px; color: var(--text2); margin-top: 2px; }
 
         /* ── Log ────────────────────────────────── */
-        .log-entry {
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
-            font-size: 12px; padding: 4px 0; color: var(--text2);
-            border-bottom: 1px solid rgba(255,255,255,0.03);
+        .log-viewer {
+            background: #0d0d14; border: 1px solid var(--border); border-radius: 6px;
+            padding: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 11px; max-height: 500px; overflow-y: auto;
+            line-height: 1.6;
         }
-        .log-entry .time { color: var(--accent); margin-right: 8px; }
+        .log-line { color: var(--text2); white-space: pre-wrap; word-break: break-all; }
+        .log-line.highlight { color: var(--accent); }
+        .log-line.warn { color: var(--warning); }
+        .log-line.err { color: var(--danger); }
 
-        .loading { text-align: center; padding: 40px; color: var(--text2); }
+        .loading { text-align: center; padding: 30px; color: var(--text2); font-size: 13px; }
+
+        /* ── Proposal card ─────────────────────── */
+        .proposal-card {
+            background: var(--surface2); border-radius: 6px; padding: 12px;
+            margin-bottom: 8px; border-left: 3px solid var(--warning);
+        }
+        .proposal-card.approved { border-left-color: var(--accent); }
+        .proposal-card.rejected { border-left-color: var(--danger); }
+        .proposal-card .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .proposal-card .p-type { font-size: 11px; font-weight: 700; color: var(--accent2); text-transform: uppercase; }
+        .proposal-card .p-desc { font-size: 12px; color: var(--text); margin-bottom: 6px; }
+        .proposal-card .p-code { font-family: monospace; font-size: 11px; color: var(--text2); background: var(--bg); padding: 8px; border-radius: 4px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; }
+        .proposal-card .p-actions { margin-top: 8px; display: flex; gap: 6px; }
+
+        /* Agent card */
+        .agent-card {
+            background: var(--surface2); border-radius: 8px; padding: 14px;
+            border-left: 4px solid var(--accent2);
+        }
+        .agent-card.approved { border-left-color: var(--accent); }
+        .agent-card.pending { border-left-color: var(--warning); }
+        .agent-card .a-name { font-size: 15px; font-weight: 700; }
+        .agent-card .a-domain { font-size: 11px; color: var(--accent2); text-transform: uppercase; margin-top: 2px; }
+        .agent-card .a-stats { font-size: 12px; color: var(--text2); margin-top: 6px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1><span>KOS</span> Agent Dashboard</h1>
+    <h1><span>KOS</span> Mission Control</h1>
     <div class="status">
         <div class="dot" id="statusDot"></div>
         <span id="statusText">Connecting...</span>
-        <span style="margin-left: 16px" id="uptimeText"></span>
+        <span style="margin-left: 12px" id="uptimeText"></span>
+        <span style="margin-left: 12px" id="nodeCount"></span>
     </div>
 </div>
 
 <div class="layout">
     <div class="sidebar">
-        <div class="nav-item active" onclick="showPage('overview')"><span class="icon">&#9632;</span> Overview</div>
-        <div class="nav-item" onclick="showPage('query')"><span class="icon">&#9654;</span> Query</div>
-        <div class="nav-item" onclick="showPage('ingest')"><span class="icon">&#43;</span> Ingest</div>
-        <div class="nav-item" onclick="showPage('health')"><span class="icon">&#9829;</span> Health</div>
-        <div class="nav-item" onclick="showPage('graph')"><span class="icon">&#9670;</span> Graph</div>
-        <div class="nav-item" onclick="showPage('tasks')"><span class="icon">&#9744;</span> Tasks</div>
-        <div class="nav-item" onclick="showPage('history')"><span class="icon">&#8986;</span> History</div>
-        <div class="nav-item" onclick="showPage('senses')"><span class="icon">&#9673;</span> Senses</div>
-        <div class="nav-item" onclick="showPage('agent')"><span class="icon">&#9889;</span> Agent</div>
+        <div class="nav-section">Engine</div>
+        <div class="nav-item active" onclick="showPage('overview', this)">&#9632; Overview</div>
+        <div class="nav-item" onclick="showPage('cycles', this)">&#8635; Cycles &amp; Log</div>
+        <div class="nav-item" onclick="showPage('query', this)">&#9654; Query</div>
+        <div class="nav-item" onclick="showPage('ingest', this)">&#43; Ingest</div>
+
+        <div class="nav-section">Intelligence</div>
+        <div class="nav-item" onclick="showPage('agents', this)">&#9881; Domain Agents <span class="nav-badge" id="agentBadge" style="display:none">0</span></div>
+        <div class="nav-item" onclick="showPage('proposals', this)">&#9998; Code Proposals <span class="nav-badge" id="proposalBadge" style="display:none">0</span></div>
+        <div class="nav-item" onclick="showPage('routing', this)">&#8644; Query Routing</div>
+
+        <div class="nav-section">Health</div>
+        <div class="nav-item" onclick="showPage('health', this)">&#9829; Health Check</div>
+        <div class="nav-item" onclick="showPage('graph', this)">&#9670; Graph Explorer</div>
+
+        <div class="nav-section">Automation</div>
+        <div class="nav-item" onclick="showPage('autonomous', this)">&#9889; Autonomous Agent</div>
+        <div class="nav-item" onclick="showPage('senses', this)">&#9673; Senses</div>
+
+        <div class="nav-section">System</div>
+        <div class="nav-item" onclick="showPage('tasks', this)">&#9744; Tasks</div>
+        <div class="nav-item" onclick="showPage('history', this)">&#8986; History</div>
     </div>
 
     <div class="main">
 
         <!-- ══ OVERVIEW ══════════════════════════ -->
         <div id="page-overview" class="page active">
-            <h2 style="margin-bottom: 16px">System Overview</h2>
+            <h2>System Overview</h2>
             <div class="metrics" id="overviewMetrics"></div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Domain Agents</h3>
+                    <div id="overviewAgents"><p class="loading">Loading...</p></div>
+                </div>
+                <div class="card">
+                    <h3>Recent Proposals</h3>
+                    <div id="overviewProposals"><p class="loading">Loading...</p></div>
+                </div>
+            </div>
+
             <div class="card">
                 <h3>Recent Queries</h3>
                 <div id="recentQueries"><p class="loading">No queries yet</p></div>
             </div>
         </div>
 
+        <!-- ══ CYCLES & LOG ══════════════════════ -->
+        <div id="page-cycles" class="page">
+            <h2>Engine Cycles &amp; Live Log</h2>
+            <div class="metrics" id="cycleMetrics"></div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="btn secondary" onclick="loadLog()">Refresh Log</button>
+                <button class="btn secondary" onclick="toggleAutoScroll()">Auto-scroll: <span id="autoScrollLabel">ON</span></button>
+                <input type="text" id="logSearch" placeholder="Search log..." style="padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:200px;" onkeydown="if(event.key==='Enter')searchLog()">
+                <button class="btn secondary" onclick="searchLog()">Search</button>
+            </div>
+            <div class="log-viewer" id="logViewer">
+                <p class="loading">Loading engine log...</p>
+            </div>
+        </div>
+
         <!-- ══ QUERY ═════════════════════════════ -->
         <div id="page-query" class="page">
-            <h2 style="margin-bottom: 16px">Ask KOS</h2>
+            <h2>Ask KOS</h2>
             <div class="query-box">
                 <input type="text" id="queryInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')doQuery()">
                 <button onclick="doQuery()">Ask</button>
@@ -235,18 +329,64 @@
 
         <!-- ══ INGEST ════════════════════════════ -->
         <div id="page-ingest" class="page">
-            <h2 style="margin-bottom: 16px">Ingest Knowledge</h2>
+            <h2>Ingest Knowledge</h2>
             <textarea id="ingestText" placeholder="Paste text here to add to the knowledge graph..."></textarea>
-            <div style="margin-top: 8px; display: flex; gap: 8px;">
+            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
                 <button class="btn" onclick="doIngest()">Ingest</button>
-                <span id="ingestResult" style="font-size: 13px; color: var(--text2); line-height: 38px;"></span>
+                <span id="ingestResult" style="font-size: 12px; color: var(--text2);"></span>
+            </div>
+        </div>
+
+        <!-- ══ DOMAIN AGENTS ═════════════════════ -->
+        <div id="page-agents" class="page">
+            <h2>Domain Agents</h2>
+            <p style="color:var(--text2);font-size:12px;margin-bottom:16px;">
+                KOS-generated specialist agents. Each agent covers a knowledge domain and can answer domain-specific queries.
+            </p>
+            <div class="metrics" id="agentSummaryMetrics"></div>
+            <div id="agentList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">
+                <p class="loading">Loading agents...</p>
+            </div>
+        </div>
+
+        <!-- ══ CODE PROPOSALS ════════════════════ -->
+        <div id="page-proposals" class="page">
+            <h2>Code Proposals</h2>
+            <p style="color:var(--text2);font-size:12px;margin-bottom:12px;">
+                Auto-generated code improvements discovered by analyzing graph structure.
+            </p>
+            <div class="metrics" id="proposalMetrics"></div>
+            <div style="margin-bottom:12px;display:flex;gap:8px;">
+                <button class="btn secondary" onclick="loadProposals('all')">All</button>
+                <button class="btn" onclick="loadProposals('PENDING')">Pending</button>
+                <button class="btn secondary" onclick="loadProposals('APPROVED')">Approved</button>
+                <button class="btn secondary" onclick="loadProposals('REJECTED')">Rejected</button>
+            </div>
+            <div id="proposalList"></div>
+        </div>
+
+        <!-- ══ QUERY ROUTING ═════════════════════ -->
+        <div id="page-routing" class="page">
+            <h2>Query Routing</h2>
+            <p style="color:var(--text2);font-size:12px;margin-bottom:16px;">
+                Route a query to the best domain agent. Tests which agent handles your question.
+            </p>
+            <div class="query-box">
+                <input type="text" id="routeInput" placeholder="Type a question to route..." onkeydown="if(event.key==='Enter')doRoute()">
+                <button class="btn purple" onclick="doRoute()">Route Query</button>
+            </div>
+            <div id="routeResult"></div>
+
+            <div class="card" style="margin-top:16px;">
+                <h3>Latest Monitor Report</h3>
+                <div id="monitorReport"><p class="loading">Loading...</p></div>
             </div>
         </div>
 
         <!-- ══ HEALTH ════════════════════════════ -->
         <div id="page-health" class="page">
-            <h2 style="margin-bottom: 16px">Health Monitor</h2>
-            <button class="btn blue" onclick="doHealth()" style="margin-bottom: 16px">Run Health Check</button>
+            <h2>Health Monitor</h2>
+            <button class="btn blue" onclick="doHealth()" style="margin-bottom:16px">Run Health Check</button>
             <div class="card">
                 <h3>Learning Mechanisms</h3>
                 <div id="healthBars"></div>
@@ -259,19 +399,86 @@
 
         <!-- ══ GRAPH ═════════════════════════════ -->
         <div id="page-graph" class="page">
-            <h2 style="margin-bottom: 16px">Graph Explorer</h2>
-            <button class="btn secondary" onclick="loadGraph()" style="margin-bottom: 16px">Refresh</button>
+            <h2>Graph Explorer</h2>
+            <button class="btn secondary" onclick="loadGraph()" style="margin-bottom:16px">Refresh</button>
             <div class="card">
                 <h3>Top Connected Nodes</h3>
                 <div id="topNodes" class="node-list"></div>
             </div>
         </div>
 
+        <!-- ══ AUTONOMOUS AGENT ══════════════════ -->
+        <div id="page-autonomous" class="page">
+            <h2>Autonomous Agent</h2>
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button class="btn" onclick="agentStart()">Start</button>
+                <button class="btn secondary" onclick="agentPause()">Pause</button>
+                <button class="btn secondary" onclick="agentResume()">Resume</button>
+                <button class="btn danger" onclick="agentStop()">Stop</button>
+                <button class="btn secondary" onclick="agentRefresh()">Refresh</button>
+            </div>
+            <div class="metrics" id="agentMetrics"></div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Foraged Topics</h3>
+                    <div id="foragedList" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                <div class="card">
+                    <h3>Agent Proposals</h3>
+                    <div id="agentProposalList"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Agent Events (Live)</h3>
+                <div id="agentEvents" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+            </div>
+        </div>
+
+        <!-- ══ SENSES ════════════════════════════ -->
+        <div id="page-senses" class="page">
+            <h2>Senses</h2>
+            <div class="metrics">
+                <div class="metric"><div class="label">Emotion</div><div class="value green" id="emotionState">...</div></div>
+                <div class="metric"><div class="label">Cortisol</div><div class="value orange" id="cortVal">-</div></div>
+                <div class="metric"><div class="label">Dopamine</div><div class="value purple" id="dopaVal">-</div></div>
+                <div class="metric"><div class="label">Serotonin</div><div class="value blue" id="seroVal">-</div></div>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>Eyes (Webcam)</h3>
+                    <button class="btn blue" onclick="doSee()" id="btnSee">Take Photo</button>
+                    <div id="eyeResult" style="margin-top:10px;font-size:12px;color:var(--text2);">Click to capture</div>
+                    <img id="lastFrame" style="display:none;max-width:100%;border-radius:6px;margin-top:8px;" />
+                </div>
+                <div class="card">
+                    <h3>Ears (Microphone)</h3>
+                    <button class="btn blue" onclick="doListen()" id="btnListen">Listen (4 sec)</button>
+                    <div id="earResult" style="margin-top:10px;font-size:12px;color:var(--text2);">Click to record</div>
+                </div>
+                <div class="card">
+                    <h3>Mouth (Speaker)</h3>
+                    <div class="query-box" style="margin-bottom:0;">
+                        <input type="text" id="speakInput" placeholder="Text to speak..." onkeydown="if(event.key==='Enter')doSpeak()">
+                        <button class="btn" onclick="doSpeak()">Speak</button>
+                    </div>
+                    <div id="mouthResult" style="margin-top:8px;font-size:12px;"></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:12px;">
+                <h3>Voice Query (Ask + Speak Answer)</h3>
+                <div class="query-box">
+                    <input type="text" id="voiceQueryInput" placeholder="Ask KOS and hear the answer..." onkeydown="if(event.key==='Enter')doVoiceQuery()">
+                    <button class="btn" onclick="doVoiceQuery()">Ask + Speak</button>
+                </div>
+                <div id="voiceResult"></div>
+            </div>
+        </div>
+
         <!-- ══ TASKS ═════════════════════════════ -->
         <div id="page-tasks" class="page">
-            <h2 style="margin-bottom: 16px">Task Manager</h2>
+            <h2>Task Manager</h2>
             <div class="query-box">
-                <input type="text" id="taskInput" placeholder="Assign a task (e.g., 'query: What is perovskite?' or 'ingest: ...' or 'health')" onkeydown="if(event.key==='Enter')doTask()">
+                <input type="text" id="taskInput" placeholder="Assign a task..." onkeydown="if(event.key==='Enter')doTask()">
                 <button onclick="doTask()">Assign</button>
             </div>
             <div class="card">
@@ -285,120 +492,8 @@
 
         <!-- ══ HISTORY ═══════════════════════════ -->
         <div id="page-history" class="page">
-            <h2 style="margin-bottom: 16px">Query History</h2>
+            <h2>Query History</h2>
             <div id="historyLog"></div>
-        </div>
-
-        <!-- SENSES -->
-        <div id="page-senses" class="page">
-            <h2 style="margin-bottom: 16px">Senses</h2>
-
-            <div class="metrics">
-                <div class="metric">
-                    <div class="label">Emotion</div>
-                    <div class="value green" id="emotionState">...</div>
-                </div>
-                <div class="metric">
-                    <div class="label">Cortisol</div>
-                    <div class="value orange" id="cortVal">-</div>
-                </div>
-                <div class="metric">
-                    <div class="label">Dopamine</div>
-                    <div class="value purple" id="dopaVal">-</div>
-                </div>
-                <div class="metric">
-                    <div class="label">Serotonin</div>
-                    <div class="value blue" id="seroVal">-</div>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-
-                <!-- EYES -->
-                <div class="card">
-                    <h3>Eyes (Webcam)</h3>
-                    <button class="btn blue" onclick="doSee()" id="btnSee">Take Photo</button>
-                    <div id="eyeResult" style="margin-top: 12px;">
-                        <p style="color: var(--text2); font-size: 13px;">Click to capture a frame and detect objects</p>
-                    </div>
-                    <img id="lastFrame" style="display:none; max-width:100%; border-radius:6px; margin-top:12px;" />
-                </div>
-
-                <!-- EARS -->
-                <div class="card">
-                    <h3>Ears (Microphone)</h3>
-                    <button class="btn blue" onclick="doListen()" id="btnListen">Listen (4 sec)</button>
-                    <div id="earResult" style="margin-top: 12px;">
-                        <p style="color: var(--text2); font-size: 13px;">Click to record 4 seconds from microphone</p>
-                    </div>
-                </div>
-
-                <!-- MOUTH -->
-                <div class="card">
-                    <h3>Mouth (Speaker)</h3>
-                    <div class="query-box" style="margin-bottom: 0;">
-                        <input type="text" id="speakInput" placeholder="Type text to speak..." onkeydown="if(event.key==='Enter')doSpeak()">
-                        <button class="btn" onclick="doSpeak()">Speak</button>
-                    </div>
-                    <div style="margin-top: 8px;">
-                        <button class="btn secondary" onclick="doSpeak('Hello. I am KOS, the Knowledge Operating System.')">Test Voice</button>
-                    </div>
-                    <div id="mouthResult" style="margin-top: 12px;"></div>
-                </div>
-            </div>
-
-            <!-- Voice Query: Ask + Speak -->
-            <div class="card" style="margin-top: 16px;">
-                <h3>Voice Query (Ask + Speak Answer)</h3>
-                <div class="query-box">
-                    <input type="text" id="voiceQueryInput" placeholder="Ask a question — KOS will answer AND speak it..." onkeydown="if(event.key==='Enter')doVoiceQuery()">
-                    <button class="btn" onclick="doVoiceQuery()">Ask + Speak</button>
-                </div>
-                <div id="voiceResult"></div>
-            </div>
-
-            <!-- Full Loop: Listen + Answer + Speak -->
-            <div class="card" style="margin-top: 16px;">
-                <h3>Full Loop: Listen → Think → Speak</h3>
-                <p style="color: var(--text2); font-size: 13px; margin-bottom: 12px;">
-                    Click the button, speak your question. KOS listens, transcribes, queries its brain, and speaks the answer back.
-                </p>
-                <button class="btn" style="background: var(--purple); font-size: 15px; padding: 14px 28px;" onclick="doFullLoop()" id="btnFullLoop">
-                    Listen → Think → Speak
-                </button>
-                <div id="fullLoopResult" style="margin-top: 12px;"></div>
-            </div>
-        </div>
-
-        <!-- ══ AGENT ═════════════════════════════ -->
-        <div id="page-agent" class="page">
-            <h2 style="margin-bottom: 16px">Autonomous Agent</h2>
-
-            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-                <button class="btn" style="background: var(--accent);" onclick="agentStart()">Start Agent</button>
-                <button class="btn secondary" onclick="agentPause()">Pause</button>
-                <button class="btn secondary" onclick="agentResume()">Resume</button>
-                <button class="btn danger" onclick="agentStop()">Stop</button>
-                <button class="btn secondary" onclick="agentRefresh()">Refresh</button>
-            </div>
-
-            <div class="metrics" id="agentMetrics"></div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div class="card">
-                    <h3>Foraged Topics</h3>
-                    <div id="foragedList" style="max-height: 300px; overflow-y: auto;"></div>
-                </div>
-                <div class="card">
-                    <h3>Proposals (Needs Approval)</h3>
-                    <div id="proposalList"></div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 16px;">
-                <h3>Agent Events (Live)</h3>
-                <div id="agentEvents" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
-            </div>
         </div>
 
     </div>
@@ -406,15 +501,28 @@
 
 <script>
 // ══════════════════════════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════════════════════════
+let autoScroll = true;
+let allProposals = [];
+let proposalFilter = 'all';
+
+// ══════════════════════════════════════════════════════════
 // API HELPERS
 // ══════════════════════════════════════════════════════════
 
 async function api(path, opts = {}) {
     try {
+        const controller = new AbortController();
+        const timeoutMs = opts._timeout || 120000; // 2 min default
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        delete opts._timeout;
         const r = await fetch('/api/' + path, {
             headers: {'Content-Type': 'application/json'},
+            signal: controller.signal,
             ...opts
         });
+        clearTimeout(timer);
         return await r.json();
     } catch(e) {
         console.error('API Error:', e);
@@ -422,19 +530,42 @@ async function api(path, opts = {}) {
     }
 }
 
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function timeFmt(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleString(); } catch(e) { return iso; }
+}
+
 // ══════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
 
-function showPage(name) {
+function showPage(name, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
-    event.target.closest('.nav-item').classList.add('active');
+    if (el) el.classList.add('active');
 
     if (name === 'graph') loadGraph();
     if (name === 'history') loadHistory();
     if (name === 'tasks') loadTasks();
+    if (name === 'cycles') loadLog();
+    if (name === 'agents') loadDomainAgents();
+    if (name === 'proposals') loadProposals('all');
+    if (name === 'routing') loadMonitorReport();
+    if (name === 'autonomous') agentRefresh();
+    if (name === 'health') loadLastHealth();
+}
+
+async function loadLastHealth() {
+    const r = await api('health/last');
+    if (r && r.result && r.result.benchmark) {
+        renderHealth(r.result);
+    }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -452,6 +583,7 @@ async function refreshOverview() {
     document.getElementById('statusText').textContent = d.status;
     document.getElementById('statusDot').style.background = d.status === 'ONLINE' ? '#00ff88' : '#ff4444';
     document.getElementById('uptimeText').textContent = d.uptime_human;
+    document.getElementById('nodeCount').textContent = d.nodes + ' nodes';
 
     document.getElementById('overviewMetrics').innerHTML = `
         <div class="metric"><div class="label">Nodes</div><div class="value green">${d.nodes}</div></div>
@@ -459,10 +591,294 @@ async function refreshOverview() {
         <div class="metric"><div class="label">Queries</div><div class="value purple">${d.queries_total}</div></div>
         <div class="metric"><div class="label">Avg Latency</div><div class="value orange">${d.avg_latency_ms}ms</div></div>
         <div class="metric"><div class="label">Pred. Accuracy</div><div class="value green">${d.prediction_accuracy}%</div></div>
+        <div class="metric"><div class="label">Agent</div><div class="value ${d.agent_running ? 'green' : 'orange'}">${d.agent_running ? 'ACTIVE' : 'IDLE'}</div></div>
+        <div class="metric"><div class="label">Learned</div><div class="value blue">${d.agent_nodes_learned || 0}</div></div>
+        <div class="metric"><div class="label">Repairs</div><div class="value green">${d.repair_cycles || 0}</div></div>
         <div class="metric"><div class="label">Contradictions</div><div class="value ${d.contradictions > 0 ? 'orange' : 'green'}">${d.contradictions}</div></div>
         <div class="metric"><div class="label">Super-Hubs</div><div class="value blue">${d.super_hubs}</div></div>
         <div class="metric"><div class="label">Orphans</div><div class="value ${d.orphans > 5 ? 'orange' : 'green'}">${d.orphans}</div></div>
     `;
+
+    // Overview agents summary
+    const agents = await api('domain_agents');
+    if (agents && agents.agents) {
+        const approved = agents.agents.filter(a => a.status === 'APPROVED').length;
+        const pending = agents.agents.filter(a => a.status !== 'APPROVED' && a.status !== 'REJECTED').length;
+        const badge = document.getElementById('agentBadge');
+        if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
+        else { badge.style.display = 'none'; }
+
+        document.getElementById('overviewAgents').innerHTML = agents.agents.slice(0, 5).map(a => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <strong style="font-size:13px;">${escHtml(a.name)}</strong>
+                    <span style="color:var(--accent2);font-size:11px;margin-left:6px;">${escHtml(a.domain)}</span>
+                </div>
+                <span class="badge ${a.status === 'APPROVED' ? 'approved' : 'pending'}">${a.status}</span>
+            </div>
+        `).join('') || '<p style="color:var(--text2)">No agents yet</p>';
+    }
+
+    // Overview proposals summary
+    const props = await api('proposals');
+    if (props && props.proposals) {
+        const pending = props.pending || 0;
+        const pbadge = document.getElementById('proposalBadge');
+        if (pending > 0) { pbadge.textContent = pending; pbadge.style.display = ''; }
+        else { pbadge.style.display = 'none'; }
+
+        document.getElementById('overviewProposals').innerHTML = `
+            <div style="display:flex;gap:16px;margin-bottom:8px;">
+                <span style="color:var(--accent);">Total: ${props.total}</span>
+                <span style="color:var(--warning);">Pending: ${props.pending}</span>
+                <span style="color:var(--accent);">Approved: ${props.approved}</span>
+            </div>
+        ` + props.proposals.slice(0, 5).map(p => `
+            <div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;">
+                <span class="badge ${(p.status||'PENDING').toLowerCase()}">${p.status || 'PENDING'}</span>
+                <span style="margin-left:6px;">${escHtml((p.description || p.type || '').substring(0, 80))}</span>
+            </div>
+        `).join('');
+    }
+}
+
+// ══════════════════════════════════════════════════════════
+// ENGINE LOG & CYCLES
+// ══════════════════════════════════════════════════════════
+
+async function loadLog() {
+    const d = await api('engine_log');
+    if (!d || !d.lines) return;
+
+    document.getElementById('cycleMetrics').innerHTML = `
+        <div class="metric"><div class="label">Log Lines</div><div class="value blue">${d.total_lines}</div></div>
+    `;
+
+    const viewer = document.getElementById('logViewer');
+    viewer.innerHTML = d.lines.map(line => {
+        let cls = 'log-line';
+        if (line.includes('ERROR') || line.includes('FATAL')) cls += ' err';
+        else if (line.includes('WARNING') || line.includes('[WARN]')) cls += ' warn';
+        else if (line.includes('===') || line.includes('SYSTEM OBSERVATION') || line.includes('CYCLE')) cls += ' highlight';
+        return `<div class="${cls}">${escHtml(line)}</div>`;
+    }).join('');
+
+    if (autoScroll) viewer.scrollTop = viewer.scrollHeight;
+}
+
+async function searchLog() {
+    const q = document.getElementById('logSearch').value.trim();
+    if (!q) { loadLog(); return; }
+    const d = await api('engine_log/search?q=' + encodeURIComponent(q));
+    if (!d || !d.lines) return;
+
+    const viewer = document.getElementById('logViewer');
+    viewer.innerHTML = `<div class="log-line highlight">Search: "${escHtml(q)}" - ${d.total} matches</div>` +
+        d.lines.map(line => `<div class="log-line">${escHtml(line)}</div>`).join('');
+}
+
+function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    document.getElementById('autoScrollLabel').textContent = autoScroll ? 'ON' : 'OFF';
+}
+
+// ══════════════════════════════════════════════════════════
+// DOMAIN AGENTS
+// ══════════════════════════════════════════════════════════
+
+async function loadDomainAgents() {
+    const d = await api('domain_agents');
+    if (!d || !d.agents) return;
+
+    const approved = d.agents.filter(a => a.status === 'APPROVED').length;
+    const pending = d.agents.filter(a => a.status !== 'APPROVED' && a.status !== 'REJECTED').length;
+
+    document.getElementById('agentSummaryMetrics').innerHTML = `
+        <div class="metric"><div class="label">Total Agents</div><div class="value blue">${d.total}</div></div>
+        <div class="metric"><div class="label">Approved</div><div class="value green">${approved}</div></div>
+        <div class="metric"><div class="label">Pending</div><div class="value orange">${pending}</div></div>
+    `;
+
+    document.getElementById('agentList').innerHTML = d.agents.map(a => `
+        <div class="agent-card ${(a.status||'').toLowerCase()}">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+                <div>
+                    <div class="a-name">${escHtml(a.name)}</div>
+                    <div class="a-domain">${escHtml(a.domain)}</div>
+                </div>
+                <span class="badge ${(a.status||'pending').toLowerCase()}">${a.status}</span>
+            </div>
+            ${a.description ? `<div class="a-stats" style="margin-top:8px;">${escHtml(a.description.substring(0, 120))}</div>` : ''}
+            <div class="a-stats">
+                ${a.core_concepts ? `Core concepts: <strong>${a.core_concepts}</strong>` : ''}
+                ${a.capabilities ? ` | Capabilities: ${a.capabilities.slice(0,3).join(', ')}` : ''}
+            </div>
+            ${a.generated_at ? `<div class="a-stats">Generated: ${timeFmt(a.generated_at)}</div>` : ''}
+            ${a.status !== 'APPROVED' && a.status !== 'REJECTED' ? `
+                <div style="margin-top:8px;display:flex;gap:6px;">
+                    <button class="btn sm" onclick="approveAgent('${a.id}')">Approve</button>
+                    <button class="btn sm danger" onclick="rejectAgent('${a.id}')">Reject</button>
+                </div>
+            ` : ''}
+            ${a.status === 'APPROVED' ? `
+                <div style="margin-top:8px;">
+                    <button class="btn sm purple" onclick="testAgent('${a.id}','${escHtml(a.domain)}')">Test Query</button>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+async function approveAgent(id) {
+    await api('domain_agents/approve/' + id, {method: 'POST'});
+    loadDomainAgents();
+}
+async function rejectAgent(id) {
+    await api('domain_agents/reject/' + id, {method: 'POST'});
+    loadDomainAgents();
+}
+async function testAgent(id, domain) {
+    const testQueries = {
+        'physics': 'What is Newton second law?',
+        'chemistry': 'What is a covalent bond?',
+        'computer science': 'What is Big O notation?',
+        'mathematics': 'What is the derivative?',
+        'general knowledge': 'What is DNA?',
+    };
+    const q = testQueries[domain] || 'Tell me about ' + domain;
+    const d = await api('domain_agents/route', {method:'POST', body: JSON.stringify({prompt: q})});
+    if (d) alert('Agent: ' + (d.agent_name||'?') + '\nAnswer: ' + (d.answer||d.error||JSON.stringify(d)).substring(0,200));
+}
+
+// ══════════════════════════════════════════════════════════
+// CODE PROPOSALS
+// ══════════════════════════════════════════════════════════
+
+async function loadProposals(filter) {
+    proposalFilter = filter || 'all';
+    const d = await api('proposals');
+    if (!d || !d.proposals) return;
+
+    allProposals = d.proposals;
+
+    document.getElementById('proposalMetrics').innerHTML = `
+        <div class="metric"><div class="label">Total</div><div class="value blue">${d.total}</div></div>
+        <div class="metric"><div class="label">Pending</div><div class="value orange">${d.pending}</div></div>
+        <div class="metric"><div class="label">Approved</div><div class="value green">${d.approved}</div></div>
+    `;
+
+    let filtered = allProposals;
+    if (filter && filter !== 'all') {
+        filtered = allProposals.filter(p => (p.status || 'PENDING') === filter);
+    }
+
+    document.getElementById('proposalList').innerHTML = filtered.slice(0, 50).map(p => {
+        const status = (p.status || 'PENDING').toLowerCase();
+        const id = p.id || p.filename?.replace('.json','') || '';
+        return `
+        <div class="proposal-card ${status}">
+            <div class="p-header">
+                <span class="p-type">${escHtml(p.type || 'unknown')}</span>
+                <span class="badge ${status}">${p.status || 'PENDING'}</span>
+            </div>
+            <div class="p-desc">${escHtml(p.description || '')}</div>
+            ${p.impact ? `<div style="font-size:11px;color:var(--text2);">Impact: ${escHtml(p.impact)}</div>` : ''}
+            ${p.code ? `<div class="p-code">${escHtml(p.code)}</div>` : ''}
+            <div style="font-size:10px;color:var(--text2);margin-top:4px;">${timeFmt(p.timestamp)}</div>
+            ${status === 'pending' ? `
+                <div class="p-actions">
+                    <button class="btn sm" onclick="approveProposalById('${escHtml(id)}')">Approve</button>
+                    <button class="btn sm danger" onclick="rejectProposalById('${escHtml(id)}')">Reject</button>
+                </div>
+            ` : ''}
+        </div>`;
+    }).join('') || '<p class="loading">No proposals match this filter</p>';
+}
+
+async function approveProposalById(id) {
+    await api('proposals/approve/' + id, {method:'POST'});
+    loadProposals(proposalFilter);
+}
+async function rejectProposalById(id) {
+    await api('proposals/reject/' + id, {method:'POST'});
+    loadProposals(proposalFilter);
+}
+
+// ══════════════════════════════════════════════════════════
+// QUERY ROUTING & MONITOR REPORT
+// ══════════════════════════════════════════════════════════
+
+async function doRoute() {
+    const input = document.getElementById('routeInput');
+    const q = input.value.trim();
+    if (!q) return;
+
+    document.getElementById('routeResult').innerHTML = '<p class="loading">Routing...</p>';
+    const d = await api('domain_agents/route', {method:'POST', body: JSON.stringify({prompt: q})});
+
+    if (d && !d.error) {
+        const fallbackLabel = d.fallback === 'internet' ? ' [via Internet Foraging]' :
+                              d.fallback === 'graph' ? ' [via Graph Lookup]' :
+                              d.fallback ? ' [Fallback]' : '';
+        const borderColor = d.fallback === 'internet' ? 'var(--purple)' :
+                            d.fallback === 'graph' ? 'var(--warning)' : 'var(--accent)';
+        document.getElementById('routeResult').innerHTML = `
+            <div class="result" style="border-left-color:${borderColor}">
+                <strong>Q:</strong> ${escHtml(q)}<br><br>
+                <strong>Routed to:</strong> <span style="color:var(--accent)">${escHtml(d.agent_name || '?')}</span>
+                <span style="color:var(--accent2);margin-left:8px;">(${escHtml(d.domain || '?')})</span>
+                <span style="color:var(--purple);margin-left:8px;font-size:11px;">${fallbackLabel}</span><br>
+                <strong>Score:</strong> ${d.routing_score || d.score || '?'} | <strong>Confidence:</strong> ${d.confidence || '?'}<br><br>
+                <strong>A:</strong> ${escHtml((d.answer || '').substring(0, 500))}
+                ${d.foraged_nodes ? '<div class="meta" style="color:var(--purple)">Foraged ' + d.foraged_nodes + ' new nodes from internet</div>' : ''}
+                ${d.evidence_count ? '<div class="meta">Evidence: ' + d.evidence_count + ' items</div>' : ''}
+            </div>`;
+    } else {
+        document.getElementById('routeResult').innerHTML = `
+            <div class="result" style="border-left-color:var(--warning);">
+                <strong>Q:</strong> ${escHtml(q)}<br>
+                <span style="color:var(--warning);">${escHtml(d?.error || 'No agent matched')}</span>
+            </div>`;
+    }
+    input.value = '';
+}
+
+async function loadMonitorReport() {
+    const d = await api('domain_agents/monitor');
+    if (!d || d.error) {
+        document.getElementById('monitorReport').innerHTML = `<p style="color:var(--text2)">${d?.error || 'No report'}</p>`;
+        return;
+    }
+
+    let html = `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Report time: ${timeFmt(d.timestamp)} | Agents loaded: ${d.agents_loaded}</div>`;
+
+    // Agent results table
+    if (d.agent_results) {
+        html += '<table><thead><tr><th>Agent</th><th>Domain</th><th>Queries</th><th>Hits</th><th>Hit Rate</th><th>Avg Confidence</th></tr></thead><tbody>';
+        for (const [id, r] of Object.entries(d.agent_results)) {
+            const hitColor = r.hit_rate >= 0.8 ? 'var(--accent)' : r.hit_rate >= 0.5 ? 'var(--warning)' : 'var(--danger)';
+            html += `<tr>
+                <td><strong>${escHtml(r.name)}</strong></td>
+                <td>${escHtml(r.domain)}</td>
+                <td>${r.queries_tested}</td>
+                <td>${r.hits}</td>
+                <td style="color:${hitColor};font-weight:700;">${(r.hit_rate * 100).toFixed(0)}%</td>
+                <td>${r.avg_confidence.toFixed(3)}</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+    }
+
+    // Routing summary
+    if (d.routing_log) {
+        const routed = d.routing_log.filter(r => r.routed_to);
+        const rate = d.routing_rate ? (d.routing_rate * 100).toFixed(0) : 0;
+        html += `<div style="margin-top:12px;">
+            <strong>Routing:</strong> ${routed.length}/${d.routing_log.length} queries routed (${rate}%)
+        </div>`;
+    }
+
+    document.getElementById('monitorReport').innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -475,22 +891,22 @@ async function doQuery() {
     if (!prompt) return;
 
     const results = document.getElementById('queryResults');
-    results.innerHTML = '<p class="loading">Thinking...</p>';
+    results.innerHTML = '<p class="loading">Thinking...</p>' + results.innerHTML;
 
-    const d = await api('query', {
-        method: 'POST',
-        body: JSON.stringify({ prompt })
-    });
+    const d = await api('query', {method:'POST', body: JSON.stringify({prompt}), _timeout: 120000});
+    if (!d) { results.innerHTML = results.innerHTML.replace(/<p class="loading">Thinking...<\/p>/, '<p class="loading" style="color:#ff6b6b;">Query timed out or server error — try again</p>'); return; }
 
-    if (!d) { results.innerHTML = '<p class="loading">Error</p>'; return; }
-
+    const srcLabel = d.source === 'internet' ? ' [Foraged from Internet +' + (d.foraged_nodes||0) + ' nodes]' :
+                     d.source && d.source.startsWith('agent:') ? ' [via ' + d.source.replace('agent:','') + ']' :
+                     ' [Graph]';
+    const srcColor = d.source === 'internet' ? 'var(--purple)' :
+                     d.source && d.source.startsWith('agent:') ? 'var(--accent2)' : 'var(--accent)';
     results.innerHTML = `
-        <div class="result">
+        <div class="result" style="border-left-color:${srcColor}">
             <strong>Q:</strong> ${escHtml(prompt)}<br><br>
             <strong>A:</strong> ${escHtml(d.answer)}
-            <div class="meta">${d.latency_ms}ms</div>
-        </div>
-    ` + results.innerHTML;
+            <div class="meta">${d.latency_ms}ms <span style="color:${srcColor};margin-left:8px;">${srcLabel}</span></div>
+        </div>` + results.innerHTML.replace(/<p class="loading">Thinking...<\/p>/, '');
 
     input.value = '';
     refreshOverview();
@@ -503,12 +919,7 @@ async function doQuery() {
 async function doIngest() {
     const text = document.getElementById('ingestText').value.trim();
     if (!text) return;
-
-    const d = await api('ingest', {
-        method: 'POST',
-        body: JSON.stringify({ text })
-    });
-
+    const d = await api('ingest', {method:'POST', body: JSON.stringify({text})});
     if (d) {
         document.getElementById('ingestResult').textContent =
             `Ingested! +${d.nodes_added} nodes (${d.nodes_after} total) in ${d.latency_ms}ms`;
@@ -521,14 +932,9 @@ async function doIngest() {
 // HEALTH
 // ══════════════════════════════════════════════════════════
 
-async function doHealth() {
+function renderHealth(d) {
     const bars = document.getElementById('healthBars');
     const bench = document.getElementById('benchmarkResults');
-    bars.innerHTML = '<p class="loading">Running health check...</p>';
-
-    const d = await api('health');
-    if (!d) { bars.innerHTML = '<p class="loading">Error</p>'; return; }
-
     const bm = d.benchmark || {};
     const acc = (bm.accuracy || 0) * 100;
 
@@ -537,7 +943,7 @@ async function doHealth() {
         { name: 'Prediction Accuracy', val: d.predictive?.accuracy || 0, color: '#00ccff' },
         { name: 'Orphans Fixed', val: Math.min(100, (d.rebalance?.orphans_fixed || 0) * 10), color: '#aa66ff' },
         { name: 'Hubs Rebalanced', val: Math.min(100, (d.rebalance?.hubs_fixed || 0) * 10), color: '#aa66ff' },
-        { name: 'Contradictions Resolved', val: d.contradictions?.resolved > 0 ? 100 : (d.contradictions?.contradictions_total > 0 ? 30 : 0), color: '#ffaa00' },
+        { name: 'Contradictions', val: d.contradictions?.resolved > 0 ? 100 : (d.contradictions?.contradictions_total > 0 ? 30 : 0), color: '#ffaa00' },
         { name: 'Weight Normalization', val: d.normalization?.clipped > 0 ? 100 : 50, color: '#00ccff' },
         { name: 'Formulas Discovered', val: Math.min(100, (d.formulas?.formulas_found || 0) * 20), color: '#00ff88' },
     ];
@@ -550,20 +956,51 @@ async function doHealth() {
         </div>
     `).join('');
 
-    // Benchmark details
     const passed = bm.passed || 0;
     const total = bm.total || 0;
     const failed = bm.failed || [];
 
     bench.innerHTML = `
-        <div style="font-size: 28px; font-weight: 700; color: ${acc >= 80 ? '#00ff88' : '#ffaa00'}; margin-bottom: 12px">
+        <div style="font-size:24px;font-weight:700;color:${acc >= 80 ? '#00ff88' : '#ffaa00'};margin-bottom:8px">
             ${passed}/${total} (${acc.toFixed(0)}%)
         </div>
-        ${failed.length > 0 ? '<p style="color:#ff4444;font-size:13px">Failed: ' + failed.map(escHtml).join(', ') + '</p>' : '<p style="color:#00ff88">All benchmarks passed!</p>'}
-        <p style="color:var(--text2);font-size:12px;margin-top:8px">Completed in ${(d.time_ms || 0).toFixed(0)}ms</p>
+        ${failed.length > 0 ? '<p style="color:#ff4444;font-size:12px">Failed: ' + failed.map(escHtml).join(', ') + '</p>' : '<p style="color:#00ff88">All benchmarks passed!</p>'}
+        <p style="color:var(--text2);font-size:11px;margin-top:6px">Completed in ${(d.time_ms || 0).toFixed(0)}ms</p>
     `;
+}
 
-    refreshOverview();
+async function doHealth() {
+    const bars = document.getElementById('healthBars');
+    const bench = document.getElementById('benchmarkResults');
+    bars.innerHTML = '<p class="loading">Running health check (background)...</p>';
+    bench.innerHTML = '';
+
+    // Fire and forget — starts health check in background thread
+    await api('health');
+
+    // Poll /api/health/last every 3s until completed
+    const poll = setInterval(async () => {
+        const r = await api('health/last');
+        if (!r) return;
+        if (r.running) {
+            bars.innerHTML = '<p class="loading">Health check running... please wait</p>';
+            return;
+        }
+        const d = r.result;
+        if (d && d.benchmark) {
+            clearInterval(poll);
+            renderHealth(d);
+            refreshOverview();
+        }
+    }, 3000);
+
+    // Timeout after 2 minutes
+    setTimeout(() => {
+        clearInterval(poll);
+        if (bars.innerHTML.includes('running')) {
+            bars.innerHTML = '<p class="loading">Health check timed out. Try again.</p>';
+        }
+    }, 120000);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -573,7 +1010,6 @@ async function doHealth() {
 async function loadGraph() {
     const d = await api('graph/top_nodes');
     if (!d) return;
-
     document.getElementById('topNodes').innerHTML = d.map(n => `
         <div class="node-card">
             <div class="word">${escHtml(n.word)}</div>
@@ -590,12 +1026,7 @@ async function doTask() {
     const input = document.getElementById('taskInput');
     const task = input.value.trim();
     if (!task) return;
-
-    await api('task', {
-        method: 'POST',
-        body: JSON.stringify({ task })
-    });
-
+    await api('task', {method:'POST', body: JSON.stringify({task})});
     input.value = '';
     loadTasks();
 }
@@ -603,13 +1034,12 @@ async function doTask() {
 async function loadTasks() {
     const d = await api('tasks');
     if (!d) return;
-
     document.getElementById('taskTable').innerHTML = d.reverse().map(t => `
         <tr>
             <td>${t.id}</td>
             <td>${escHtml(t.task.substring(0, 60))}</td>
             <td style="color:${t.status === 'completed' ? '#00ff88' : '#ffaa00'}">${t.status}</td>
-            <td style="font-size:12px">${escHtml((t.result || '').substring(0, 80))}</td>
+            <td style="font-size:11px">${escHtml((t.result || '').substring(0, 80))}</td>
         </tr>
     `).join('');
 }
@@ -624,24 +1054,14 @@ async function loadHistory() {
         document.getElementById('historyLog').innerHTML = '<p class="loading">No queries yet</p>';
         return;
     }
-
     document.getElementById('historyLog').innerHTML = d.reverse().map(q => `
-        <div class="log-entry">
-            <span class="time">${new Date(q.timestamp * 1000).toLocaleTimeString()}</span>
+        <div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;">
+            <span style="color:var(--accent);margin-right:6px;">${new Date(q.timestamp * 1000).toLocaleTimeString()}</span>
             <strong>${escHtml(q.prompt)}</strong>
-            <span style="color:var(--text2)"> &rarr; ${escHtml(q.answer.substring(0, 100))}</span>
-            <span style="color:var(--accent);margin-left:8px">${q.latency_ms}ms</span>
+            <span style="color:var(--text2)"> → ${escHtml(q.answer.substring(0, 100))}</span>
+            <span style="color:var(--accent);margin-left:6px;">${q.latency_ms}ms</span>
         </div>
     `).join('');
-}
-
-// ══════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════
-
-function escHtml(s) {
-    if (!s) return '';
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -655,7 +1075,7 @@ async function doSee() {
     btn.disabled = true; btn.textContent = 'Capturing...';
     result.innerHTML = '<p class="loading">Looking...</p>';
 
-    const d = await api('sensors/see', {method: 'POST'});
+    const d = await api('sensors/see', {method:'POST'});
     btn.disabled = false; btn.textContent = 'Take Photo';
 
     if (!d || d.status === 'ERROR') {
@@ -666,18 +1086,13 @@ async function doSee() {
     let html = '<p style="color:var(--accent)">Resolution: ' + d.resolution + '</p>';
     html += '<p><strong>Detected ' + d.detections.length + ' objects:</strong></p>';
     d.detections.forEach(det => {
-        html += '<div style="padding:4px 0;font-size:13px;">' +
+        html += '<div style="padding:2px 0;font-size:12px;">' +
             escHtml(det.label) + ' <span style="color:var(--accent)">' +
             (det.confidence*100).toFixed(0) + '%</span></div>';
     });
-    if (d.emotion_state) {
-        html += '<p style="margin-top:8px;color:var(--purple)">Emotion: ' + d.emotion_state + '</p>';
-    }
     result.innerHTML = html;
-
     img.src = d.frame_url + '?t=' + Date.now();
     img.style.display = 'block';
-
     refreshEmotion();
 }
 
@@ -685,9 +1100,9 @@ async function doListen() {
     const btn = document.getElementById('btnListen');
     const result = document.getElementById('earResult');
     btn.disabled = true; btn.textContent = 'Listening...';
-    result.innerHTML = '<p class="loading">Recording 4 seconds... Speak now!</p>';
+    result.innerHTML = '<p class="loading">Recording... Speak now!</p>';
 
-    const d = await api('sensors/listen', {method: 'POST'});
+    const d = await api('sensors/listen', {method:'POST'});
     btn.disabled = false; btn.textContent = 'Listen (4 sec)';
 
     if (!d || d.status === 'ERROR') {
@@ -695,35 +1110,22 @@ async function doListen() {
         return;
     }
 
-    let html = '<p>Peak amplitude: ' + d.peak_amplitude + '</p>';
+    let html = '<p>Peak: ' + d.peak_amplitude + '</p>';
     if (d.transcript) {
-        html += '<div class="result" style="margin-top:8px;">' +
-            '<strong>Heard:</strong> ' + escHtml(d.transcript) + '</div>';
-        if (d.ingested) {
-            html += '<p style="color:var(--accent);font-size:12px">Ingested into knowledge graph</p>';
-        }
+        html += '<div class="result" style="margin-top:6px;"><strong>Heard:</strong> ' + escHtml(d.transcript) + '</div>';
     } else {
         html += '<p style="color:var(--text2)">No speech detected</p>';
     }
     result.innerHTML = html;
-    refreshOverview();
 }
 
 function doSpeak(preset) {
     const text = preset || document.getElementById('speakInput').value.trim();
     if (!text) return;
-    const result = document.getElementById('mouthResult');
-    result.innerHTML = '<p class="loading">Speaking...</p>';
-
-    api('sensors/speak', {
-        method: 'POST',
-        body: JSON.stringify({prompt: text})
-    }).then(d => {
-        if (d?.status === 'OK') {
-            result.innerHTML = '<p style="color:var(--accent)">Spoke: "' + escHtml(text.substring(0,80)) + '"</p>';
-        } else {
-            result.innerHTML = '<p style="color:#ff4444">' + (d?.error || 'Error') + '</p>';
-        }
+    api('sensors/speak', {method:'POST', body: JSON.stringify({prompt: text})}).then(d => {
+        document.getElementById('mouthResult').innerHTML = d?.status === 'OK'
+            ? '<p style="color:var(--accent);font-size:12px;">Spoke: "' + escHtml(text.substring(0,60)) + '"</p>'
+            : '<p style="color:#ff4444">Error</p>';
     });
     if (!preset) document.getElementById('speakInput').value = '';
 }
@@ -735,89 +1137,41 @@ async function doVoiceQuery() {
     const result = document.getElementById('voiceResult');
     result.innerHTML = '<p class="loading">Thinking + Speaking...</p>';
 
-    const d = await api('sensors/speak_answer', {
-        method: 'POST',
-        body: JSON.stringify({prompt})
-    });
-
+    const d = await api('sensors/speak_answer', {method:'POST', body: JSON.stringify({prompt})});
     if (d) {
-        result.innerHTML = '<div class="result"><strong>Q:</strong> ' + escHtml(prompt) +
-            '<br><br><strong>A:</strong> ' + escHtml(d.answer) +
-            '<div class="meta">' + d.latency_ms + 'ms | Spoken: ' + d.spoken + '</div></div>';
+        result.innerHTML = `<div class="result"><strong>Q:</strong> ${escHtml(prompt)}<br><br><strong>A:</strong> ${escHtml(d.answer)}<div class="meta">${d.latency_ms}ms | Spoken: ${d.spoken}</div></div>`;
     }
     input.value = '';
-    refreshOverview();
-}
-
-async function doFullLoop() {
-    const btn = document.getElementById('btnFullLoop');
-    const result = document.getElementById('fullLoopResult');
-    btn.disabled = true; btn.textContent = 'Listening (5 sec)... SPEAK NOW!';
-    result.innerHTML = '<p class="loading">Recording from microphone...</p>';
-
-    // Step 1: Listen
-    const listenResult = await api('sensors/listen', {method: 'POST'});
-    if (!listenResult || !listenResult.transcript || listenResult.transcript.startsWith('(')) {
-        result.innerHTML = '<p style="color:var(--warning)">No speech detected. Try again.</p>';
-        btn.disabled = false; btn.textContent = 'Listen → Think → Speak';
-        return;
-    }
-
-    const heard = listenResult.transcript;
-    result.innerHTML = '<p>Heard: <strong>"' + escHtml(heard) + '"</strong></p><p class="loading">Thinking + Speaking...</p>';
-    btn.textContent = 'Thinking...';
-
-    // Step 2: Query + Speak
-    const answerResult = await api('sensors/speak_answer', {
-        method: 'POST',
-        body: JSON.stringify({prompt: heard})
-    });
-
-    btn.disabled = false; btn.textContent = 'Listen → Think → Speak';
-
-    if (answerResult) {
-        result.innerHTML =
-            '<div class="result">' +
-            '<strong>You said:</strong> "' + escHtml(heard) + '"<br><br>' +
-            '<strong>KOS answered:</strong> ' + escHtml(answerResult.answer) +
-            '<div class="meta">' + answerResult.latency_ms + 'ms | Spoken: ' + answerResult.spoken + '</div>' +
-            '</div>';
-    }
-    refreshOverview();
-    refreshEmotion();
 }
 
 async function refreshEmotion() {
     const d = await api('sensors/emotion');
     if (!d) return;
-    const el = document.getElementById('emotionState');
-    if (el) el.textContent = d.emotion;
-    const cort = document.getElementById('cortVal');
-    if (cort) cort.textContent = d.cortisol;
-    const dopa = document.getElementById('dopaVal');
-    if (dopa) dopa.textContent = d.dopamine;
-    const sero = document.getElementById('seroVal');
-    if (sero) sero.textContent = d.serotonin;
+    const el = id => document.getElementById(id);
+    if (el('emotionState')) el('emotionState').textContent = d.emotion;
+    if (el('cortVal')) el('cortVal').textContent = d.cortisol;
+    if (el('dopaVal')) el('dopaVal').textContent = d.dopamine;
+    if (el('seroVal')) el('seroVal').textContent = d.serotonin;
 }
 
 // ══════════════════════════════════════════════════════════
-// AGENT
+// AUTONOMOUS AGENT
 // ══════════════════════════════════════════════════════════
 
 async function agentStart() {
-    const d = await api('agent/start', {method: 'POST'});
+    const d = await api('agent/start', {method:'POST'});
     if (d) agentRefresh();
 }
 async function agentStop() {
-    await api('agent/stop', {method: 'POST'});
+    await api('agent/stop', {method:'POST'});
     agentRefresh();
 }
 async function agentPause() {
-    await api('agent/pause', {method: 'POST'});
+    await api('agent/pause', {method:'POST'});
     agentRefresh();
 }
 async function agentResume() {
-    await api('agent/resume', {method: 'POST'});
+    await api('agent/resume', {method:'POST'});
     agentRefresh();
 }
 
@@ -834,60 +1188,64 @@ async function agentRefresh() {
         <div class="metric"><div class="label">Errors</div><div class="value ${(s.errors||0) > 0 ? 'orange' : 'green'}">${s.errors || 0}</div></div>
     `;
 
-    // Foraged topics
     const foraged = await api('agent/foraged');
     if (foraged && foraged.length > 0) {
         document.getElementById('foragedList').innerHTML = foraged.reverse().map(f =>
-            `<div class="log-entry"><span class="time">${new Date(f.time*1000).toLocaleTimeString()}</span>
+            `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;">
+            <span style="color:var(--accent);margin-right:6px;">${new Date(f.time*1000).toLocaleTimeString()}</span>
             <strong>${escHtml(f.topic)}</strong> <span style="color:var(--accent)">+${f.nodes} nodes</span></div>`
         ).join('');
     } else {
-        document.getElementById('foragedList').innerHTML = '<p style="color:var(--text2)">No topics foraged yet</p>';
+        document.getElementById('foragedList').innerHTML = '<p style="color:var(--text2);font-size:12px;">No topics foraged yet</p>';
     }
 
-    // Proposals
     const proposals = await api('agent/proposals');
     if (proposals && proposals.length > 0) {
-        document.getElementById('proposalList').innerHTML = proposals.map((p, i) =>
-            `<div style="padding:8px;border-bottom:1px solid var(--border);">
+        document.getElementById('agentProposalList').innerHTML = proposals.map((p, i) =>
+            `<div style="padding:6px;border-bottom:1px solid var(--border);font-size:12px;">
             <strong>[${escHtml(p.type)}]</strong> ${escHtml(p.reason||'').substring(0,80)}
             <div style="margin-top:4px;">
-                <button class="btn" style="padding:4px 12px;font-size:11px;" onclick="approveProposal(${i})">Approve</button>
-                <button class="btn danger" style="padding:4px 12px;font-size:11px;" onclick="rejectProposal(${i})">Reject</button>
+                <button class="btn sm" onclick="approveAgentProposal(${i})">Approve</button>
+                <button class="btn sm danger" onclick="rejectAgentProposal(${i})">Reject</button>
             </div></div>`
         ).join('');
     } else {
-        document.getElementById('proposalList').innerHTML = '<p style="color:var(--text2)">No proposals pending</p>';
+        document.getElementById('agentProposalList').innerHTML = '<p style="color:var(--text2);font-size:12px;">No proposals pending</p>';
     }
 
-    // Events
     const events = await api('agent/events');
     if (events && events.length > 0) {
         document.getElementById('agentEvents').innerHTML = events.reverse().map(e =>
-            `<div class="log-entry">${e.message ? escHtml(e.message) :
+            `<div style="padding:2px 0;color:var(--text2);">${e.message ? escHtml(e.message) :
             'Cycle ' + e.cycle + ': +' + (e.nodes_added||0) + ' nodes, ' +
             (e.foraged||0) + ' foraged, ' + (e.improved||0) + ' improved'}</div>`
         ).join('');
     }
 }
 
-async function approveProposal(idx) {
-    await api('agent/approve/' + idx, {method: 'POST'});
+async function approveAgentProposal(idx) {
+    await api('agent/approve/' + idx, {method:'POST'});
     agentRefresh();
 }
-async function rejectProposal(idx) {
-    await api('agent/reject/' + idx, {method: 'POST'});
+async function rejectAgentProposal(idx) {
+    await api('agent/reject/' + idx, {method:'POST'});
     agentRefresh();
 }
 
-// Auto-refresh
+// ══════════════════════════════════════════════════════════
+// AUTO-REFRESH
+// ══════════════════════════════════════════════════════════
+
 refreshOverview();
 setInterval(refreshOverview, 5000);
+
 setInterval(() => {
-    if (document.getElementById('page-agent').classList.contains('active')) {
-        agentRefresh();
-    }
-}, 3000);
+    const active = document.querySelector('.page.active');
+    if (!active) return;
+    const id = active.id;
+    if (id === 'page-autonomous') agentRefresh();
+    if (id === 'page-cycles') loadLog();
+}, 4000);
 </script>
 
 </body>

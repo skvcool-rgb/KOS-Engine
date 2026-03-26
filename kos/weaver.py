@@ -76,7 +76,7 @@ class AlgorithmicWeaver:
         edge_trust_map = {}  # provenance_text -> trust_score
         try:
             from .edge_types import infer_type, EDGE_CONFIG
-            for pair, texts in getattr(kernel, 'provenance', {}).items():
+            for pair, texts in list(getattr(kernel, 'provenance', {}).items()):
                 for text in texts:
                     et = infer_type(text)
                     trust = EDGE_CONFIG.get(et, {}).get("trust", 0.5)
@@ -92,7 +92,7 @@ class AlgorithmicWeaver:
                     getattr(kernel, 'provenance', {}).get(
                         tuple(sorted([suid, ans_uuid])), set()))
             if suid in kernel.nodes:
-                for target_uuid in kernel.nodes[suid].connections:
+                for target_uuid in list(kernel.nodes[suid].connections):
                     evidence_set.update(
                         getattr(kernel, 'provenance', {}).get(
                             tuple(sorted([suid, target_uuid])), set()))

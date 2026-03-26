@@ -318,6 +318,7 @@ class KOSShellOffline:
         self.node_embeddings = None
         self.embedded_uuids = []
         self._st_util = None
+        self._word_emb_cache = {}  # Cache word -> embedding to avoid re-encoding
 
         # NLTK POS tagger (lazy-loaded)
         self._nltk_loaded = False
@@ -382,7 +383,7 @@ class KOSShellOffline:
             self.embedded_uuids = current_uuids
             plain_words = [self.lexicon.get_word(uid) for uid in current_uuids]
             self.node_embeddings = self.embedder.encode(
-                plain_words, convert_to_tensor=True)
+                plain_words, convert_to_tensor=True, batch_size=256, show_progress_bar=False)
         elif len(current_uuids) != len(self.embedded_uuids):
             # Incremental: only encode NEW nodes, concat to existing
             import torch
@@ -390,7 +391,7 @@ class KOSShellOffline:
             new_uuids = [u for u in current_uuids if u not in old_set]
             if new_uuids:
                 new_words = [self.lexicon.get_word(uid) for uid in new_uuids]
-                new_embs = self.embedder.encode(new_words, convert_to_tensor=True)
+                new_embs = self.embedder.encode(new_words, convert_to_tensor=True, batch_size=256, show_progress_bar=False)
                 self.node_embeddings = torch.cat([self.node_embeddings, new_embs], dim=0)
                 self.embedded_uuids = self.embedded_uuids + new_uuids
         return True
@@ -436,9 +437,13 @@ class KOSShellOffline:
         if resolved:
             return resolved
 
-        # Layer 5: Semantic vector
+        # Layer 5: Semantic vector (with word embedding cache)
         if self.kernel.nodes and self._ensure_embeddings():
-            w_emb = self.embedder.encode(w, convert_to_tensor=True)
+            if w in self._word_emb_cache:
+                w_emb = self._word_emb_cache[w]
+            else:
+                w_emb = self.embedder.encode(w, convert_to_tensor=True)
+                self._word_emb_cache[w] = w_emb
             hits = self._st_util.cos_sim(w_emb, self.node_embeddings)[0]
             best_score = hits.max().item()
             best_idx = hits.argmax().item()
@@ -908,9 +913,10 @@ class KOSShellOffline:
             best_seeds = thought["seeds"]
             best_results = thought["results"]
 
-            # Store for learning coordinator
+            # Store for learning coordinator + pipeline reranking
             self._last_seed_ids = best_seeds
             self._last_results = {nid: act for nid, act in best_results}
+            self._last_activated = list(best_results)  # [(node_id, activation), ...]
 
             from .weaver import AlgorithmicWeaver
             weaver = AlgorithmicWeaver()

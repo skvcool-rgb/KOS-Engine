@@ -5,6 +5,9 @@
   "impact": "Fixes failing query: 'What are the side effects of apixaban?'",
   "code": "\n# AUTO-GENERATED WEAVER RULE\n# Based on failing query: \"What are the side effects of apixaban?\"\n\n# Add to AlgorithmicWeaver.weave() scoring section:\n\nSIDE_EFFECT_PROMPT = {'apixaban?', 'of', 'effects', 'side', 'what', 'are', 'the'}\nSIDE_EFFECT_BOOST = 35\n\n# Inside the scoring loop:\nhas_side_effect = bool(\n    SIDE_EFFECT_PROMPT & set(prompt_lower.split()))\nif has_side_effect:\n    # Boost sentences containing relevant evidence\n    side_effect_evidence = {\" relevant_word1 \", \" relevant_word2 \"}\n    if any(w in sent_lower for w in side_effect_evidence):\n        score += SIDE_EFFECT_BOOST\n",
   "timestamp": "2026-03-24T01:12:55.924846",
-  "status": "PENDING",
-  "safety_check": "PASSED"
+  "status": "APPROVED",
+  "safety_check": "PASSED",
+  "approved_at": "2026-03-25T16:23:37",
+  "applied": true,
+  "applied_at": "2026-03-25T20:36:32"
 }
