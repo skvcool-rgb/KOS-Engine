@@ -1,2 +1,13 @@
-# KOS Engine — install core dependencies
--r requirements-core.txt
+# KOS Engine V6.1 — Core Dependencies
+nltk
+jellyfish
+sympy
+numpy
+beautifulsoup4
+requests
+networkx
+pyvis
+streamlit
+openai
+fastapi
+uvicorn
